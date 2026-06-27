@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Weather & Timer</title>
+
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#2563eb" />
+
+<!-- iOS "Add to Home Screen" support -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Weather" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+<style>
+  :root {
+    --bg: #0b1220;
+    --card: #131c31;
+    --accent: #2563eb;
+    --text: #f3f5f9;
+    --muted: #8b9bb4;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: env(safe-area-inset-top) 1rem env(safe-area-inset-bottom);
+    gap: 1.25rem;
+    min-height: 100vh;
+  }
+  header {
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  }
+  .weather-icon { font-size: 3.5rem; line-height: 1; }
+  .temp { font-size: 3.2rem; font-weight: 700; margin: 0.2rem 0; }
+  .location { color: var(--muted); font-size: 0.95rem; }
+  .desc { font-size: 1.05rem; margin-top: 0.25rem; }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .meta-row span b { color: var(--text); }
+  button {
+    font-family: inherit;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  #refreshBtn {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 0.7rem;
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  .timer-card {
+    text-align: center;
+  }
+  .timer-display {
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin: 0.5rem 0 1.25rem;
+  }
+  .timer-buttons {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .timer-buttons button {
+    flex: 1;
+    padding: 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  #startPauseBtn {
+    background: var(--accent);
+    color: white;
+  }
+  #resetBtn {
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+  }
+  .status {
+    color: var(--muted);
+    font-size: 0.9rem;
+    min-height: 1.2rem;
+    margin-top: 0.5rem;
+  }
+  footer {
+    margin-top: auto;
+    padding: 1rem 0 1.5rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>WEATHER &amp; TIMER</h1>
+</header>
+
+<section class="card" id="weatherCard">
+  <div class="weather-icon" id="weatherIcon">⏳</div>
+  <div class="temp" id="temp">--°</div>
+  <div class="desc" id="desc">Loading weather...</div>
+  <div class="location" id="location"></div>
+  <div class="meta-row">
+    <span>Feels like <b id="feelsLike">--°</b></span>
+    <span>Wind <b id="wind">-- mph</b></span>
+  </div>
+  <button id="refreshBtn">Refresh</button>
+</section>
+
+<section class="card timer-card">
+  <div class="status">30 minute timer</div>
+  <div class="timer-display" id="timerDisplay">30:00</div>
+  <div class="timer-buttons">
+    <button id="startPauseBtn">Start</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+  <div class="status" id="timerStatus"></div>
+</section>
+
+<footer>Add to Home Screen for the full app experience.</footer>
+
+<script>
+// ---------- Weather ----------
+const WEATHER_CODES = {
+  0: ['Clear sky', '☀️'],
+  1: ['Mainly clear', '🌤️'],
+  2: ['Partly cloudy', '⛅'],
+  3: ['Overcast', '☁️'],
+  45: ['Fog', '🌫️'],
+  48: ['Freezing fog', '🌫️'],
+  51: ['Light drizzle', '🌦️'],
+  53: ['Drizzle', '🌦️'],
+  55: ['Heavy drizzle', '🌧️'],
+  56: ['Freezing drizzle', '🌧️'],
+  57: ['Freezing drizzle', '🌧️'],
+  61: ['Light rain', '🌧️'],
+  63: ['Rain', '🌧️'],
+  65: ['Heavy rain', '🌧️'],
+  66: ['Freezing rain', '🌧️'],
+  67: ['Freezing rain', '🌧️'],
+  71: ['Light snow', '🌨️'],
+  73: ['Snow', '🌨️'],
+  75: ['Heavy snow', '❄️'],
+  77: ['Snow grains', '❄️'],
+  80: ['Light showers', '🌦️'],
+  81: ['Showers', '🌧️'],
+  82: ['Heavy showers', '⛈️'],
+  85: ['Snow showers', '🌨️'],
+  86: ['Heavy snow showers', '❄️'],
+  95: ['Thunderstorm', '⛈️'],
+  96: ['Thunderstorm + hail', '⛈️'],
+  99: ['Severe thunderstorm', '⛈️'],
+};
+
+function describeWeather(code) {
+  return WEATHER_CODES[code] || ['Unknown', '❔'];
+}
+
+async function loadWeather() {
+  const descEl = document.getElementById('desc');
+  const iconEl = document.getElementById('weatherIcon');
+  descEl.textContent = 'Locating you...';
+  iconEl.textContent = '⏳';
+
+  if (!('geolocation' in navigator)) {
+    descEl.textContent = 'Geolocation not supported on this device.';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        descEl.textContent = 'Fetching weather...';
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('weather request failed');
+        const data = await res.json();
+        const cur = data.current;
+        const [label, icon] = describeWeather(cur.weather_code);
+
+        document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
+        document.getElementById('feelsLike').textContent = `${Math.round(cur.apparent_temperature)}°`;
+        document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} mph`;
+        descEl.textContent = label;
+        iconEl.textContent = icon;
+
+        try {
+          const geoRes = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+          if (geoRes.ok) {
+            const geo = await geoRes.json();
+            const place = [geo.city || geo.locality, geo.principalSubdivisionCode || geo.countryCode]
+              .filter(Boolean)
+              .join(', ');
+            document.getElementById('location').textContent = place;
+          }
+        } catch (_) {
+          // location label is a nice-to-have; weather data above is unaffected
+        }
+      } catch (err) {
+        descEl.textContent = 'Could not load weather. Tap Refresh to retry.';
+        iconEl.textContent = '⚠️';
+      }
+    },
+    (err) => {
+      descEl.textContent = 'Location permission denied. Enable it in Settings to see local weather.';
+      iconEl.textContent = '📍';
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 }
+  );
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadWeather);
+loadWeather();
+
+// ---------- Timer ----------
+const TIMER_SECONDS = 30 * 60;
+let remaining = TIMER_SECONDS;
+let running = false;
+let intervalId = null;
+
+const timerDisplay = document.getElementById('timerDisplay');
+const startPauseBtn = document.getElementById('startPauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const timerStatus = document.getElementById('timerStatus');
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, '0');
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function renderTimer() {
+  timerDisplay.textContent = formatTime(remaining);
+}
+
+function tick() {
+  remaining -= 1;
+  renderTimer();
+  if (remaining <= 0) {
+    stopTimer();
+    timerStatus.textContent = "Time's up!";
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+    playBeep();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Timer done', { body: '30 minutes are up.' });
+    }
+  }
+}
+
+function startTimer() {
+  if (running) return;
+  if (remaining <= 0) remaining = TIMER_SECONDS;
+  running = true;
+  startPauseBtn.textContent = 'Pause';
+  timerStatus.textContent = '';
+  intervalId = setInterval(tick, 1000);
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function stopTimer() {
+  running = false;
+  startPauseBtn.textContent = 'Start';
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+function resetTimer() {
+  stopTimer();
+  remaining = TIMER_SECONDS;
+  timerStatus.textContent = '';
+  renderTimer();
+}
+
+startPauseBtn.addEventListener('click', () => {
+  if (running) {
+    stopTimer();
+  } else {
+    startTimer();
+  }
+});
+
+resetBtn.addEventListener('click', resetTimer);
+
+let audioCtx = null;
+function playBeep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const playTone = (delay) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.value = 0.2;
+      osc.connect(gain).connect(audioCtx.destination);
+      const start = audioCtx.currentTime + delay;
+      osc.start(start);
+      osc.stop(start + 0.25);
+    };
+    playTone(0);
+    playTone(0.35);
+    playTone(0.7);
+  } catch (_) {
+    // audio playback is best-effort; vibration + on-screen status already cover the alert
+  }
+}
+
+renderTimer();
+
+// ---------- Service worker (offline support + installability) ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
