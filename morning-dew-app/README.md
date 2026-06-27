@@ -1,0 +1,125 @@
+# Morning Dew
+
+A single-screen morning briefing PWA: greeting, live Brisbane weather,
+upcoming calendar events, open reminders, and email triage (urgent + new) —
+in the same Liquid Glass dark aesthetic as this repo's other apps.
+
+Weather works with zero setup. Calendar, reminders, and email each render a
+clearly-labelled placeholder card until you add their credentials — nothing
+blocks anything else.
+
+## Architecture
+
+```
+morning-dew-app/
+├── public/        # static PWA frontend (deployed to GitHub Pages)
+│   ├── index.html
+│   ├── manifest.json
+│   ├── sw.js
+│   ├── offline.html
+│   └── icons/
+├── server/        # Bun backend — holds secrets, proxies calendar/reminders/email
+│   ├── server.js
+│   ├── ics.js      # .ics parser + RRULE expansion
+│   └── gmail.js    # Gmail API client (OAuth refresh-token flow)
+├── .env.example
+├── package.json
+├── DECISIONS.md    # ambiguity log from the autonomous build
+├── ERRORS.md        # error log from the autonomous build
+└── BUILD_SUMMARY.md # what works right now vs. what needs your credentials
+```
+
+**Why two pieces?** Weather is keyless and CORS-enabled, so the browser talks
+to Open-Meteo directly. Calendar (.ics), reminders (.ics), and Gmail all need
+either a server-side fetch (no CORS support / no public API) or a real secret
+(OAuth client secret, refresh token) that must never reach a browser. The Bun
+backend holds those and serves the frontend too.
+
+## Run locally
+
+```bash
+cd morning-dew-app
+cp .env.example .env       # then fill in whatever credentials you have
+bun run server              # serves the app + APIs on http://localhost:8787
+```
+
+Open `http://localhost:8787` on your phone (same Wi-Fi) or laptop. Every
+section that has no env vars set shows a placeholder card explaining exactly
+what to add — nothing crashes or hangs waiting on missing config.
+
+If you just want to preview the static frontend without the backend (weather
+only, everything else shows "couldn't reach the service"):
+
+```bash
+bun run dev:static   # python3 -m http.server on :8080, no API routes
+```
+
+## Deploying
+
+The `public/` folder is a standard static PWA — deploy it the same way as
+this repo's other apps (GitHub Pages: Settings → Pages → Deploy from branch →
+point at this folder, or any static host: Netlify/Vercel/Cloudflare Pages).
+
+The `server/` backend needs a host that keeps a process running — GitHub
+Pages can't do this. Run it on whatever machine you leave on overnight (a
+laptop, a home server, a small VPS, a Raspberry Pi). Point your phone's
+Morning Dew install at that machine's address (or put it behind a tunnel like
+Cloudflare Tunnel / Tailscale if you want a stable public URL). Without the
+backend running, weather still works; calendar/reminders/email show "couldn't
+reach the service" instead of a placeholder (a clear signal to go start it).
+
+## Environment variables
+
+All optional — every missing one degrades to a placeholder, nothing blocks.
+
+| Variable | Used for | How to get it |
+|---|---|---|
+| `PORT` | Backend listen port | Defaults to `8787` |
+| `ICLOUD_ICS_URL` | Upcoming calendar events | See below |
+| `REMINDERS_ICS_URL` | Open reminders | See below |
+| `GOOGLE_CLIENT_ID` | Gmail triage | See below |
+| `GOOGLE_CLIENT_SECRET` | Gmail triage | See below |
+| `GOOGLE_REFRESH_TOKEN` | Gmail triage | See below |
+
+### Getting `ICLOUD_ICS_URL`
+
+1. On Mac: open Calendar.app → right-click the calendar you want → **Share
+   Calendar...** → check **Public Calendar** → click the link icon to copy
+   the URL.
+2. Or on iCloud.com → Calendar → hover the calendar in the sidebar → click
+   **...** → **Public Calendar** → copy the link.
+3. The link starts with `webcal://` — change that prefix to `https://` and
+   use the result as `ICLOUD_ICS_URL`.
+
+### Getting `REMINDERS_ICS_URL`
+
+Apple doesn't expose a direct public export for Reminders. Workaround: move
+(or mirror) the reminders you want surfaced into an iCloud **Calendar**
+(create a dedicated one, e.g. "Reminders Feed"), then share that calendar
+publicly the same way as above, and use its link here.
+
+### Getting Gmail OAuth credentials
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/),
+   create a project (or use an existing one), and enable the **Gmail API**.
+2. Under **APIs & Services → Credentials**, create an **OAuth client ID** of
+   type **Desktop app**. Note the Client ID and Client Secret —
+   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+3. Go to [Google's OAuth 2.0 Playground](https://developers.google.com/oauthplayground/).
+   Click the gear icon → check **Use your own OAuth credentials** → paste
+   your Client ID/Secret.
+4. In Step 1, find and authorize the scope
+   `https://www.googleapis.com/auth/gmail.readonly`.
+5. Click **Exchange authorization code for tokens** — copy the **Refresh
+   token** shown → `GOOGLE_REFRESH_TOKEN`.
+
+This refresh token doesn't expire under normal use, so you only need to do
+this once.
+
+## Notes
+
+- No secrets are ever hardcoded — everything sensitive comes from environment
+  variables read server-side only (`server/server.js`), never shipped to the
+  browser.
+- Every data section fetches independently with its own try/catch and an 8
+  second timeout — one slow or failing source never blocks the others.

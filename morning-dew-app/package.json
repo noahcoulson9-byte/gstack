@@ -1,0 +1,10 @@
+{
+  "name": "morning-dew-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Morning Dew — a single-screen morning briefing PWA (weather, calendar, reminders, email triage)",
+  "scripts": {
+    "server": "bun run server/server.js",
+    "dev:static": "cd public && python3 -m http.server 8080"
+  }
+}

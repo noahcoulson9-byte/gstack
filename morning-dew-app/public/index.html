@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Morning Dew</title>
+
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#3a8dff" />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Morning Dew" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+<style>
+  :root {
+    --text: #f5f7fb;
+    --muted: rgba(245, 247, 251, 0.62);
+    --glass-bg: rgba(255, 255, 255, 0.10);
+    --glass-bg-soft: rgba(255, 255, 255, 0.07);
+    --glass-border: rgba(255, 255, 255, 0.28);
+    --glass-highlight: rgba(255, 255, 255, 0.45);
+    --danger: #ff6b6b;
+    --ok: #34e0c4;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+  body {
+    position: relative;
+    background: #060912;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(env(safe-area-inset-top) + 1.5rem) 1.1rem calc(env(safe-area-inset-bottom) + 1.5rem);
+    gap: 1.1rem;
+  }
+
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.55;
+    z-index: 0;
+    will-change: transform;
+  }
+  .blob-a {
+    width: 60vw; height: 60vw;
+    top: -15vw; left: -20vw;
+    background: radial-gradient(circle, #3a8dff, transparent 70%);
+    animation: drift1 22s ease-in-out infinite alternate;
+  }
+  .blob-b {
+    width: 70vw; height: 70vw;
+    bottom: -25vw; right: -25vw;
+    background: radial-gradient(circle, #7c5cff, transparent 70%);
+    animation: drift2 26s ease-in-out infinite alternate;
+  }
+  .blob-c {
+    width: 50vw; height: 50vw;
+    top: 30vh; right: -15vw;
+    background: radial-gradient(circle, #34e0c4, transparent 70%);
+    opacity: 0.35;
+    animation: drift3 30s ease-in-out infinite alternate;
+  }
+  @keyframes drift1 { from { transform: translate(0,0); } to { transform: translate(6vw, 8vh); } }
+  @keyframes drift2 { from { transform: translate(0,0); } to { transform: translate(-8vw, -6vh); } }
+  @keyframes drift3 { from { transform: translate(0,0); } to { transform: translate(-5vw, 5vh); } }
+
+  main {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .greeting-block { padding: 0 0.25rem; }
+  .greeting-date {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .greeting-phrase {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-top: 0.3rem;
+  }
+  .greeting-name {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    background: linear-gradient(120deg, #ffffff, #cfe0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glass {
+    position: relative;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 26px;
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    overflow: hidden;
+  }
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--glass-highlight), transparent 45%);
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .section-title {
+    position: relative;
+    z-index: 1;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    padding: 0 0.25rem;
+    margin-top: 0.2rem;
+  }
+
+  /* ---- weather ---- */
+  .weather-card { padding: 1.5rem 1.4rem; text-align: center; }
+  .weather-icon { font-size: 3.6rem; line-height: 1; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.35)); }
+  .temp { font-size: 3.8rem; font-weight: 700; margin: 0.1rem 0; letter-spacing: -0.02em; }
+  .desc { font-size: 1.05rem; font-weight: 600; }
+  .location { color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+  .stats-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .stat-card { padding: 0.85rem 1rem; text-align: left; }
+  .stat-label { color: var(--muted); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.15rem; }
+
+  /* ---- generic list cards (calendar / reminders / email) ---- */
+  .list-card { padding: 1rem 1.1rem; }
+  .list-row {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  .list-row:last-child { border-bottom: none; }
+  .list-row-title { font-weight: 600; font-size: 0.95rem; }
+  .list-row-meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.15rem; }
+  .empty-state, .error-state, .placeholder-state {
+    position: relative; z-index: 1;
+    color: var(--muted); font-size: 0.88rem; padding: 0.4rem 0.1rem; line-height: 1.4;
+  }
+  .error-state { color: var(--danger); }
+  .placeholder-state code {
+    background: rgba(255,255,255,0.10); padding: 0.1rem 0.35rem; border-radius: 6px; font-size: 0.78rem;
+  }
+  .loading-state {
+    position: relative; z-index: 1;
+    color: var(--muted); font-size: 0.88rem; padding: 0.4rem 0.1rem;
+  }
+  .tag {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 0.12rem 0.45rem; border-radius: 8px; margin-bottom: 0.3rem;
+  }
+  .tag-urgent { background: rgba(255, 107, 107, 0.18); color: var(--danger); }
+  .tag-new { background: rgba(52, 224, 196, 0.18); color: var(--ok); }
+
+  button {
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+  }
+  .refresh-btn {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    border-radius: 22px;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .refresh-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.16); }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-align: center;
+    padding-top: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-a"></div>
+<div class="blob blob-b"></div>
+<div class="blob blob-c"></div>
+
+<main>
+  <div class="greeting-block">
+    <div class="greeting-date" id="dateLabel"></div>
+    <div class="greeting-phrase" id="greetingPhrase">Good day</div>
+    <div class="greeting-name">Noah</div>
+  </div>
+
+  <section class="glass weather-card" id="weatherCard">
+    <div class="weather-icon" id="weatherIcon">⏳</div>
+    <div class="temp" id="temp">--°</div>
+    <div class="desc" id="desc">Loading weather...</div>
+    <div class="location" id="location">Brisbane, QLD</div>
+  </section>
+
+  <section class="stats-grid">
+    <div class="glass stat-card"><div class="stat-label">Feels like</div><div class="stat-value" id="feelsLike">--°</div></div>
+    <div class="glass stat-card"><div class="stat-label">Humidity</div><div class="stat-value" id="humidity">--%</div></div>
+    <div class="glass stat-card"><div class="stat-label">Wind</div><div class="stat-value" id="wind">-- km/h</div></div>
+    <div class="glass stat-card"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></div>
+  </section>
+
+  <button class="refresh-btn" id="refreshBtn">Refresh weather</button>
+
+  <div class="section-title">Next 48 hours</div>
+  <section class="glass list-card" id="calendarCard">
+    <div class="loading-state">Loading calendar...</div>
+  </section>
+
+  <div class="section-title">Reminders</div>
+  <section class="glass list-card" id="remindersCard">
+    <div class="loading-state">Loading reminders...</div>
+  </section>
+
+  <div class="section-title">Urgent emails</div>
+  <section class="glass list-card" id="urgentEmailCard">
+    <div class="loading-state">Loading email...</div>
+  </section>
+
+  <div class="section-title">New emails</div>
+  <section class="glass list-card" id="newEmailCard">
+    <div class="loading-state">Loading email...</div>
+  </section>
+</main>
+
+<footer>Morning Dew · weather from Open-Meteo · calendar, reminders &amp; email refresh automatically</footer>
+
+<script>
+const BRISBANE = { latitude: -27.4698, longitude: 153.0251 };
+const FETCH_TIMEOUT_MS = 8000;
+
+const WEATHER_CODES = {
+  0: ['Clear sky', '☀️'], 1: ['Mainly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'],
+  45: ['Fog', '🌫️'], 48: ['Freezing fog', '🌫️'], 51: ['Light drizzle', '🌦️'], 53: ['Drizzle', '🌦️'],
+  55: ['Heavy drizzle', '🌧️'], 56: ['Freezing drizzle', '🌧️'], 57: ['Freezing drizzle', '🌧️'],
+  61: ['Light rain', '🌧️'], 63: ['Rain', '🌧️'], 65: ['Heavy rain', '🌧️'], 66: ['Freezing rain', '🌧️'],
+  67: ['Freezing rain', '🌧️'], 71: ['Light snow', '🌨️'], 73: ['Snow', '🌨️'], 75: ['Heavy snow', '❄️'],
+  77: ['Snow grains', '❄️'], 80: ['Light showers', '🌦️'], 81: ['Showers', '🌧️'], 82: ['Heavy showers', '⛈️'],
+  85: ['Snow showers', '🌨️'], 86: ['Heavy snow showers', '❄️'], 95: ['Thunderstorm', '⛈️'],
+  96: ['Thunderstorm + hail', '⛈️'], 99: ['Severe thunderstorm', '⛈️'],
+};
+function describeWeather(code) { return WEATHER_CODES[code] || ['Unknown', '❔']; }
+
+async function fetchWithTimeout(url, opts = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function renderGreeting() {
+  const now = new Date();
+  const hour = now.getHours();
+  const phrase = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greetingPhrase').textContent = phrase;
+  document.getElementById('dateLabel').textContent = now.toLocaleDateString(undefined, {
+    weekday: 'long', month: 'long', day: 'numeric',
+  });
+}
+
+// ---------- Weather ----------
+// Brisbane coords are hardcoded per spec (no geolocation prompt) — this also
+// fixes the old "Fetching weather..." hang, which was the browser waiting
+// indefinitely on a geolocation permission prompt that the user never saw/granted.
+async function loadWeather() {
+  const descEl = document.getElementById('desc');
+  const iconEl = document.getElementById('weatherIcon');
+  descEl.textContent = 'Fetching weather...';
+  iconEl.textContent = '⏳';
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${BRISBANE.latitude}&longitude=${BRISBANE.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code`;
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
+    const data = await res.json();
+    const cur = data.current;
+    const [label, icon] = describeWeather(cur.weather_code);
+
+    document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
+    document.getElementById('feelsLike').textContent = `${Math.round(cur.apparent_temperature)}°`;
+    document.getElementById('humidity').textContent = `${Math.round(cur.relative_humidity_2m)}%`;
+    document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} km/h`;
+    document.getElementById('precip').textContent = `${Math.round(cur.precipitation_probability ?? 0)}%`;
+    descEl.textContent = label;
+    iconEl.textContent = icon;
+  } catch (err) {
+    descEl.textContent = err.name === 'AbortError'
+      ? 'Weather timed out. Tap Refresh to retry.'
+      : 'Could not load weather. Tap Refresh to retry.';
+    iconEl.textContent = '⚠️';
+  }
+}
+
+// ---------- Calendar ----------
+function fmtEventTime(iso, allDay) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (allDay) return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  return d.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+}
+
+async function loadCalendar() {
+  const card = document.getElementById('calendarCard');
+  try {
+    const res = await fetchWithTimeout('/api/calendar');
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const data = await res.json();
+    if (!data.configured) {
+      card.innerHTML = `<div class="placeholder-state">No iCloud calendar connected yet. Set <code>ICLOUD_ICS_URL</code> in the server environment to see upcoming events here.</div>`;
+      return;
+    }
+    if (data.error) {
+      card.innerHTML = `<div class="error-state">Couldn't load calendar: ${data.error}</div>`;
+      return;
+    }
+    if (!data.events.length) {
+      card.innerHTML = `<div class="empty-state">Nothing on the calendar in the next 48 hours.</div>`;
+      return;
+    }
+    card.innerHTML = data.events.map((ev) => `
+      <div class="list-row">
+        <div class="list-row-title">${ev.summary}</div>
+        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}</div>
+      </div>`).join('');
+  } catch (err) {
+    card.innerHTML = `<div class="error-state">Couldn't reach the calendar service. Is the Morning Dew server running?</div>`;
+  }
+}
+
+// ---------- Reminders ----------
+async function loadReminders() {
+  const card = document.getElementById('remindersCard');
+  try {
+    const res = await fetchWithTimeout('/api/reminders');
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const data = await res.json();
+    if (!data.configured) {
+      card.innerHTML = `<div class="placeholder-state">No reminders feed connected yet. Set <code>REMINDERS_ICS_URL</code> (an iCloud Reminders list shared as a calendar/.ics subscription) in the server environment.</div>`;
+      return;
+    }
+    if (data.error) {
+      card.innerHTML = `<div class="error-state">Couldn't load reminders: ${data.error}</div>`;
+      return;
+    }
+    if (!data.events.length) {
+      card.innerHTML = `<div class="empty-state">No open reminders due soon.</div>`;
+      return;
+    }
+    card.innerHTML = data.events.map((ev) => `
+      <div class="list-row">
+        <div class="list-row-title">${ev.summary}</div>
+        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}</div>
+      </div>`).join('');
+  } catch (err) {
+    card.innerHTML = `<div class="error-state">Couldn't reach the reminders service. Is the Morning Dew server running?</div>`;
+  }
+}
+
+// ---------- Email ----------
+function renderEmailList(card, items, emptyMsg, tagClass, tagLabel) {
+  if (!items.length) {
+    card.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+    return;
+  }
+  card.innerHTML = items.map((m) => `
+    <div class="list-row">
+      <span class="tag ${tagClass}">${tagLabel}</span>
+      <div class="list-row-title">${m.subject}</div>
+      <div class="list-row-meta">${m.from}</div>
+    </div>`).join('');
+}
+
+async function loadEmail() {
+  const urgentCard = document.getElementById('urgentEmailCard');
+  const newCard = document.getElementById('newEmailCard');
+  try {
+    const res = await fetchWithTimeout('/api/email');
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const data = await res.json();
+    if (!data.configured) {
+      const msg = `<div class="placeholder-state">Gmail isn't connected yet. Set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code> and <code>GOOGLE_REFRESH_TOKEN</code> in the server environment.</div>`;
+      urgentCard.innerHTML = msg;
+      newCard.innerHTML = msg;
+      return;
+    }
+    if (data.error) {
+      const msg = `<div class="error-state">Couldn't load email: ${data.error}</div>`;
+      urgentCard.innerHTML = msg;
+      newCard.innerHTML = msg;
+      return;
+    }
+    renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent');
+    renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New');
+  } catch (err) {
+    const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
+    urgentCard.innerHTML = msg;
+    newCard.innerHTML = msg;
+  }
+}
+
+renderGreeting();
+document.getElementById('refreshBtn').addEventListener('click', loadWeather);
+loadWeather();
+loadCalendar();
+loadReminders();
+loadEmail();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
