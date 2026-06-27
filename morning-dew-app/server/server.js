@@ -33,22 +33,38 @@ function json(data, status = 200) {
   });
 }
 
+// envVarName may hold one URL or several comma-separated URLs (e.g. several
+// iCloud calendars merged into one feed). Each URL is fetched independently —
+// one bad/slow calendar doesn't drop the others, it just adds a per-feed note.
 async function handleIcsFeed(envVarName, label) {
-  const url = process.env[envVarName];
-  if (!url) {
+  const raw = process.env[envVarName];
+  if (!raw) {
     return json({ configured: false, label, events: [] });
   }
-  try {
-    const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
-    if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
-    const text = await res.text();
-    const now = new Date();
-    const windowEnd = new Date(now.getTime() + 48 * 3600 * 1000);
-    const events = eventsInWindow(text, now, windowEnd);
-    return json({ configured: true, label, events });
-  } catch (err) {
-    return json({ configured: true, label, events: [], error: String(err.message || err) }, 200);
-  }
+  const urls = raw.split(',').map((u) => u.trim()).filter(Boolean);
+  const now = new Date();
+  const windowEnd = new Date(now.getTime() + 48 * 3600 * 1000);
+
+  const results = await Promise.allSettled(
+    urls.map(async (url) => {
+      const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
+      if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+      const text = await res.text();
+      return eventsInWindow(text, now, windowEnd);
+    })
+  );
+
+  const events = [];
+  const errors = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') events.push(...r.value);
+    else errors.push(`feed ${i + 1}: ${String(r.reason.message || r.reason)}`);
+  });
+  events.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  const payload = { configured: true, label, events };
+  if (errors.length) payload.error = errors.join('; ');
+  return json(payload);
 }
 
 async function handleEmail() {

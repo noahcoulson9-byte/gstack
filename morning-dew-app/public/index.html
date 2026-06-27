@@ -353,15 +353,12 @@ async function loadCalendar() {
       card.innerHTML = `<div class="placeholder-state">No iCloud calendar connected yet. Set <code>ICLOUD_ICS_URL</code> in the server environment to see upcoming events here.</div>`;
       return;
     }
-    if (data.error) {
-      card.innerHTML = `<div class="error-state">Couldn't load calendar: ${data.error}</div>`;
-      return;
-    }
+    const errorNote = data.error ? `<div class="error-state">Some calendars didn't load: ${data.error}</div>` : '';
     if (!data.events.length) {
-      card.innerHTML = `<div class="empty-state">Nothing on the calendar in the next 48 hours.</div>`;
+      card.innerHTML = errorNote || `<div class="empty-state">Nothing on the calendar in the next 48 hours.</div>`;
       return;
     }
-    card.innerHTML = data.events.map((ev) => `
+    card.innerHTML = errorNote + data.events.map((ev) => `
       <div class="list-row">
         <div class="list-row-title">${ev.summary}</div>
         <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}</div>

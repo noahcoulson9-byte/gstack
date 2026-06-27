@@ -68,7 +68,21 @@ synthetic .ics fixtures (see verification in BUILD_SUMMARY.md); no real
 iCloud feed was available to test against the full edge-case spread Apple's
 export can produce, since the build has no credentials to fetch one.
 
-## 6. Backend deploy target
+## 6. Multiple iCloud calendars merged into one feed
+
+Noah provided 7 public calendar share links at once, all separate calendars,
+none of them a reminders feed. Decision: extend `ICLOUD_ICS_URL` to accept a
+comma-separated list of links instead of just one. `server/server.js`'s
+`handleIcsFeed` now fetches every URL in the list independently via
+`Promise.allSettled`, merges all resulting events into one sorted "Next 48
+hours" list, and — if some feeds fail and others succeed — shows the events
+that *did* load plus a small inline note about which feed numbers failed,
+rather than discarding everything on a single bad link. Verified the 403s
+returned when testing against the real links are this sandbox's network
+policy blocking `icloud.com` outbound (confirmed via the proxy status
+endpoint), not a bug in the merge logic — see ERRORS.md.
+
+## 7. Backend deploy target
 
 The brief says "deploy it." A Bun server needs a host that runs a persistent
 process (GitHub Pages does not). Decision: keep the frontend on the same
