@@ -61,6 +61,7 @@
   }
   .weather-icon { font-size: 4rem; line-height: 1; }
   .temp { font-size: 4rem; font-weight: 700; margin: 0.2rem 0; }
+  .greeting { color: var(--text); font-size: 1rem; font-weight: 600; margin-top: 0.75rem; }
   .location { color: var(--muted); font-size: 0.95rem; }
   .desc { font-size: 1.1rem; margin-top: 0.25rem; }
   .meta-grid {
@@ -110,6 +111,7 @@
   <div class="weather-icon" id="weatherIcon">⏳</div>
   <div class="temp" id="temp">--°</div>
   <div class="desc" id="desc">Loading weather...</div>
+  <div class="greeting">Welcome back, Noah Coulson</div>
   <div class="location" id="location"></div>
   <div class="meta-grid">
     <span>Feels like <b id="feelsLike">--°</b></span>
@@ -118,7 +120,7 @@
     <span>Precipitation <b id="precip">--%</b></span>
   </div>
   <button id="refreshBtn">Refresh</button>
-  <div class="source">Source: Open-Meteo (best_match — auto-selects the highest-resolution national weather model for your location, e.g. ECMWF/ICON/GFS)</div>
+  <div class="source">Source: Open-Meteo — auto-selects the highest-resolution national weather model for your location (e.g. ECMWF/ICON/GFS)</div>
 </section>
 
 <footer>Add to Home Screen for the full app experience.</footer>
@@ -175,8 +177,10 @@ async function loadWeather() {
       const { latitude, longitude } = pos.coords;
       try {
         descEl.textContent = 'Fetching weather...';
-        // models=best_match picks the highest-resolution national model (ECMWF/ICON/GFS/etc) per location.
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code&models=best_match`;
+        // No "models" param: Open-Meteo's default IS best_match (auto-picks the
+        // highest-res national model per location). Passing it explicitly switches
+        // the API into multi-model response mode and was producing drifted readings.
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('weather request failed');
         const data = await res.json();
