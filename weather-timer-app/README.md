@@ -1,7 +1,9 @@
-# Weather & Timer
+# Weather
 
-A tiny installable web app: live local weather (via [Open-Meteo](https://open-meteo.com),
-no API key needed) plus a 30-minute timer with sound/vibration alert.
+A tiny installable web app showing live local weather via
+[Open-Meteo](https://open-meteo.com) (no API key needed), using its
+`best_match` model selection to pull from the highest-resolution national
+weather model available for your location (e.g. ECMWF, ICON, GFS).
 
 ## Run locally
 
@@ -36,7 +38,3 @@ point it at this folder and it needs no build step or server-side code.
 
 - Weather and location both require the user to grant the browser's location
   permission; iOS will prompt on first load.
-- The 30-minute timer keeps running while the tab/app is in the foreground.
-  iOS Safari (and installed PWAs) suspends JS timers in the background, so the
-  countdown is accurate while you're looking at it but should not be relied on
-  as a background alarm.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Weather & Timer</title>
+<title>Weather</title>
 
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#2563eb" />
@@ -59,18 +59,19 @@
     padding: 1.5rem;
     box-shadow: 0 8px 30px rgba(0,0,0,0.35);
   }
-  .weather-icon { font-size: 3.5rem; line-height: 1; }
-  .temp { font-size: 3.2rem; font-weight: 700; margin: 0.2rem 0; }
+  .weather-icon { font-size: 4rem; line-height: 1; }
+  .temp { font-size: 4rem; font-weight: 700; margin: 0.2rem 0; }
   .location { color: var(--muted); font-size: 0.95rem; }
-  .desc { font-size: 1.05rem; margin-top: 0.25rem; }
-  .meta-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
+  .desc { font-size: 1.1rem; margin-top: 0.25rem; }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
     color: var(--muted);
     font-size: 0.9rem;
   }
-  .meta-row span b { color: var(--text); }
+  .meta-grid span b { color: var(--text); display: block; font-size: 1.1rem; margin-top: 0.15rem; }
   button {
     font-family: inherit;
     border: none;
@@ -78,45 +79,17 @@
     cursor: pointer;
   }
   #refreshBtn {
-    margin-top: 1rem;
+    margin-top: 1.25rem;
     width: 100%;
     padding: 0.7rem;
     background: rgba(255,255,255,0.06);
     color: var(--text);
     font-size: 0.95rem;
   }
-  .timer-card {
-    text-align: center;
-  }
-  .timer-display {
-    font-size: 3.5rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    margin: 0.5rem 0 1.25rem;
-  }
-  .timer-buttons {
-    display: flex;
-    gap: 0.75rem;
-  }
-  .timer-buttons button {
-    flex: 1;
-    padding: 0.9rem;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-  #startPauseBtn {
-    background: var(--accent);
-    color: white;
-  }
-  #resetBtn {
-    background: rgba(255,255,255,0.06);
-    color: var(--text);
-  }
-  .status {
+  .source {
     color: var(--muted);
-    font-size: 0.9rem;
-    min-height: 1.2rem;
-    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    margin-top: 0.75rem;
   }
   footer {
     margin-top: auto;
@@ -130,7 +103,7 @@
 <body>
 
 <header>
-  <h1>WEATHER &amp; TIMER</h1>
+  <h1>WEATHER</h1>
 </header>
 
 <section class="card" id="weatherCard">
@@ -138,27 +111,19 @@
   <div class="temp" id="temp">--°</div>
   <div class="desc" id="desc">Loading weather...</div>
   <div class="location" id="location"></div>
-  <div class="meta-row">
+  <div class="meta-grid">
     <span>Feels like <b id="feelsLike">--°</b></span>
-    <span>Wind <b id="wind">-- mph</b></span>
+    <span>Humidity <b id="humidity">--%</b></span>
+    <span>Wind <b id="wind">-- km/h</b></span>
+    <span>Precipitation <b id="precip">--%</b></span>
   </div>
   <button id="refreshBtn">Refresh</button>
-</section>
-
-<section class="card timer-card">
-  <div class="status">30 minute timer</div>
-  <div class="timer-display" id="timerDisplay">30:00</div>
-  <div class="timer-buttons">
-    <button id="startPauseBtn">Start</button>
-    <button id="resetBtn">Reset</button>
-  </div>
-  <div class="status" id="timerStatus"></div>
+  <div class="source">Source: Open-Meteo (best_match — auto-selects the highest-resolution national weather model for your location, e.g. ECMWF/ICON/GFS)</div>
 </section>
 
 <footer>Add to Home Screen for the full app experience.</footer>
 
 <script>
-// ---------- Weather ----------
 const WEATHER_CODES = {
   0: ['Clear sky', '☀️'],
   1: ['Mainly clear', '🌤️'],
@@ -210,7 +175,8 @@ async function loadWeather() {
       const { latitude, longitude } = pos.coords;
       try {
         descEl.textContent = 'Fetching weather...';
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code`;
+        // models=best_match picks the highest-resolution national model (ECMWF/ICON/GFS/etc) per location.
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code&models=best_match`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('weather request failed');
         const data = await res.json();
@@ -219,7 +185,9 @@ async function loadWeather() {
 
         document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
         document.getElementById('feelsLike').textContent = `${Math.round(cur.apparent_temperature)}°`;
+        document.getElementById('humidity').textContent = `${Math.round(cur.relative_humidity_2m)}%`;
         document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} km/h`;
+        document.getElementById('precip').textContent = `${Math.round(cur.precipitation_probability ?? 0)}%`;
         descEl.textContent = label;
         iconEl.textContent = icon;
 
@@ -253,106 +221,6 @@ async function loadWeather() {
 document.getElementById('refreshBtn').addEventListener('click', loadWeather);
 loadWeather();
 
-// ---------- Timer ----------
-const TIMER_SECONDS = 30 * 60;
-let remaining = TIMER_SECONDS;
-let running = false;
-let intervalId = null;
-
-const timerDisplay = document.getElementById('timerDisplay');
-const startPauseBtn = document.getElementById('startPauseBtn');
-const resetBtn = document.getElementById('resetBtn');
-const timerStatus = document.getElementById('timerStatus');
-
-function formatTime(sec) {
-  const m = Math.floor(sec / 60).toString().padStart(2, '0');
-  const s = Math.floor(sec % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-}
-
-function renderTimer() {
-  timerDisplay.textContent = formatTime(remaining);
-}
-
-function tick() {
-  remaining -= 1;
-  renderTimer();
-  if (remaining <= 0) {
-    stopTimer();
-    timerStatus.textContent = "Time's up!";
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-    playBeep();
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Timer done', { body: '30 minutes are up.' });
-    }
-  }
-}
-
-function startTimer() {
-  if (running) return;
-  if (remaining <= 0) remaining = TIMER_SECONDS;
-  running = true;
-  startPauseBtn.textContent = 'Pause';
-  timerStatus.textContent = '';
-  intervalId = setInterval(tick, 1000);
-
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-function stopTimer() {
-  running = false;
-  startPauseBtn.textContent = 'Start';
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-}
-
-function resetTimer() {
-  stopTimer();
-  remaining = TIMER_SECONDS;
-  timerStatus.textContent = '';
-  renderTimer();
-}
-
-startPauseBtn.addEventListener('click', () => {
-  if (running) {
-    stopTimer();
-  } else {
-    startTimer();
-  }
-});
-
-resetBtn.addEventListener('click', resetTimer);
-
-let audioCtx = null;
-function playBeep() {
-  try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const playTone = (delay) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.value = 0.2;
-      osc.connect(gain).connect(audioCtx.destination);
-      const start = audioCtx.currentTime + delay;
-      osc.start(start);
-      osc.stop(start + 0.25);
-    };
-    playTone(0);
-    playTone(0.35);
-    playTone(0.7);
-  } catch (_) {
-    // audio playback is best-effort; vibration + on-screen status already cover the alert
-  }
-}
-
-renderTimer();
-
-// ---------- Service worker (offline support + installability) ----------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});

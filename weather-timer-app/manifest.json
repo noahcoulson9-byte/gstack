@@ -1,7 +1,7 @@
 {
-  "name": "Weather & Timer",
+  "name": "Weather",
   "short_name": "Weather",
-  "description": "Live local weather and a 30 minute timer",
+  "description": "Live local weather, sourced from the highest-resolution national weather model for your location",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
