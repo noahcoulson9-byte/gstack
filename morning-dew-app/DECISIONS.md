@@ -97,3 +97,61 @@ autonomously, so self-hosting is the honest, working answer right now —
 swapping to a hosted function (Cloudflare Worker, Fly.io, etc.) later is a
 deploy-target change, not a code rewrite, since `server/server.js` and its
 two helper modules have no GitHub-Pages-specific assumptions baked in.
+
+## 8. Outlook merges into the existing Calendar/Reminders/Email cards, not new sections
+
+Noah's instruction was to "add all the things I asked for including outlook
+reminders calendar etc." The original brief's three data sections (Calendar,
+Reminders, Email) are provider-agnostic by name — there's no reason a user
+would want a separate "Outlook Calendar" card sitting next to "Calendar."
+Decision: `server/outlook.js` (new) mirrors `gmail.js`'s shape, and
+`server/server.js` merges Outlook's calendar events / Microsoft To Do tasks /
+mail triage into the exact same `/api/calendar`, `/api/reminders`, and
+`/api/email` endpoints that already serve iCloud `.ics` and Gmail data — same
+pattern as decision 6's multi-iCloud-calendar merge, generalized to mixed
+provider types. Every event/message object now carries a `source` field
+(`iCloud` / `Outlook` / `Gmail`) rendered as a small tag in the UI, since a
+single card can now show rows from more than one provider. One provider
+failing (e.g. missing credentials, a 403, a timeout) never hides data that
+loaded fine from another — each source is fetched via `Promise.allSettled`-
+style isolation and errors are appended as a note rather than replacing the
+list.
+
+## 9. Microsoft To Do is the Outlook equivalent of Reminders
+
+Microsoft Graph has no API named "Reminders." The closest equivalent —
+matching Apple Reminders' "a list of things to do, some with due dates" shape
+— is Microsoft To Do (`/me/todo/lists` + `/me/todo/lists/{id}/tasks`), which
+is also what Outlook's own "Tasks" pane surfaces. Decision: `fetchTasks()` in
+`server/outlook.js` pulls all of a user's To Do lists, fetches each list's
+non-completed tasks in parallel via `Promise.allSettled` (one bad list is
+skipped, not fatal to the rest — same isolation pattern as everywhere else in
+this app), and feeds the merged result into `/api/reminders` alongside
+whatever iCloud reminders-as-calendar feed is configured.
+
+## 10. No further `AskUserQuestion` calls for this expansion, per explicit instruction
+
+Noah's message asked to "add all the things I asked for... and to not to need
+to ask me any questions so I can let you run in the background untill
+finished." This explicitly supersedes the `AskUserQuestion` pattern used
+earlier in the build (decision-adjacent: the multi-calendar-link
+disambiguation). For the entire Outlook integration — env var naming
+(`MS_CLIENT_ID`/`MS_CLIENT_SECRET`/`MS_REFRESH_TOKEN`/`MS_TENANT_ID`, chosen
+to mirror `GOOGLE_*`'s naming convention), the To Do-as-Reminders mapping
+(decision 9), and the merge-into-existing-cards architecture (decision 8) —
+every ambiguity was resolved unilaterally and logged here rather than asked
+about, exactly as instructed.
+
+## 11. Microsoft Graph confirmed sandbox-blocked; login endpoint is not
+
+Tested directly (see ERRORS.md item 2): `login.microsoftonline.com` (the
+OAuth token endpoint) returns a real `200` through the sandbox proxy, but
+`graph.microsoft.com` (every actual data endpoint — calendar, tasks, mail)
+returns the same `403 connect_rejected` already seen for `icloud.com` and
+Google's APIs. This means `outlook.js`'s token-refresh call is the one piece
+of this entire app's external-network surface that could theoretically be
+exercised live in this sandbox if real Microsoft credentials existed — but
+since none do, and the Graph calls that would follow are blocked anyway, no
+live Outlook request of any kind was attempted. Code review against the
+documented Graph API contract is the verification ceiling here, same as for
+the Gmail and iCloud paths.

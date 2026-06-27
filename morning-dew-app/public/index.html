@@ -350,7 +350,7 @@ async function loadCalendar() {
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     if (!data.configured) {
-      card.innerHTML = `<div class="placeholder-state">No iCloud calendar connected yet. Set <code>ICLOUD_ICS_URL</code> in the server environment to see upcoming events here.</div>`;
+      card.innerHTML = `<div class="placeholder-state">No calendar connected yet. Set <code>ICLOUD_ICS_URL</code> and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment to see upcoming events here.</div>`;
       return;
     }
     const errorNote = data.error ? `<div class="error-state">Some calendars didn't load: ${data.error}</div>` : '';
@@ -361,7 +361,7 @@ async function loadCalendar() {
     card.innerHTML = errorNote + data.events.map((ev) => `
       <div class="list-row">
         <div class="list-row-title">${ev.summary}</div>
-        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}</div>
+        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}${ev.source ? ' · ' + ev.source : ''}</div>
       </div>`).join('');
   } catch (err) {
     card.innerHTML = `<div class="error-state">Couldn't reach the calendar service. Is the Morning Dew server running?</div>`;
@@ -376,21 +376,18 @@ async function loadReminders() {
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     if (!data.configured) {
-      card.innerHTML = `<div class="placeholder-state">No reminders feed connected yet. Set <code>REMINDERS_ICS_URL</code> (an iCloud Reminders list shared as a calendar/.ics subscription) in the server environment.</div>`;
+      card.innerHTML = `<div class="placeholder-state">No reminders feed connected yet. Set <code>REMINDERS_ICS_URL</code> (an iCloud Reminders list shared as a calendar/.ics subscription) and/or the Outlook <code>MS_*</code> vars (Microsoft To Do is used as the Outlook reminders equivalent) in the server environment.</div>`;
       return;
     }
-    if (data.error) {
-      card.innerHTML = `<div class="error-state">Couldn't load reminders: ${data.error}</div>`;
-      return;
-    }
+    const errorNote = data.error ? `<div class="error-state">Some reminders didn't load: ${data.error}</div>` : '';
     if (!data.events.length) {
-      card.innerHTML = `<div class="empty-state">No open reminders due soon.</div>`;
+      card.innerHTML = errorNote || `<div class="empty-state">No open reminders due soon.</div>`;
       return;
     }
-    card.innerHTML = data.events.map((ev) => `
+    card.innerHTML = errorNote + data.events.map((ev) => `
       <div class="list-row">
         <div class="list-row-title">${ev.summary}</div>
-        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}</div>
+        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.source ? ' · ' + ev.source : ''}</div>
       </div>`).join('');
   } catch (err) {
     card.innerHTML = `<div class="error-state">Couldn't reach the reminders service. Is the Morning Dew server running?</div>`;
@@ -398,14 +395,14 @@ async function loadReminders() {
 }
 
 // ---------- Email ----------
-function renderEmailList(card, items, emptyMsg, tagClass, tagLabel) {
+function renderEmailList(card, items, emptyMsg, tagClass, tagLabel, errorNote) {
   if (!items.length) {
-    card.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+    card.innerHTML = errorNote || `<div class="empty-state">${emptyMsg}</div>`;
     return;
   }
-  card.innerHTML = items.map((m) => `
+  card.innerHTML = (errorNote || '') + items.map((m) => `
     <div class="list-row">
-      <span class="tag ${tagClass}">${tagLabel}</span>
+      <span class="tag ${tagClass}">${tagLabel}${m.source ? ' · ' + m.source : ''}</span>
       <div class="list-row-title">${m.subject}</div>
       <div class="list-row-meta">${m.from}</div>
     </div>`).join('');
@@ -419,19 +416,14 @@ async function loadEmail() {
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     if (!data.configured) {
-      const msg = `<div class="placeholder-state">Gmail isn't connected yet. Set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code> and <code>GOOGLE_REFRESH_TOKEN</code> in the server environment.</div>`;
+      const msg = `<div class="placeholder-state">No email source connected yet. Set <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code>/<code>GOOGLE_REFRESH_TOKEN</code> (Gmail) and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment.</div>`;
       urgentCard.innerHTML = msg;
       newCard.innerHTML = msg;
       return;
     }
-    if (data.error) {
-      const msg = `<div class="error-state">Couldn't load email: ${data.error}</div>`;
-      urgentCard.innerHTML = msg;
-      newCard.innerHTML = msg;
-      return;
-    }
-    renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent');
-    renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New');
+    const errorNote = data.error ? `<div class="error-state">Some email sources didn't load: ${data.error}</div>` : '';
+    renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent', errorNote);
+    renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New', errorNote);
   } catch (err) {
     const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
     urgentCard.innerHTML = msg;

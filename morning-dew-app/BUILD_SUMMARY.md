@@ -15,9 +15,16 @@ to.
   state if the network call fails or times out — it can no longer hang on
   "Fetching weather..." forever (root cause + fix in DECISIONS.md item 3).
 - **Calendar, reminders, and email cards** — fully built UI + backend
-  endpoints, render correct "not configured yet" placeholder cards right now
-  since no credentials exist. They do not block, error, or hang; each is
+  endpoints. Calendar now has 7 real iCloud calendar links in `.env`
+  (merged into one "Next 48 hours" feed, see DECISIONS.md item 6); the rest
+  still render correct "not configured yet" placeholder cards since no
+  credentials exist for them. They do not block, error, or hang; each is
   independent of the others and of weather.
+- **Outlook / Microsoft 365** — added as a second provider for Calendar,
+  Reminders (via Microsoft To Do), and Email, merging into the same three
+  cards alongside iCloud and Gmail rather than new sections. Fully coded
+  (`server/outlook.js` Graph API client, `server/server.js` merge logic,
+  frontend source tags) but has no credentials yet — see the table below.
 - **PWA install** — manifest, service worker (network-first, never caches
   `/api/*` so live data is always fresh), offline fallback page, "Add to Home
   Screen" ready on iOS.
@@ -26,15 +33,16 @@ to.
 
 | Feature | Stub behavior now | What unlocks it |
 |---|---|---|
-| Upcoming calendar events | Placeholder card: "No iCloud calendar connected yet" | Set `ICLOUD_ICS_URL` |
-| Reminders | Placeholder card: "No reminders feed connected yet" | Set `REMINDERS_ICS_URL` (see README for the iCloud workaround — Apple has no direct public Reminders export) |
-| Urgent emails | Placeholder card: "Gmail isn't connected yet" | Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` |
-| New emails | Same placeholder as above (one Gmail connection powers both) | Same three vars |
+| Upcoming calendar events (Outlook side) | Merges with the working iCloud feed; shows nothing extra until set | Set `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MS_REFRESH_TOKEN` |
+| Reminders | Placeholder card: "No reminders feed connected yet" | Set `REMINDERS_ICS_URL` (see README for the iCloud workaround — Apple has no direct public Reminders export) and/or the `MS_*` vars (Outlook side, via Microsoft To Do) |
+| Urgent emails | Placeholder card: "No email source connected yet" | Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REFRESH_TOKEN` (Gmail) and/or `MS_CLIENT_ID`/`MS_CLIENT_SECRET`/`MS_REFRESH_TOKEN` (Outlook) |
+| New emails | Same placeholder as above (one connection of either provider powers both) | Same vars as above |
 
-All three integrations are **fully coded** (`server/ics.js` RRULE-aware
-parser, `server/gmail.js` OAuth + Gmail API client, full frontend rendering
-logic) — they just have nothing to talk to without credentials. Nothing
-needs to be built later; only env vars need to be filled in.
+All integrations are **fully coded** (`server/ics.js` RRULE-aware parser,
+`server/gmail.js` OAuth + Gmail API client, `server/outlook.js` Graph API
+client covering calendar/tasks/mail, full frontend rendering logic with
+per-source tags) — they just have nothing to talk to without credentials.
+Nothing needs to be built later; only env vars need to be filled in.
 
 ## What you need to do when you wake up
 
@@ -47,6 +55,10 @@ needs to be built later; only env vars need to be filled in.
      calendar (Apple has no direct API for this). Steps in README.md.
    - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN` —
      from Google Cloud Console + OAuth Playground. Steps in README.md.
+   - `MS_CLIENT_ID` / `MS_CLIENT_SECRET` / `MS_REFRESH_TOKEN` / `MS_TENANT_ID`
+     — Outlook/Microsoft 365 (calendar, reminders via To Do, mail). From an
+     Azure App registration + a manual one-time OAuth code exchange. Full
+     walkthrough in README.md.
 3. Run the backend somewhere that stays on: `bun run server` (from
    `morning-dew-app/`). This is the one piece that can't live on GitHub Pages
    — see DECISIONS.md item 6 for why, and item 2 for the split architecture.
@@ -67,14 +79,26 @@ Weather works the moment you open the app — no action needed for that part.
   `.env` set — `/api/calendar`, `/api/reminders`, `/api/email` all returned
   the expected `{"configured": false, ...}` placeholder JSON instead of
   erroring or hanging.
+- Re-ran with fake `MS_CLIENT_ID`/`MS_CLIENT_SECRET`/`MS_REFRESH_TOKEN` set
+  (alongside the real iCloud links already in `.env`) to confirm the Outlook
+  merge path actually triggers and fails in isolation rather than crashing
+  the whole response: `/api/calendar` came back `configured: true` with
+  separate iCloud-feed and Outlook error notes side by side; `/api/reminders`
+  and `/api/email` each came back `configured: true` with just the Outlook
+  error note (no Gmail/REMINDERS_ICS_URL set). No hang, no 500, no thrown
+  exception in the server log.
 - Static file serving verified (`/`, `/manifest.json` return 200 with
   expected Morning Dew markup).
-- Gmail OAuth refresh + live iCloud `.ics` fetch are **not** tested against
-  the real services — this sandbox's network proxy blocks
-  `oauth2.googleapis.com`, `gmail.googleapis.com`, and `icloud.com` outbound
-  (see ERRORS.md item 1). They're written against the documented API
-  contracts; first real run will surface any drift as a per-card error
-  state, never a hang.
+- Gmail OAuth refresh, live iCloud `.ics` fetch, and live Outlook/Graph calls
+  are **not** tested against the real services — this sandbox's network
+  proxy blocks `oauth2.googleapis.com`, `gmail.googleapis.com`,
+  `graph.microsoft.com`, and `icloud.com` outbound (see ERRORS.md items 1-2).
+  Notably, `login.microsoftonline.com` (the Microsoft OAuth token endpoint)
+  is NOT blocked — only the actual Graph data endpoints are — so a real
+  Outlook token refresh could succeed in this sandbox even though the
+  subsequent calendar/tasks/mail calls would still fail here. All three
+  providers are written against their documented API contracts; first real
+  run will surface any drift as a per-card error state, never a hang.
 
 ## Deployment
 
