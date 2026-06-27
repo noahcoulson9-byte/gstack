@@ -210,7 +210,7 @@ async function loadWeather() {
       const { latitude, longitude } = pos.coords;
       try {
         descEl.textContent = 'Fetching weather...';
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('weather request failed');
         const data = await res.json();
@@ -219,7 +219,7 @@ async function loadWeather() {
 
         document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
         document.getElementById('feelsLike').textContent = `${Math.round(cur.apparent_temperature)}°`;
-        document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} mph`;
+        document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} km/h`;
         descEl.textContent = label;
         iconEl.textContent = icon;
 
