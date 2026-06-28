@@ -71,7 +71,7 @@ async function fetchTasks(accessToken) {
 }
 
 async function fetchMail(accessToken, { maxPerSection = 8 } = {}) {
-  const select = '$select=subject,from,bodyPreview';
+  const select = '$select=subject,from,bodyPreview,receivedDateTime';
   const urgentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=isRead eq false and importance eq 'high'&$top=${maxPerSection}&${select}`;
   const recentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=isRead eq false&$orderby=receivedDateTime desc&$top=${maxPerSection}&${select}`;
 
@@ -87,6 +87,7 @@ async function fetchMail(accessToken, { maxPerSection = 8 } = {}) {
     subject: m.subject || '(no subject)',
     from: (m.from && m.from.emailAddress && (m.from.emailAddress.name || m.from.emailAddress.address)) || 'Unknown sender',
     snippet: m.bodyPreview || '',
+    date: m.receivedDateTime || null,
     source: 'Outlook',
   });
 
