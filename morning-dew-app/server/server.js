@@ -48,10 +48,14 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+// Allows the frontend to be hosted on a different origin than the backend
+// (e.g. GitHub Pages frontend + Render-hosted backend) — these are read-only
+// GET endpoints with no cookies/auth, so a wildcard origin carries no
+// meaningful risk.
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 }
 

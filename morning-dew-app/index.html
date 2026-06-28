@@ -242,6 +242,7 @@
   </section>
 
   <button class="refresh-btn" id="refreshBtn">Refresh weather</button>
+  <button class="refresh-btn" id="serverBtn">Server: not set</button>
 
   <div class="section-title">Next 48 hours</div>
   <section class="glass list-card" id="calendarCard">
@@ -269,6 +270,38 @@
 <script>
 const BRISBANE = { latitude: -27.4698, longitude: 153.0251 };
 const FETCH_TIMEOUT_MS = 8000;
+
+// Calendar/reminders/email need the Bun backend, which can't run on GitHub
+// Pages — when this frontend is hosted there, the backend lives on a
+// different origin (e.g. Render), so /api/* calls need an absolute URL
+// instead of a same-origin relative one. Persisted in localStorage so it
+// survives reloads and re-installs of the PWA; empty string means
+// "same origin as this page" (true when self-hosting the whole app via
+// `bun run server`, where index.html and /api/* are served from one place).
+const API_BASE_KEY = 'morningDewApiBase';
+function getApiBase() {
+  return (localStorage.getItem(API_BASE_KEY) || '').replace(/\/$/, '');
+}
+function apiUrl(path) {
+  return getApiBase() + path;
+}
+function updateServerBtnLabel() {
+  const base = getApiBase();
+  document.getElementById('serverBtn').textContent = base ? `Server: ${base.replace(/^https?:\/\//, '')}` : 'Server: not set';
+}
+document.getElementById('serverBtn').addEventListener('click', () => {
+  const current = getApiBase();
+  const next = prompt('Backend URL (e.g. https://morning-dew-backend.onrender.com)\nLeave blank to use this same site.', current);
+  if (next === null) return;
+  const trimmed = next.trim();
+  if (trimmed) localStorage.setItem(API_BASE_KEY, trimmed);
+  else localStorage.removeItem(API_BASE_KEY);
+  updateServerBtnLabel();
+  loadCalendar();
+  loadReminders();
+  loadEmail();
+});
+updateServerBtnLabel();
 
 const WEATHER_CODES = {
   0: ['Clear sky', '☀️'], 1: ['Mainly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'],
@@ -346,7 +379,7 @@ function fmtEventTime(iso, allDay) {
 async function loadCalendar() {
   const card = document.getElementById('calendarCard');
   try {
-    const res = await fetchWithTimeout('/api/calendar');
+    const res = await fetchWithTimeout(apiUrl('/api/calendar'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     if (!data.configured) {
@@ -372,7 +405,7 @@ async function loadCalendar() {
 async function loadReminders() {
   const card = document.getElementById('remindersCard');
   try {
-    const res = await fetchWithTimeout('/api/reminders');
+    const res = await fetchWithTimeout(apiUrl('/api/reminders'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     if (!data.configured) {
@@ -412,7 +445,7 @@ async function loadEmail() {
   const urgentCard = document.getElementById('urgentEmailCard');
   const newCard = document.getElementById('newEmailCard');
   try {
-    const res = await fetchWithTimeout('/api/email');
+    const res = await fetchWithTimeout(apiUrl('/api/email'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     if (!data.configured) {
