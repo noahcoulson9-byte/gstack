@@ -76,12 +76,46 @@ of falling back to rendering `README.md`. Any static host works the same way
 (Netlify/Vercel/Cloudflare Pages, pointed at this folder).
 
 The `server/` backend needs a host that keeps a process running — GitHub
-Pages can't do this. Run it on whatever machine you leave on overnight (a
-laptop, a home server, a small VPS, a Raspberry Pi). Point your phone's
-Morning Dew install at that machine's address (or put it behind a tunnel like
-Cloudflare Tunnel / Tailscale if you want a stable public URL). Without the
-backend running, weather still works; calendar/reminders/email show "couldn't
-reach the service" instead of a placeholder (a clear signal to go start it).
+Pages can't do this. Two options:
+
+### Option A: Render (free, no machine to keep on)
+
+This repo includes a `render.yaml` Blueprint at the repo root that points at
+`morning-dew-app/Dockerfile`, so Render can build and run the backend without
+any manual service configuration.
+
+1. Go to <https://dashboard.render.com/blueprints> and connect this repo
+   (`noahcoulson9-byte/gstack`).
+2. Render detects `render.yaml` automatically and shows the
+   `morning-dew-backend` service. Click **Apply**.
+3. First deploy takes a few minutes (it's building a Docker image). Once it's
+   live, open the service's **Environment** tab in the Render dashboard and
+   fill in whichever variables you have from the table below (`ICLOUD_ICS_URL`,
+   `GOOGLE_CLIENT_ID`, etc.) — they were left blank in `render.yaml` on purpose
+   since they're secrets. Saving triggers a redeploy.
+4. Copy the service's URL (shown at the top of the Render dashboard page,
+   looks like `https://morning-dew-backend.onrender.com`).
+5. Open the installed Morning Dew app on your phone, tap the **Server**
+   button (below Refresh weather), and paste that URL in. It's saved on your
+   phone, so you only do this once per device.
+
+Render's free tier spins the service down after ~15 minutes idle, so the
+first request after a quiet period takes 10-30 seconds while it wakes back
+up — calendar/reminders/email will briefly show a loading or error state on
+that first load, then work normally. This is a known tradeoff of the free
+tier, not a bug.
+
+### Option B: self-host
+
+Run it on whatever machine you leave on overnight (a laptop, a home server, a
+small VPS, a Raspberry Pi): `bun run server` from `morning-dew-app/`. Point
+the Morning Dew app's **Server** button at that machine's address (or put it
+behind a tunnel like Cloudflare Tunnel / Tailscale if you want a stable
+public URL instead of a LAN IP).
+
+Either way: without the backend reachable, weather still works;
+calendar/reminders/email show "couldn't reach the service" instead of a
+placeholder (a clear signal to check the Server URL or go start it).
 
 ## Environment variables
 

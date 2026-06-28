@@ -190,3 +190,35 @@ verified by curling each of those paths against a locally running backend
 (see BUILD_SUMMARY.md). `sw.js`'s `CACHE_NAME` was bumped to `v2` so already
 installed PWA clients pick up the corrected file layout instead of serving a
 stale cached copy of the old structure.
+
+## 13. Backend deploy target upgraded to Render, with a configurable frontend→backend origin
+
+Noah asked to "set up server or tell me how to get server running" and,
+given the choice between a free cloud host, his own always-on machine, or a
+Raspberry Pi/home server, picked the free cloud host and accepted the
+known cold-start tradeoff. Decision: added `Dockerfile` (thin `oven/bun:1`
+wrapper running `server/server.js`, no code changes needed since it already
+reads `process.env.PORT`) and a repo-root `render.yaml` Blueprint
+(`rootDir: morning-dew-app`) so Render's dashboard can build and run the
+backend with one "Apply" click instead of manual service configuration.
+Added `morning-dew-app/.dockerignore` excluding `.env` and `*.md` — without
+it, `Dockerfile`'s `COPY . .` would have baked the real iCloud calendar share
+links currently in `.env` into the built image. `render.yaml` leaves every
+secret as `sync: false` (filled in via the Render dashboard post-deploy,
+never committed).
+
+This surfaced a real architectural gap: the GitHub-Pages-hosted frontend and
+a Render-hosted backend are different origins, but `index.html` was calling
+`/api/calendar` etc. as same-origin relative paths (which only worked when
+`bun run server` served both the frontend and the API from one process).
+Fixed two ways: (1) `server/server.js`'s `json()` helper now sets
+`Access-Control-Allow-Origin: *` — these are read-only GET endpoints with no
+cookies or auth, so a wildcard origin adds no real risk; (2) `index.html`
+gained a "Server" button (next to "Refresh weather") that prompts for a
+backend base URL and persists it in `localStorage`, with all three
+`/api/*` fetches routed through an `apiUrl()` helper that prefixes that base
+(or none, for same-origin self-hosting — the original behavior is preserved
+when the field is left blank). This makes the frontend deploy-target-agnostic:
+GitHub Pages + Render, GitHub Pages + self-hosted-with-tunnel, or one box
+running everything all work without code changes, just a different value in
+that one prompt.
