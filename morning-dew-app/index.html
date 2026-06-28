@@ -845,14 +845,26 @@ function fmtMailDate(iso) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+// Deep link straight to the exact message, by its source. Gmail messages open
+// in Gmail (app or web) by their API id; Outlook messages open in OWA. The
+// Outlook iOS app can't be pointed at a specific Gmail message, so opening the
+// precise email means opening it via its own provider.
+function mailUrl(m) {
+  if (m.source === 'Outlook' && m.id) {
+    return `https://outlook.office.com/mail/inbox/id/${encodeURIComponent(m.id)}`;
+  }
+  if (m.id) {
+    return `https://mail.google.com/mail/u/0/#all/${encodeURIComponent(m.id)}`;
+  }
+  return 'ms-outlook://';
+}
+
 function mailRow(m) {
   const name = senderName(m.from);
   const initial = escapeHtml(name.charAt(0).toUpperCase() || '?');
   const color = avatarColor(name + (m.source || ''));
-  // ms-outlook:// opens the Outlook app. iOS can't deep-link to a specific
-  // message from a Gmail API id, so this lands in the Outlook inbox.
   return `
-    <a class="mail-row" href="ms-outlook://">
+    <a class="mail-row" href="${escapeHtml(mailUrl(m))}" target="_blank" rel="noopener">
       <span class="mail-unread-dot"></span>
       <span class="mail-avatar" style="background:${color}">${initial}</span>
       <span class="mail-body">
