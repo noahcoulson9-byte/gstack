@@ -7,7 +7,7 @@
 // hides data that loaded fine from another source.
 //
 // Weather is NOT proxied here — Open-Meteo is CORS-enabled and keyless, so the
-// frontend fetches it directly (see public/index.html).
+// frontend fetches it directly (see index.html).
 //
 // Run: bun run server/server.js   (reads env vars, see ../.env.example)
 
@@ -18,7 +18,14 @@ const { fetchTriage } = require('./gmail');
 const outlook = require('./outlook');
 
 const PORT = process.env.PORT || 8787;
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+// Frontend files live directly in the app root (GitHub Pages serves this repo
+// from its root, and falls back to rendering README.md as HTML for any
+// directory that has no index.html directly inside it — so the frontend
+// can't be nested in a public/ subfolder). The app root is also where .env,
+// server/, and the markdown docs live, so serveStatic() below allowlists
+// exactly the files/prefixes the frontend needs rather than trusting
+// PUBLIC_DIR as a dedicated secrets-free directory.
+const PUBLIC_DIR = path.join(__dirname, '..');
 const FETCH_TIMEOUT_MS = 8000;
 
 async function fetchWithTimeout(url, ms) {
@@ -174,8 +181,16 @@ const MIME = {
   '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json',
 };
 
+// Explicit allowlist: PUBLIC_DIR is the app root, which also holds .env,
+// server/ source, and markdown docs — only these exact files and the icons/
+// prefix are servable, everything else 404s regardless of what's on disk.
+const STATIC_FILES = new Set(['/index.html', '/manifest.json', '/sw.js', '/offline.html']);
+
 function serveStatic(pathname) {
   const rel = pathname === '/' ? '/index.html' : pathname;
+  if (!STATIC_FILES.has(rel) && !rel.startsWith('/icons/')) {
+    return new Response('Not found', { status: 404 });
+  }
   const filePath = path.join(PUBLIC_DIR, rel);
   if (!filePath.startsWith(PUBLIC_DIR) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     return new Response('Not found', { status: 404 });
