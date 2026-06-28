@@ -43,6 +43,28 @@ skips geolocation entirely and fetches that fixed location directly. Combined
 with an 8s `AbortController` timeout on every fetch, no card can hang forever
 now.
 
+**Superseded by decision 14** — Noah asked for live location after living
+with the Brisbane-only behavior for a while. Geolocation is back, but with
+the timeout this decision was originally about: `getCurrentPosition` is now
+raced against an 8s manual timer (`GEO_TIMEOUT_MS`) in addition to its own
+`timeout` option, since iOS Safari doesn't always honor the option alone.
+Brisbane is now the fallback when geolocation fails/times out/is denied,
+not the only behavior.
+
+## 14. Live geolocation with Brisbane as the timeout/denial fallback
+
+Implemented in `index.html`'s `loadWeather()`: tries `getCurrentPosition()`
+first (wrapped in the hard 8s race described in decision 3's update); on
+success, fetches Open-Meteo for the device's real coordinates and kicks off
+a best-effort reverse-geocode (BigDataCloud's free, keyless,
+CORS-enabled `reverse-geocode-client` endpoint) to label the card with the
+actual suburb/city instead of "Current location". On any failure (denied,
+no support, timeout), falls back to the original fixed Brisbane coordinates
+and labels the card "Brisbane, QLD (location unavailable)" so it's obvious
+which mode is active. The reverse-geocode call is decorative only — if it
+fails, the temperature/etc. already loaded from the real coordinates are
+unaffected, only the text label stays generic.
+
 ## 4. Apple Reminders: no public no-credential read API exists
 
 Apple does not expose a public .ics export endpoint for Reminders the way it

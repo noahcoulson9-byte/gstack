@@ -363,17 +363,71 @@ function renderGreeting() {
 }
 
 // ---------- Weather ----------
-// Brisbane coords are hardcoded per spec (no geolocation prompt) — this also
-// fixes the old "Fetching weather..." hang, which was the browser waiting
-// indefinitely on a geolocation permission prompt that the user never saw/granted.
+// Live location, with a hard-capped wait. The original "Fetching weather..."
+// hang was navigator.geolocation.getCurrentPosition never resolving when the
+// permission prompt was dismissed/ignored/previously-denied — no timeout was
+// ever set on it. Fixed by racing it against a manual timer in addition to
+// the API's own (unreliable on iOS) `timeout` option, and falling back to
+// Brisbane (the original fixed location) if geolocation fails or times out,
+// so the weather card never hangs no matter what the user does with the
+// permission prompt.
+const GEO_TIMEOUT_MS = 8000;
+
+function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('geolocation unsupported'));
+      return;
+    }
+    const timer = setTimeout(() => reject(new Error('geolocation timed out')), GEO_TIMEOUT_MS);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { clearTimeout(timer); resolve(pos); },
+      (err) => { clearTimeout(timer); reject(err); },
+      { enableHighAccuracy: false, timeout: GEO_TIMEOUT_MS, maximumAge: 5 * 60 * 1000 }
+    );
+  });
+}
+
+// Best-effort, no API key — BigDataCloud's free reverse-geocode endpoint is
+// CORS-enabled and keyless. Never blocks weather: failure just leaves the
+// generic "Current location" label in place.
+async function updateLocationLabel(latitude, longitude) {
+  try {
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    const place = data.locality || data.city || data.principalSubdivision;
+    if (place) {
+      document.getElementById('location').textContent = data.principalSubdivision && place !== data.principalSubdivision
+        ? `${place}, ${data.principalSubdivision}`
+        : place;
+    }
+  } catch {
+    // Best-effort only — coordinates-based weather already loaded fine.
+  }
+}
+
 async function loadWeather() {
   const descEl = document.getElementById('desc');
   const iconEl = document.getElementById('weatherIcon');
+  const locationEl = document.getElementById('location');
   descEl.textContent = 'Fetching weather...';
   iconEl.textContent = '⏳';
 
+  let { latitude, longitude } = BRISBANE;
+  locationEl.textContent = 'Current location';
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${BRISBANE.latitude}&longitude=${BRISBANE.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code`;
+    const pos = await getCurrentPosition();
+    latitude = pos.coords.latitude;
+    longitude = pos.coords.longitude;
+    updateLocationLabel(latitude, longitude);
+  } catch {
+    locationEl.textContent = 'Brisbane, QLD (location unavailable)';
+  }
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code`;
     const res = await fetchWithTimeout(url);
     if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
     const data = await res.json();
