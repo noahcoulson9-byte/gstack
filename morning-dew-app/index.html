@@ -108,6 +108,10 @@
     background-clip: text;
     color: transparent;
   }
+  .updated-label {
+    color: var(--muted); font-size: 0.74rem; font-weight: 600;
+    margin-top: 0.45rem; opacity: 0.75;
+  }
 
   .glass {
     position: relative;
@@ -322,7 +326,105 @@
     transition: transform 0.2s ease, background 0.15s ease;
   }
   .page-refresh-btn:active { background: rgba(255, 255, 255, 0.16); }
-  .page-refresh-btn.spinning { transform: rotate(360deg); }
+  .page-refresh-btn.spinning { animation: spin360 0.6s ease; }
+  @keyframes spin360 { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+  /* Settings gear, pinned just left of the refresh button */
+  .page-settings-btn {
+    position: fixed;
+    z-index: 5;
+    top: calc(env(safe-area-inset-top) + 0.75rem);
+    right: calc(env(safe-area-inset-right) + 0.9rem + 52px);
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; color: var(--text);
+    border-radius: 50%;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    transition: background 0.15s ease;
+  }
+  .page-settings-btn:active { background: rgba(255, 255, 255, 0.16); }
+
+  /* Pull-to-refresh spinner */
+  .ptr-spinner {
+    position: fixed; z-index: 4;
+    top: calc(env(safe-area-inset-top) + 0.4rem);
+    left: 50%;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: var(--text);
+    border-radius: 50%;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    opacity: 0; transform: translate(-50%, -10px);
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+  .ptr-spinner.active { animation: spin360 0.8s linear infinite; }
+
+  /* ---- Hourly strip ---- */
+  .hourly-card { padding: 0.6rem 0.4rem; }
+  .hourly-strip {
+    position: relative; z-index: 1;
+    display: flex; gap: 0.2rem;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hourly-strip::-webkit-scrollbar { display: none; }
+  .hour-cell {
+    flex: 0 0 auto; width: 3.5rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    padding: 0.4rem 0;
+  }
+  .hc-time { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+  .hc-icon { font-size: 1.25rem; }
+  .hc-temp { font-size: 0.95rem; font-weight: 700; }
+  .hc-rain { font-size: 0.68rem; color: #5fb0ff; font-weight: 600; min-height: 0.9rem; }
+
+  /* ---- Weather card extras ---- */
+  .weather-hilo { font-size: 0.95rem; font-weight: 600; margin-top: 0.35rem; }
+  .weather-hilo .hi { color: var(--text); }
+  .weather-hilo .lo { color: var(--muted); }
+  .weather-sun { color: var(--muted); font-size: 0.82rem; margin-top: 0.25rem; }
+  .weather-card.cond-clear { background: linear-gradient(160deg, rgba(255,196,84,0.16), var(--glass-bg)); }
+  .weather-card.cond-cloud { background: linear-gradient(160deg, rgba(150,170,200,0.16), var(--glass-bg)); }
+  .weather-card.cond-rain { background: linear-gradient(160deg, rgba(74,150,255,0.20), var(--glass-bg)); }
+  .weather-card.cond-storm { background: linear-gradient(160deg, rgba(124,92,255,0.22), var(--glass-bg)); }
+
+  /* ---- Today timeline ---- */
+  .timeline-row {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-start; gap: 0.65rem;
+    padding: 0.6rem 0.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none; color: var(--text);
+  }
+  .timeline-row:last-child { border-bottom: none; }
+  a.timeline-row:active { background: rgba(255,255,255,0.08); }
+  .tl-icon { flex-shrink: 0; font-size: 1.1rem; width: 1.5rem; text-align: center; }
+  .tl-body { flex: 1; min-width: 0; }
+  .tl-title { font-weight: 600; font-size: 0.95rem; }
+  .tl-meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.1rem; }
+  .tl-time { flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: var(--muted); white-space: nowrap; margin-top: 0.1rem; }
+
+  /* ---- Time-of-day theming (overrides page bg + blob colors) ---- */
+  body.theme-dawn  { background: #1a1320; }
+  body.theme-day   { background: #060912; }
+  body.theme-dusk  { background: #1a1018; }
+  body.theme-night { background: #04060d; }
+  body.theme-dawn  .blob-a { background: radial-gradient(circle, #ff9e6d, transparent 70%); }
+  body.theme-dawn  .blob-b { background: radial-gradient(circle, #ffd27a, transparent 70%); }
+  body.theme-dawn  .blob-c { background: radial-gradient(circle, #c86b9a, transparent 70%); }
+  body.theme-dusk  .blob-a { background: radial-gradient(circle, #ff7e5f, transparent 70%); }
+  body.theme-dusk  .blob-b { background: radial-gradient(circle, #9b5de5, transparent 70%); }
+  body.theme-dusk  .blob-c { background: radial-gradient(circle, #5a4b8a, transparent 70%); }
+  body.theme-night .blob-a { background: radial-gradient(circle, #1e3a6e, transparent 70%); }
+  body.theme-night .blob-b { background: radial-gradient(circle, #2a2f6e, transparent 70%); }
+  body.theme-night .blob-c { background: radial-gradient(circle, #14304a, transparent 70%); }
 
   /* ---- AI overview ---- */
   .overview-card { padding: 1rem 1.1rem; }
@@ -351,7 +453,10 @@
 </head>
 <body>
 
-<button class="page-refresh-btn" id="pageRefreshBtn" aria-label="Reload page" title="Reload">↻</button>
+<button class="page-settings-btn" id="settingsBtn" aria-label="Server settings" title="Server settings">⚙</button>
+<button class="page-refresh-btn" id="pageRefreshBtn" aria-label="Refresh now" title="Refresh">↻</button>
+
+<div class="ptr-spinner" id="ptrSpinner" aria-hidden="true">↻</div>
 
 <div class="blob blob-a"></div>
 <div class="blob blob-b"></div>
@@ -362,6 +467,7 @@
     <div class="greeting-date" id="dateLabel"></div>
     <div class="greeting-phrase" id="greetingPhrase">Good day</div>
     <div class="greeting-name">Noah</div>
+    <div class="updated-label" id="updatedLabel">Updating…</div>
   </div>
 
   <section class="glass overview-card" id="overviewCard">
@@ -374,6 +480,8 @@
     <div class="temp" id="temp">--°</div>
     <div class="desc" id="desc">Loading weather...</div>
     <div class="location" id="location">Brisbane, QLD</div>
+    <div class="weather-hilo" id="weatherHilo"></div>
+    <div class="weather-sun" id="weatherSun"></div>
   </section>
 
   <section class="stats-grid">
@@ -383,26 +491,26 @@
     <div class="glass stat-card"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></div>
   </section>
 
+  <div class="section-title">Hourly</div>
+  <section class="glass hourly-card" id="hourlyCard">
+    <div class="loading-state">Loading hourly forecast...</div>
+  </section>
+
   <div class="section-title">7-day forecast</div>
   <section class="glass forecast-card" id="forecastCard">
     <div class="loading-state">Loading forecast...</div>
   </section>
 
-  <button class="refresh-btn" id="refreshBtn">Refresh weather</button>
-  <button class="refresh-btn" id="serverBtn">Server: not set</button>
-
   <div class="section-title-row">
-    <div class="section-title">Next 48 hours</div>
+    <div class="section-title">Today</div>
     <a class="icon-link" href="calshow://" aria-label="Open Apple Calendar">📅</a>
   </div>
-  <section class="glass list-card" id="calendarCard">
-    <div class="loading-state">Loading calendar...</div>
+  <section class="glass list-card" id="todayCard">
+    <div class="loading-state">Loading today...</div>
   </section>
 
-  <div class="section-title">Reminders</div>
-  <section class="glass list-card" id="remindersCard">
-    <div class="loading-state">Loading reminders...</div>
-  </section>
+  <div class="section-title" id="upcomingTitle" hidden>Upcoming</div>
+  <section class="glass list-card" id="upcomingCard" hidden></section>
 
   <div class="section-title">Urgent emails</div>
   <section class="glass mail-card" id="urgentEmailCard">
@@ -435,22 +543,17 @@ function getApiBase() {
 function apiUrl(path) {
   return getApiBase() + path;
 }
+// The backend URL now lives behind the ⚙ gear (see openServerSetting); this
+// reflects the current value into the gear's tooltip/aria-label for at-a-glance
+// confirmation of which server the app is pointed at.
 function updateServerBtnLabel() {
   const base = getApiBase();
-  document.getElementById('serverBtn').textContent = base ? `Server: ${base.replace(/^https?:\/\//, '')}` : 'Server: not set';
+  const btn = document.getElementById('settingsBtn');
+  if (!btn) return;
+  const label = base ? `Server: ${base.replace(/^https?:\/\//, '')}` : 'Server: not set';
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
 }
-document.getElementById('serverBtn').addEventListener('click', () => {
-  const current = getApiBase();
-  const next = prompt('Backend URL (e.g. https://morning-dew-backend.onrender.com)\nLeave blank to use this same site.', current);
-  if (next === null) return;
-  const trimmed = next.trim();
-  if (trimmed) localStorage.setItem(API_BASE_KEY, trimmed);
-  else localStorage.removeItem(API_BASE_KEY);
-  updateServerBtnLabel();
-  loadCalendar();
-  loadReminders();
-  loadEmail();
-});
 updateServerBtnLabel();
 
 // ---------- AI overview ----------
@@ -515,8 +618,11 @@ function renderOverview() {
   const lines = [];
 
   if (overview.weather) {
-    const { label, temp, precip, fallback } = overview.weather;
+    const { label, temp, precip, fallback, nudges } = overview.weather;
     lines.push(`<div class="overview-line"><span class="icon">🌡️</span><span>${temp}° and ${label.toLowerCase()}, ${precip}% chance of rain${fallback ? ' (showing Brisbane — location unavailable)' : ''}.</span></div>`);
+    (nudges || []).forEach((n) => {
+      lines.push(`<div class="overview-line"><span class="icon">${n.icon}</span><span>${escapeHtml(n.text)}</span></div>`);
+    });
   }
 
   if (overview.calendar) {
@@ -657,11 +763,16 @@ async function loadWeather() {
   }
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}`
+      + `&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code,uv_index,is_day`
+      + `&hourly=temperature_2m,precipitation_probability,weather_code`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset`
+      + `&timezone=auto&forecast_days=7`;
     const res = await fetchWithTimeout(url);
     if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
     const data = await res.json();
     const cur = data.current;
+    const daily = data.daily;
     const [label, icon] = describeWeather(cur.weather_code);
 
     document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
@@ -672,23 +783,128 @@ async function loadWeather() {
     descEl.textContent = label;
     iconEl.textContent = icon;
 
+    // Hero card: today's hi/lo + sunrise/sunset + condition tint.
+    if (daily && daily.temperature_2m_max) {
+      document.getElementById('weatherHilo').innerHTML =
+        `<span class="hi">H ${Math.round(daily.temperature_2m_max[0])}°</span> &nbsp; <span class="lo">L ${Math.round(daily.temperature_2m_min[0])}°</span>`;
+    }
+    if (daily && daily.sunrise) {
+      document.getElementById('weatherSun').textContent =
+        `🌅 ${fmtClock(daily.sunrise[0])}  ·  🌇 ${fmtClock(daily.sunset[0])}`;
+    }
+    applyConditionTint(cur.weather_code);
+    applyTheme(cur.is_day);
+
     overview.weather = {
       label,
       temp: Math.round(cur.temperature_2m),
       precip: Math.round(cur.precipitation_probability ?? 0),
       fallback: usedFallback,
+      nudges: weatherNudges(cur, data.hourly, daily),
     };
     renderOverview();
 
-    renderForecast(data.daily);
+    renderHourly(data.hourly);
+    renderForecast(daily);
   } catch (err) {
     descEl.textContent = err.name === 'AbortError'
-      ? 'Weather timed out. Tap Refresh to retry.'
-      : 'Could not load weather. Tap Refresh to retry.';
+      ? 'Weather timed out. Pull down to retry.'
+      : 'Could not load weather. Pull down to retry.';
     iconEl.textContent = '⚠️';
     document.getElementById('forecastCard').innerHTML =
-      `<div class="error-state">Couldn't load the forecast. Tap Refresh to retry.</div>`;
+      `<div class="error-state">Couldn't load the forecast. Pull down to retry.</div>`;
+    document.getElementById('hourlyCard').innerHTML =
+      `<div class="error-state">Couldn't load the hourly forecast.</div>`;
   }
+}
+
+// Tints the hero weather card by broad condition group.
+function applyConditionTint(code) {
+  const card = document.getElementById('weatherCard');
+  card.classList.remove('cond-clear', 'cond-cloud', 'cond-rain', 'cond-storm');
+  let cls = 'cond-cloud';
+  if (code === 0 || code === 1) cls = 'cond-clear';
+  else if ([95, 96, 99, 82].includes(code)) cls = 'cond-storm';
+  else if (code >= 51) cls = 'cond-rain';
+  else if (code <= 3) cls = code <= 1 ? 'cond-clear' : 'cond-cloud';
+  card.classList.add(cls);
+}
+
+// Recolors the ambient background by time of day. Uses the API's is_day when
+// available, otherwise the device clock.
+function applyTheme(isDay) {
+  const hour = new Date().getHours();
+  let period;
+  if (isDay === 0) period = hour < 5 || hour >= 20 ? 'night' : 'dusk';
+  else if (hour >= 5 && hour < 8) period = 'dawn';
+  else if (hour >= 8 && hour < 17) period = 'day';
+  else if (hour >= 17 && hour < 20) period = 'dusk';
+  else period = 'night';
+  document.body.classList.remove('theme-dawn', 'theme-day', 'theme-dusk', 'theme-night');
+  document.body.classList.add('theme-' + period);
+}
+
+// Builds actionable {icon,text} weather lines from current/hourly/daily data.
+function weatherNudges(cur, hourly, daily) {
+  const out = [];
+  // Umbrella — scan the next 12 hours for a rain-probability peak.
+  if (hourly && hourly.time) {
+    const now = Date.now();
+    let peak = { p: -1, time: null };
+    let count = 0;
+    for (let i = 0; i < hourly.time.length && count < 12; i++) {
+      const t = new Date(hourly.time[i]).getTime();
+      if (t < now - 3600000) continue;
+      count++;
+      const p = hourly.precipitation_probability[i] ?? 0;
+      if (p > peak.p) peak = { p, time: hourly.time[i] };
+    }
+    if (peak.p >= 50) {
+      out.push({ icon: '☔', text: `Umbrella — ${Math.round(peak.p)}% rain around ${fmtClock(peak.time)}.` });
+    }
+  }
+  // UV — high index today.
+  if (daily && daily.uv_index_max) {
+    const uv = Math.round(daily.uv_index_max[0] ?? 0);
+    if (uv >= 6) out.push({ icon: '🧴', text: `High UV (${uv}) today — wear sunscreen.` });
+  }
+  // Temperature extremes today.
+  if (daily && daily.temperature_2m_min) {
+    const lo = Math.round(daily.temperature_2m_min[0]);
+    const hi = Math.round(daily.temperature_2m_max[0]);
+    if (lo <= 10) out.push({ icon: '🧥', text: `Chilly start at ${lo}° — take a layer.` });
+    if (hi >= 32) out.push({ icon: '🥵', text: `Hot day, up to ${hi}° — stay hydrated.` });
+  }
+  return out;
+}
+
+// Next ~12 hours, horizontally scrollable.
+function renderHourly(hourly) {
+  const card = document.getElementById('hourlyCard');
+  if (!hourly || !hourly.time || !hourly.time.length) {
+    card.innerHTML = `<div class="empty-state">Hourly forecast unavailable.</div>`;
+    return;
+  }
+  const now = Date.now();
+  let start = hourly.time.findIndex((t) => new Date(t).getTime() >= now - 3600000);
+  if (start < 0) start = 0;
+  const cells = [];
+  for (let i = start; i < hourly.time.length && cells.length < 12; i++) {
+    const d = new Date(hourly.time[i]);
+    const isNow = cells.length === 0;
+    const label = isNow ? 'Now' : d.toLocaleTimeString(undefined, { hour: 'numeric' });
+    const [, icon] = describeWeather(hourly.weather_code[i]);
+    const temp = Math.round(hourly.temperature_2m[i]);
+    const rain = Math.round(hourly.precipitation_probability[i] ?? 0);
+    cells.push(`
+      <div class="hour-cell">
+        <span class="hc-time">${escapeHtml(label)}</span>
+        <span class="hc-icon">${icon}</span>
+        <span class="hc-temp">${temp}°</span>
+        <span class="hc-rain">${rain >= 10 ? '💧' + rain + '%' : ''}</span>
+      </div>`);
+  }
+  card.innerHTML = `<div class="hourly-strip">${cells.join('')}</div>`;
 }
 
 // Map a temperature to a color on a cold→hot scale (blue → red).
@@ -737,7 +953,7 @@ function renderForecast(daily) {
   card.innerHTML = rows.join('');
 }
 
-// ---------- Calendar ----------
+// ---------- Calendar / Reminders → unified Today timeline ----------
 function fmtEventTime(iso, allDay) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -745,64 +961,130 @@ function fmtEventTime(iso, allDay) {
   return d.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
+function timelineRow(it) {
+  const icon = it.type === 'event' ? '📅' : '✅';
+  const time = it.allDay ? 'All day' : (it.start ? fmtClock(it.start) : '');
+  const meta = [it.location, it.source].filter(Boolean).map(escapeHtml).join(' · ');
+  const inner = `
+      <span class="tl-icon">${icon}</span>
+      <span class="tl-body">
+        <span class="tl-title">${escapeHtml(it.summary)}</span>
+        ${meta ? `<span class="tl-meta">${meta}</span>` : ''}
+      </span>
+      ${time ? `<span class="tl-time">${escapeHtml(time)}</span>` : ''}`;
+  // Events deep-link to Apple Calendar; reminders have no reliable per-item
+  // deep link on iOS, so they're listed but not tappable.
+  return it.type === 'event'
+    ? `<a class="timeline-row" href="calshow://">${inner}</a>`
+    : `<div class="timeline-row">${inner}</div>`;
+}
+
+// Chronological merge of today's events + today/undated reminders. Reads the
+// already-fetched overview.calendar / overview.reminders — no extra network.
+function renderToday() {
+  const card = document.getElementById('todayCard');
+  const calReached = overview.calendarReached;
+  const remReached = overview.remindersReached;
+  if (calReached === undefined && remReached === undefined) return; // still loading
+
+  if (calReached === false && remReached === false) {
+    card.innerHTML = `<div class="error-state">Couldn't reach the service. Pull down to retry, or check the ⚙ Server setting.</div>`;
+    renderUpcoming();
+    return;
+  }
+
+  const events = overview.calendar || [];
+  const reminders = overview.reminders || [];
+
+  const todayEvents = events
+    .filter((ev) => ev.start && isToday(ev.start))
+    .map((ev) => ({
+      type: 'event', summary: ev.summary, start: ev.start, allDay: ev.allDay,
+      location: ev.location, source: ev.source,
+      sortKey: ev.allDay ? 0 : new Date(ev.start).getTime(),
+    }));
+  const todayReminders = reminders
+    .filter((r) => !r.start || isToday(r.start))
+    .map((r) => ({
+      type: 'reminder', summary: r.summary, start: r.start, allDay: r.allDay, source: r.source,
+      sortKey: r.start && !r.allDay ? new Date(r.start).getTime() : -1,
+    }));
+
+  const items = [...todayReminders, ...todayEvents].sort((a, b) => a.sortKey - b.sortKey);
+
+  const errBits = [];
+  if (overview.calendarError) errBits.push(`Some calendars didn't load: ${overview.calendarError}`);
+  if (overview.remindersError) errBits.push(`Some reminders didn't load: ${overview.remindersError}`);
+  const errNote = errBits.length ? `<div class="error-state">${escapeHtml(errBits.join(' · '))}</div>` : '';
+
+  if (!items.length) {
+    card.innerHTML = errNote || `<div class="empty-state">Nothing scheduled today. Enjoy it. 🌤️</div>`;
+  } else {
+    card.innerHTML = errNote + items.map(timelineRow).join('');
+  }
+  renderUpcoming();
+}
+
+// Events beyond today within the fetched window (i.e. tomorrow). Hidden if empty.
+function renderUpcoming() {
+  const title = document.getElementById('upcomingTitle');
+  const card = document.getElementById('upcomingCard');
+  const upcoming = (overview.calendar || [])
+    .filter((ev) => ev.start && !isToday(ev.start))
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+  if (!upcoming.length) {
+    title.hidden = true;
+    card.hidden = true;
+    return;
+  }
+  title.hidden = false;
+  card.hidden = false;
+  card.innerHTML = upcoming.map((ev) => `
+    <a class="timeline-row" href="calshow://">
+      <span class="tl-icon">📅</span>
+      <span class="tl-body">
+        <span class="tl-title">${escapeHtml(ev.summary)}</span>
+        <span class="tl-meta">${escapeHtml(fmtEventTime(ev.start, ev.allDay))}${ev.source ? ' · ' + escapeHtml(ev.source) : ''}</span>
+      </span>
+    </a>`).join('');
+}
+
 async function loadCalendar() {
-  const card = document.getElementById('calendarCard');
   try {
     const res = await fetchWithTimeout(apiUrl('/api/calendar'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    if (!data.configured) {
-      card.innerHTML = `<div class="placeholder-state">No calendar connected yet. Set <code>ICLOUD_ICS_URL</code> and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment to see upcoming events here.</div>`;
-      return;
-    }
-    const errorNote = data.error ? `<div class="error-state">Some calendars didn't load: ${data.error}</div>` : '';
-    if (!data.events.length) {
-      card.innerHTML = errorNote || `<div class="empty-state">Nothing on the calendar in the next 48 hours.</div>`;
-      overview.calendar = [];
-      renderOverview();
-      return;
-    }
-    card.innerHTML = errorNote + data.events.map((ev) => `
-      <div class="list-row">
-        <div class="list-row-title">${ev.summary}</div>
-        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}${ev.source ? ' · ' + ev.source : ''}</div>
-      </div>`).join('');
-
-    overview.calendar = data.events;
+    overview.calendarConfigured = !!data.configured;
+    overview.calendar = data.configured ? data.events : [];
+    overview.calendarError = data.error || null;
+    overview.calendarReached = true;
     renderOverview();
+    renderToday();
+    return true;
   } catch (err) {
-    card.innerHTML = `<div class="error-state">Couldn't reach the calendar service. Is the Morning Dew server running?</div>`;
+    overview.calendarReached = false;
+    renderToday();
+    return false;
   }
 }
 
 // ---------- Reminders ----------
 async function loadReminders() {
-  const card = document.getElementById('remindersCard');
   try {
     const res = await fetchWithTimeout(apiUrl('/api/reminders'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    if (!data.configured) {
-      card.innerHTML = `<div class="placeholder-state">No reminders feed connected yet. Set <code>REMINDERS_ICS_URL</code> (an iCloud Reminders list shared as a calendar/.ics subscription) and/or the Outlook <code>MS_*</code> vars (Microsoft To Do is used as the Outlook reminders equivalent) in the server environment.</div>`;
-      return;
-    }
-    const errorNote = data.error ? `<div class="error-state">Some reminders didn't load: ${data.error}</div>` : '';
-    if (!data.events.length) {
-      card.innerHTML = errorNote || `<div class="empty-state">No open reminders due soon.</div>`;
-      overview.reminders = [];
-      renderOverview();
-      return;
-    }
-    card.innerHTML = errorNote + data.events.map((ev) => `
-      <div class="list-row">
-        <div class="list-row-title">${ev.summary}</div>
-        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.source ? ' · ' + ev.source : ''}</div>
-      </div>`).join('');
-
-    overview.reminders = data.events;
+    overview.remindersConfigured = !!data.configured;
+    overview.reminders = data.configured ? data.events : [];
+    overview.remindersError = data.error || null;
+    overview.remindersReached = true;
     renderOverview();
+    renderToday();
+    return true;
   } catch (err) {
-    card.innerHTML = `<div class="error-state">Couldn't reach the reminders service. Is the Morning Dew server running?</div>`;
+    overview.remindersReached = false;
+    renderToday();
+    return false;
   }
 }
 
@@ -897,7 +1179,7 @@ async function loadEmail() {
       const msg = `<div class="placeholder-state">No email source connected yet. Set <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code>/<code>GOOGLE_REFRESH_TOKEN</code> (Gmail) and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment.</div>`;
       urgentCard.innerHTML = msg;
       newCard.innerHTML = msg;
-      return;
+      return true;
     }
     const errorNote = data.error ? `<div class="error-state">Some email sources didn't load: ${data.error}</div>` : '';
     renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent', errorNote);
@@ -905,23 +1187,135 @@ async function loadEmail() {
 
     overview.email = { urgent: data.urgent.length };
     renderOverview();
+    return true;
   } catch (err) {
     const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
     urgentCard.innerHTML = msg;
     newCard.innerHTML = msg;
+    return false;
   }
 }
 
-renderGreeting();
+// ---------- Refresh orchestration ----------
+let lastUpdated = 0;
+
+// Runs an /api loader and, if it failed (couldn't reach the backend — likely a
+// Render cold start), retries once after a delay long enough to cover the wake.
+function withColdStartRetry(loadFn, delayMs = 10000) {
+  Promise.resolve(loadFn()).then((ok) => {
+    if (ok === false) setTimeout(loadFn, delayMs);
+  });
+}
+
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 45) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
+function renderUpdated() {
+  const el = document.getElementById('updatedLabel');
+  if (!el) return;
+  el.textContent = lastUpdated ? `Updated ${fmtAgo(lastUpdated)}` : 'Updating…';
+}
+
+function refreshAll() {
+  lastUpdated = Date.now();
+  renderUpdated();
+  // Wake the backend a beat early so the /api calls land on a warm container.
+  fetchWithTimeout(apiUrl('/')).catch(() => {});
+  loadWeather();
+  withColdStartRetry(loadCalendar);
+  withColdStartRetry(loadReminders);
+  withColdStartRetry(loadEmail);
+}
+
+// ---------- Controls ----------
+function openServerSetting() {
+  const current = getApiBase();
+  const next = prompt('Backend URL (e.g. https://morning-dew-backend.onrender.com)\nLeave blank to use this same site.', current);
+  if (next === null) return;
+  const trimmed = next.trim();
+  if (trimmed) localStorage.setItem(API_BASE_KEY, trimmed);
+  else localStorage.removeItem(API_BASE_KEY);
+  updateServerBtnLabel();
+  refreshAll();
+}
+
+document.getElementById('settingsBtn').addEventListener('click', openServerSetting);
 document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
+  e.currentTarget.classList.remove('spinning');
+  // reflow so the animation restarts on every tap
+  void e.currentTarget.offsetWidth;
   e.currentTarget.classList.add('spinning');
-  location.reload();
+  refreshAll();
 });
-document.getElementById('refreshBtn').addEventListener('click', loadWeather);
-loadWeather();
-loadCalendar();
-loadReminders();
-loadEmail();
+
+// ---------- Pull to refresh ----------
+(function setupPullToRefresh() {
+  const spinner = document.getElementById('ptrSpinner');
+  const THRESHOLD = 70;
+  let startY = 0;
+  let pulling = false;
+  window.addEventListener('touchstart', (e) => {
+    if (window.scrollY <= 0 && e.touches.length === 1) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+    } else {
+      pulling = false;
+    }
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0 && window.scrollY <= 0) {
+      const pct = Math.min(1, dy / THRESHOLD);
+      spinner.style.opacity = String(pct);
+      spinner.style.transform = `translate(-50%, ${Math.min(dy / 2, 40) - 10}px)`;
+    }
+  }, { passive: true });
+  window.addEventListener('touchend', (e) => {
+    if (!pulling) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > THRESHOLD && window.scrollY <= 0) {
+      spinner.classList.add('active');
+      spinner.style.opacity = '1';
+      refreshAll();
+      setTimeout(() => {
+        spinner.classList.remove('active');
+        spinner.style.opacity = '0';
+        spinner.style.transform = 'translate(-50%, -10px)';
+      }, 1200);
+    } else {
+      spinner.style.opacity = '0';
+      spinner.style.transform = 'translate(-50%, -10px)';
+    }
+    pulling = false;
+  }, { passive: true });
+})();
+
+// ---------- Refresh on open / focus ----------
+// Re-fetch when the installed PWA is brought back to the foreground after being
+// idle, so it's fresh the moment it's opened each morning without a manual tap.
+const STALE_MS = 5 * 60 * 1000;
+function maybeRefreshOnVisible() {
+  if (document.visibilityState === 'visible' && Date.now() - lastUpdated > STALE_MS) {
+    refreshAll();
+  }
+}
+document.addEventListener('visibilitychange', maybeRefreshOnVisible);
+window.addEventListener('pageshow', maybeRefreshOnVisible);
+
+// ---------- Boot ----------
+renderGreeting();
+applyTheme(); // hour-based theme immediately; weather refines it with is_day
+refreshAll();
+setInterval(renderUpdated, 30000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
