@@ -37,13 +37,15 @@
     position: relative;
     background: linear-gradient(168deg, #2a1d13 0%, #1c130c 55%, #130d08 100%);
     background-attachment: fixed;
-    min-height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: calc(env(safe-area-inset-top) + 1.5rem) 1.1rem calc(env(safe-area-inset-bottom) + 1.5rem);
-    gap: 1.1rem;
+    padding: calc(env(safe-area-inset-top) + 1.2rem) 1.1rem calc(env(safe-area-inset-bottom) + 1rem);
+    gap: 0;
   }
+  main.home { width: 100%; max-width: 460px; }
 
   .blob {
     position: fixed;
@@ -182,6 +184,28 @@
 
   /* Stat tiles */
   .stat-tile { padding: 0.8rem 0.9rem; }
+
+  /* ---- Single-screen launcher home ---- */
+  main.home {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .home-tiles {
+    flex: 1 1 auto; min-height: 0;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.7rem;
+  }
+  .home-tile {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
+    gap: 0.15rem; padding: 1rem; min-height: 0; overflow: hidden;
+    text-align: left; cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .home-tile:active { transform: scale(0.97); }
+  .tile-icon { font-size: 1.7rem; line-height: 1; }
+  .tile-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .tile-value { font-size: 1.55rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
+  .tile-sub { font-size: 0.78rem; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Schedule pills (cream card) */
   .sched-item {
@@ -597,7 +621,7 @@
 <div class="blob blob-b"></div>
 <div class="blob blob-c"></div>
 
-<main>
+<main class="home">
   <header class="topbar">
     <div class="brand">Morning Dew<small>Your daily briefing</small></div>
   </header>
@@ -614,60 +638,33 @@
     <div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>
   </section>
 
-  <div class="bento">
-    <section class="glass card-amber weather-card span2" id="weatherCard">
-      <button class="card-drill" data-detail="weather" aria-label="Weather details">↗</button>
-      <div class="weather-icon" id="weatherIcon">⏳</div>
-      <div class="temp" id="temp">--°</div>
-      <div class="desc" id="desc">Loading weather...</div>
-      <div class="location" id="location">Brisbane, QLD</div>
-      <div class="weather-hilo" id="weatherHilo"></div>
-      <div class="weather-sun" id="weatherSun"></div>
-    </section>
-
-    <section class="glass card-dark stat-tile"><div class="stat-label">Feels like</div><div class="stat-value" id="feelsLike">--°</div></section>
-    <section class="glass card-dark stat-tile"><div class="stat-label">Humidity</div><div class="stat-value" id="humidity">--%</div></section>
-    <section class="glass card-dark stat-tile"><div class="stat-label">Wind</div><div class="stat-value" id="wind">-- km/h</div></section>
-    <section class="glass card-dark stat-tile"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></section>
-
-    <section class="glass card-cream bento-card span2" id="scheduleCard">
-      <div class="bento-head">
-        <span class="bento-title">Schedule</span>
-        <a class="icon-link" href="calshow://" aria-label="Open Apple Calendar">📅</a>
-        <button class="header-drill" data-detail="today">Plan my day ↗</button>
-      </div>
-      <div id="scheduleList"><div class="loading-state">Loading…</div></div>
-    </section>
-
-    <section class="glass card-cream bento-card span2" id="tasksCard">
-      <div class="bento-title">Tasks</div>
-      <div id="tasksList"><div class="loading-state">Loading…</div></div>
-    </section>
-
-    <section class="glass card-dark hourly-card span2" id="hourlyCard">
-      <div class="loading-state">Loading hourly forecast...</div>
-    </section>
-
-    <section class="glass card-dark forecast-card span2" id="forecastCard">
-      <div class="loading-state">Loading forecast...</div>
-    </section>
-
-    <div class="bento-head span2">
-      <span class="bento-title">Urgent emails</span>
-      <button class="header-drill" data-detail="email">Inbox insights ↗</button>
-    </div>
-    <section class="glass card-dark mail-card span2" id="urgentEmailCard">
-      <div class="loading-state">Loading email...</div>
-    </section>
-
-    <div class="bento-title span2">New emails</div>
-    <section class="glass card-dark mail-card span2" id="newEmailCard">
-      <div class="loading-state">Loading email...</div>
-    </section>
+  <div class="home-tiles">
+    <button class="glass card-amber home-tile" data-detail="weather">
+      <span class="tile-icon" id="tileWeatherIcon">⏳</span>
+      <span class="tile-label">Weather</span>
+      <span class="tile-value" id="tileWeatherValue">--°</span>
+      <span class="tile-sub" id="tileWeatherSub">Loading…</span>
+    </button>
+    <button class="glass card-cream home-tile" data-detail="schedule">
+      <span class="tile-icon">📅</span>
+      <span class="tile-label">Schedule</span>
+      <span class="tile-value" id="tileSchedValue">—</span>
+      <span class="tile-sub" id="tileSchedSub">Loading…</span>
+    </button>
+    <button class="glass card-cream home-tile" data-detail="tasks">
+      <span class="tile-icon">✅</span>
+      <span class="tile-label">Tasks</span>
+      <span class="tile-value" id="tileTasksValue">—</span>
+      <span class="tile-sub" id="tileTasksSub">Loading…</span>
+    </button>
+    <button class="glass card-dark home-tile" data-detail="inbox">
+      <span class="tile-icon">✉️</span>
+      <span class="tile-label">Inbox</span>
+      <span class="tile-value" id="tileInboxValue">—</span>
+      <span class="tile-sub" id="tileInboxSub">Loading…</span>
+    </button>
   </div>
 </main>
-
-<footer>Morning Dew · weather from Open-Meteo · calendar, reminders &amp; email refresh automatically</footer>
 
 <div class="detail-overlay" id="detailOverlay" hidden>
   <div class="detail-header">
@@ -813,7 +810,8 @@ function renderOverview() {
     card.innerHTML = `<div class="overview-label">Today at a glance</div><div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>`;
     return;
   }
-  card.innerHTML = `<div class="overview-label">Today at a glance</div>${lines.join('')}`;
+  // Home is one screen — keep the glance compact (top 3 lines).
+  card.innerHTML = `<div class="overview-label">Today at a glance</div>${lines.slice(0, 3).join('')}`;
 }
 
 const WEATHER_CODES = {
@@ -882,9 +880,11 @@ async function updateLocationLabel(latitude, longitude) {
     const data = await res.json();
     const place = data.locality || data.city || data.principalSubdivision;
     if (place) {
-      document.getElementById('location').textContent = data.principalSubdivision && place !== data.principalSubdivision
+      overview.locationLabel = data.principalSubdivision && place !== data.principalSubdivision
         ? `${place}, ${data.principalSubdivision}`
         : place;
+      renderHome();
+      if (currentDetail === 'weather') openDetail('weather');
     }
   } catch {
     // Best-effort only — coordinates-based weather already loaded fine.
@@ -892,14 +892,8 @@ async function updateLocationLabel(latitude, longitude) {
 }
 
 async function loadWeather() {
-  const descEl = document.getElementById('desc');
-  const iconEl = document.getElementById('weatherIcon');
-  const locationEl = document.getElementById('location');
-  descEl.textContent = 'Fetching weather...';
-  iconEl.textContent = '⏳';
-
   let { latitude, longitude } = BRISBANE;
-  locationEl.textContent = 'Current location';
+  overview.locationLabel = 'Current location';
   let usedFallback = false;
   try {
     const pos = await getCurrentPosition();
@@ -907,7 +901,7 @@ async function loadWeather() {
     longitude = pos.coords.longitude;
     updateLocationLabel(latitude, longitude);
   } catch {
-    locationEl.textContent = 'Brisbane, QLD (location unavailable)';
+    overview.locationLabel = 'Brisbane, QLD (location unavailable)';
     usedFallback = true;
   }
 
@@ -924,47 +918,25 @@ async function loadWeather() {
     const daily = data.daily;
     const [label, icon] = describeWeather(cur.weather_code);
 
-    document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
-    document.getElementById('feelsLike').textContent = `${Math.round(cur.apparent_temperature)}°`;
-    document.getElementById('humidity').textContent = `${Math.round(cur.relative_humidity_2m)}%`;
-    document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} km/h`;
-    document.getElementById('precip').textContent = `${Math.round(cur.precipitation_probability ?? 0)}%`;
-    descEl.textContent = label;
-    iconEl.textContent = icon;
-
-    // Hero card: today's hi/lo + sunrise/sunset + condition tint.
-    if (daily && daily.temperature_2m_max) {
-      document.getElementById('weatherHilo').innerHTML =
-        `<span class="hi">H ${Math.round(daily.temperature_2m_max[0])}°</span> &nbsp; <span class="lo">L ${Math.round(daily.temperature_2m_min[0])}°</span>`;
-    }
-    if (daily && daily.sunrise) {
-      document.getElementById('weatherSun').textContent =
-        `🌅 ${fmtClock(daily.sunrise[0])}  ·  🌇 ${fmtClock(daily.sunset[0])}`;
-    }
     applyTheme(cur.is_day);
 
     overview.weather = {
       label,
+      icon,
       temp: Math.round(cur.temperature_2m),
       precip: Math.round(cur.precipitation_probability ?? 0),
       fallback: usedFallback,
       nudges: weatherNudges(cur, data.hourly, daily),
     };
     overview.weatherRaw = { current: cur, hourly: data.hourly, daily };
+    overview.weatherReached = true;
     renderOverview();
+    renderHome();
     if (currentDetail === 'weather') openDetail('weather');
-
-    renderHourly(data.hourly);
-    renderForecast(daily);
   } catch (err) {
-    descEl.textContent = err.name === 'AbortError'
-      ? 'Weather timed out. Pull down to retry.'
-      : 'Could not load weather. Pull down to retry.';
-    iconEl.textContent = '⚠️';
-    document.getElementById('forecastCard').innerHTML =
-      `<div class="error-state">Couldn't load the forecast. Pull down to retry.</div>`;
-    document.getElementById('hourlyCard').innerHTML =
-      `<div class="error-state">Couldn't load the hourly forecast.</div>`;
+    overview.weatherReached = false;
+    renderHome();
+    if (currentDetail === 'weather') openDetail('weather');
   }
 }
 
@@ -1016,18 +988,16 @@ function weatherNudges(cur, hourly, daily) {
   return out;
 }
 
-// Next ~12 hours, horizontally scrollable.
-function renderHourly(hourly) {
-  const card = document.getElementById('hourlyCard');
+// Next ~18 hours, horizontally scrollable. Returns HTML for the weather section.
+function hourlyHtml(hourly) {
   if (!hourly || !hourly.time || !hourly.time.length) {
-    card.innerHTML = `<div class="empty-state">Hourly forecast unavailable.</div>`;
-    return;
+    return `<div class="empty-state">Hourly forecast unavailable.</div>`;
   }
   const now = Date.now();
   let start = hourly.time.findIndex((t) => new Date(t).getTime() >= now - 3600000);
   if (start < 0) start = 0;
   const cells = [];
-  for (let i = start; i < hourly.time.length && cells.length < 12; i++) {
+  for (let i = start; i < hourly.time.length && cells.length < 18; i++) {
     const d = new Date(hourly.time[i]);
     const isNow = cells.length === 0;
     const label = isNow ? 'Now' : d.toLocaleTimeString(undefined, { hour: 'numeric' });
@@ -1042,7 +1012,7 @@ function renderHourly(hourly) {
         <span class="hc-rain">${rain >= 10 ? '💧' + rain + '%' : ''}</span>
       </div>`);
   }
-  card.innerHTML = `<div class="hourly-strip">${cells.join('')}</div>`;
+  return `<div class="hourly-strip">${cells.join('')}</div>`;
 }
 
 // Map a temperature to a color on a cold→hot scale (blue → red).
@@ -1051,11 +1021,9 @@ function tempColor(t) {
   return `hsl(${hue}, 80%, 58%)`;
 }
 
-function renderForecast(daily) {
-  const card = document.getElementById('forecastCard');
+function forecastHtml(daily) {
   if (!daily || !daily.time || !daily.time.length) {
-    card.innerHTML = `<div class="empty-state">Forecast unavailable.</div>`;
-    return;
+    return `<div class="empty-state">Forecast unavailable.</div>`;
   }
   const highs = daily.temperature_2m_max;
   const lows = daily.temperature_2m_min;
@@ -1088,7 +1056,7 @@ function renderForecast(daily) {
       </div>`;
   });
 
-  card.innerHTML = rows.join('');
+  return rows.join('');
 }
 
 // ---------- Calendar / Reminders → unified Today timeline ----------
@@ -1099,58 +1067,46 @@ function fmtEventTime(iso, allDay) {
   return d.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
-// Re-renders the Schedule (events) and Tasks (reminders) bento cards from the
+// Refreshes the home tiles + (if open) the Schedule/Tasks sections from the
 // already-fetched overview.calendar / overview.reminders — no extra network.
 function renderToday() {
-  renderSchedule();
-  renderTasks();
-  if (currentDetail === 'today') openDetail('today');
+  renderHome();
+  if (currentDetail === 'schedule') openDetail('schedule');
+  if (currentDetail === 'tasks') openDetail('tasks');
 }
 
-// Schedule card: today's events as time pills (newest reference's "Schedule").
-function renderSchedule() {
-  const card = document.getElementById('scheduleList');
-  if (!card) return;
-  if (overview.calendarReached === false) {
-    card.innerHTML = `<div class="error-state">Couldn't reach the calendar. Pull down to retry.</div>`;
-    return;
-  }
-  if (overview.calendarReached === undefined) return; // still loading
-  const events = (overview.calendar || [])
+function todaysEvents() {
+  return (overview.calendar || [])
     .filter((ev) => ev.start && isToday(ev.start))
     .sort((a, b) => (a.allDay ? 0 : new Date(a.start)) - (b.allDay ? 0 : new Date(b.start)));
+}
+function todaysReminders() {
+  return (overview.reminders || []).filter((r) => !r.start || isToday(r.start));
+}
+
+// Schedule section body: today's events as time pills.
+function scheduleListHtml() {
+  if (overview.calendarReached === false) return `<div class="error-state">Couldn't reach the calendar. Pull down to retry.</div>`;
+  if (overview.calendarReached === undefined) return `<div class="loading-state">Loading…</div>`;
+  const events = todaysEvents();
   const errNote = overview.calendarError ? `<div class="error-state">Some calendars didn't load: ${escapeHtml(overview.calendarError)}</div>` : '';
-  if (!events.length) {
-    card.innerHTML = errNote || `<div class="empty-state">No events today. 🌤️</div>`;
-    return;
-  }
-  card.innerHTML = errNote + events.map((ev) => `
+  if (!events.length) return errNote || `<div class="empty-state">No events today. 🌤️</div>`;
+  return errNote + events.map((ev) => `
     <a class="sched-item" href="calshow://">
       <span class="sched-time">${ev.allDay ? 'ALL DAY' : escapeHtml(fmtClock(ev.start))}${ev.source ? ' · ' + escapeHtml(ev.source) : ''}</span>
       <span class="sched-title">${escapeHtml(ev.summary)}</span>
     </a>`).join('');
 }
 
-// Tasks card: today/undated reminders as a checklist (reference's "Tasks").
-function renderTasks() {
-  const card = document.getElementById('tasksList');
-  if (!card) return;
-  if (overview.remindersReached === false) {
-    card.innerHTML = `<div class="error-state">Couldn't reach reminders. Pull down to retry.</div>`;
-    return;
-  }
-  if (overview.remindersReached === undefined) return; // still loading
-  if (overview.remindersConfigured === false) {
-    card.innerHTML = `<div class="placeholder-state">No reminders feed connected. Set <code>REMINDERS_ICS_URL</code> on the server.</div>`;
-    return;
-  }
-  const rems = (overview.reminders || []).filter((r) => !r.start || isToday(r.start));
+// Tasks section body: today/undated reminders as a checklist.
+function tasksListHtml() {
+  if (overview.remindersReached === false) return `<div class="error-state">Couldn't reach reminders. Pull down to retry.</div>`;
+  if (overview.remindersReached === undefined) return `<div class="loading-state">Loading…</div>`;
+  if (overview.remindersConfigured === false) return `<div class="placeholder-state">No reminders feed connected. Set <code>REMINDERS_ICS_URL</code> on the server.</div>`;
+  const rems = todaysReminders();
   const errNote = overview.remindersError ? `<div class="error-state">Some reminders didn't load: ${escapeHtml(overview.remindersError)}</div>` : '';
-  if (!rems.length) {
-    card.innerHTML = errNote || `<div class="empty-state">No tasks due today. ✅</div>`;
-    return;
-  }
-  card.innerHTML = errNote + rems.map((r) => `
+  if (!rems.length) return errNote || `<div class="empty-state">No tasks due today. ✅</div>`;
+  return errNote + rems.map((r) => `
     <div class="task-item">
       <span class="task-box"></span>
       <span class="task-title">${escapeHtml(r.summary)}${r.start && !r.allDay ? `<span class="task-time">${escapeHtml(fmtClock(r.start))}</span>` : ''}</span>
@@ -1268,40 +1224,30 @@ function mailRow(m) {
     </a>`;
 }
 
-function renderEmailList(card, items, emptyMsg, tagClass, tagLabel, errorNote) {
-  if (!items.length) {
-    card.innerHTML = errorNote || `<div class="empty-state">${emptyMsg}</div>`;
-    return;
-  }
-  card.innerHTML = (errorNote || '') + `<div class="mail-scroll">${items.map(mailRow).join('')}</div>`;
+// Mail list HTML for a section (returns a string, no DOM write).
+function mailListHtml(items, emptyMsg) {
+  if (!items.length) return `<div class="empty-state">${emptyMsg}</div>`;
+  return `<div class="mail-scroll">${items.map(mailRow).join('')}</div>`;
 }
 
 async function loadEmail() {
-  const urgentCard = document.getElementById('urgentEmailCard');
-  const newCard = document.getElementById('newEmailCard');
   try {
     const res = await fetchWithTimeout(apiUrl('/api/email'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    if (!data.configured) {
-      const msg = `<div class="placeholder-state">No email source connected yet. Set <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code>/<code>GOOGLE_REFRESH_TOKEN</code> (Gmail) and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment.</div>`;
-      urgentCard.innerHTML = msg;
-      newCard.innerHTML = msg;
-      return true;
-    }
-    const errorNote = data.error ? `<div class="error-state">Some email sources didn't load: ${data.error}</div>` : '';
-    renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent', errorNote);
-    renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New', errorNote);
-
-    overview.email = { urgent: data.urgent.length };
-    overview.emailData = { urgent: data.urgent, recent: data.recent };
+    overview.emailReached = true;
+    overview.emailConfigured = !!data.configured;
+    overview.emailError = data.error || null;
+    overview.email = { urgent: data.configured ? data.urgent.length : 0 };
+    overview.emailData = data.configured ? { urgent: data.urgent, recent: data.recent } : { urgent: [], recent: [] };
     renderOverview();
-    if (currentDetail === 'email') openDetail('email');
+    renderHome();
+    if (currentDetail === 'inbox') openDetail('inbox');
     return true;
   } catch (err) {
-    const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
-    urgentCard.innerHTML = msg;
-    newCard.innerHTML = msg;
+    overview.emailReached = false;
+    renderHome();
+    if (currentDetail === 'inbox') openDetail('inbox');
     return false;
   }
 }
@@ -1350,20 +1296,30 @@ function weatherDetailHtml() {
 
   const rainBars = days.map((d) => barRow(d.name, d.rain, maxRain, d.rain + '%', '#5fb0ff')).join('');
 
+  const sun = daily.sunrise ? `🌅 ${fmtClock(daily.sunrise[0])}  ·  🌇 ${fmtClock(daily.sunset[0])}` : '';
   return `
     <section class="glass detail-hero">
       <div class="metric-big">${Math.round(cur.temperature_2m)}°</div>
-      <div class="metric-sub">${escapeHtml(label)} · feels ${Math.round(cur.apparent_temperature)}°</div>
+      <div class="metric-sub">${escapeHtml(label)} · feels ${Math.round(cur.apparent_temperature)}° · ${escapeHtml(overview.locationLabel || '')}</div>
       <div class="metric-row">
         <div class="metric-chip"><div class="k">Rain now</div><div class="v">${Math.round(cur.precipitation_probability ?? 0)}%</div></div>
         <div class="metric-chip"><div class="k">UV</div><div class="v">${Math.round(cur.uv_index ?? 0)}</div></div>
         <div class="metric-chip"><div class="k">Wind</div><div class="v">${Math.round(cur.wind_speed_10m)}</div></div>
         <div class="metric-chip"><div class="k">Humidity</div><div class="v">${Math.round(cur.relative_humidity_2m)}%</div></div>
       </div>
+      ${sun ? `<div class="weather-sun" style="margin-top:0.6rem">${sun}</div>` : ''}
     </section>
     <section class="glass insight-card">
       <div class="insight-head">What to plan around</div>
       ${insightLines(tips)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Next hours</div>
+      ${hourlyHtml(raw.hourly)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">7-day forecast</div>
+      ${forecastHtml(daily)}
     </section>
     <section class="glass insight-card">
       <div class="insight-head">Rain chance, next 7 days</div>
@@ -1450,14 +1406,45 @@ function todayDetailHtml() {
     ${freeBars}`;
 }
 
-// ---- Email detail: inbox insights ----
-function emailDetailHtml() {
+// ---- Schedule section: today's events + plan-my-day insights + upcoming ----
+function scheduleDetailHtml() {
+  const upcoming = (overview.calendar || [])
+    .filter((ev) => ev.start && !isToday(ev.start))
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+  const upcomingHtml = upcoming.length
+    ? `<section class="glass insight-card"><div class="insight-head">Tomorrow &amp; later</div>${
+        upcoming.map((ev) => `
+          <a class="sched-item" href="calshow://">
+            <span class="sched-time">${escapeHtml(fmtEventTime(ev.start, ev.allDay))}${ev.source ? ' · ' + escapeHtml(ev.source) : ''}</span>
+            <span class="sched-title">${escapeHtml(ev.summary)}</span>
+          </a>`).join('')
+      }</section>`
+    : '';
+  return `
+    ${todayDetailHtml()}
+    <section class="glass insight-card"><div class="insight-head">Today's schedule</div>${scheduleListHtml()}</section>
+    ${upcomingHtml}`;
+}
+
+// ---- Tasks section: reminders checklist ----
+function tasksDetailHtml() {
+  const rems = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders() : [];
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${rems.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> due</span></div>
+      <div class="metric-sub">reminders for today</div>
+    </section>
+    <section class="glass insight-card"><div class="insight-head">Today's tasks</div>${tasksListHtml()}</section>`;
+}
+
+// ---- Inbox section: triage + sender insights + the actual email lists ----
+function inboxDetailHtml() {
+  if (overview.emailReached === false) return `<section class="glass insight-card"><div class="error-state">Couldn't reach the email service. Pull down to retry.</div></section>`;
+  if (overview.emailConfigured === false) return `<section class="glass insight-card"><div class="placeholder-state">No email source connected yet. Set the <code>GOOGLE_*</code> (Gmail) and/or <code>MS_*</code> (Outlook) vars on the server.</div></section>`;
   const d = overview.emailData;
   if (!d) return `<section class="glass insight-card"><div class="empty-state">Email is still loading…</div></section>`;
   const all = [...d.urgent, ...d.recent];
-  if (!all.length) return `<section class="glass insight-card"><div class="empty-state">Inbox is clear — nothing urgent or new. 🎉</div></section>`;
 
-  // Top senders across unread
   const counts = {};
   all.forEach((m) => { const s = senderName(m.from); counts[s] = (counts[s] || 0) + 1; });
   const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -1469,30 +1456,31 @@ function emailDetailHtml() {
   tips.push({ ico: '📥', text: `<b>${d.recent.length}</b> new unread in the last day.` });
   if (top.length) tips.push({ ico: '👤', text: `Most is from <b>${escapeHtml(top[0][0])}</b> (${top[0][1]}).` });
 
+  const insights = all.length ? `
+    <section class="glass insight-card"><div class="insight-head">Triage</div>${insightLines(tips)}</section>
+    <section class="glass insight-card"><div class="insight-head">Who's emailing you</div><div class="bars">${senderBars}</div></section>` : '';
+
   return `
     <section class="glass detail-hero">
       <div class="metric-big">${d.recent.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> new</span></div>
-      <div class="metric-sub">${d.urgent.length} urgent · tap any sender's mail on the home screen to open it</div>
+      <div class="metric-sub">${d.urgent.length} urgent · tap any email to open it in Gmail</div>
     </section>
-    <section class="glass insight-card">
-      <div class="insight-head">Triage</div>
-      ${insightLines(tips)}
-    </section>
-    <section class="glass insight-card">
-      <div class="insight-head">Who's emailing you</div>
-      <div class="bars">${senderBars}</div>
-    </section>`;
+    ${insights}
+    <section class="glass insight-card"><div class="insight-head">Urgent</div>${mailListHtml(d.urgent, 'No urgent email right now.')}</section>
+    <section class="glass insight-card"><div class="insight-head">New</div>${mailListHtml(d.recent, 'No new email right now.')}</section>`;
 }
 
 const DETAILS = {
   weather: { title: 'Weather', build: weatherDetailHtml },
-  today: { title: 'Your day', build: todayDetailHtml },
-  email: { title: 'Inbox', build: emailDetailHtml },
+  schedule: { title: 'Schedule', build: scheduleDetailHtml },
+  tasks: { title: 'Tasks', build: tasksDetailHtml },
+  inbox: { title: 'Inbox', build: inboxDetailHtml },
 };
 
 function openDetail(type) {
   const d = DETAILS[type];
   if (!d) return;
+  const wasOpen = currentDetail !== null;
   currentDetail = type;
   document.getElementById('detailTitle').textContent = d.title;
   document.getElementById('detailContent').innerHTML = d.build();
@@ -1500,11 +1488,51 @@ function openDetail(type) {
   ov.hidden = false;
   ov.scrollTop = 0;
   document.body.style.overflow = 'hidden';
+  // Push a history entry the first time we open, so the OS back gesture closes it.
+  if (!wasOpen) history.pushState({ detail: type }, '');
 }
 function closeDetail() {
+  if (currentDetail === null) return;
   currentDetail = null;
   document.getElementById('detailOverlay').hidden = true;
   document.body.style.overflow = '';
+}
+// The back button and OS back both route through history so state stays balanced.
+window.addEventListener('popstate', () => { if (currentDetail !== null) closeDetail(); });
+
+// ---------- Home launcher tiles ----------
+function setTileText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+function renderHome() {
+  // Weather tile
+  const w = overview.weather;
+  setTileText('tileWeatherIcon', w ? w.icon : (overview.weatherReached === false ? '⚠️' : '⏳'));
+  setTileText('tileWeatherValue', w ? `${w.temp}°` : '--°');
+  setTileText('tileWeatherSub', w ? `${w.label} · ${w.precip}% rain` : (overview.weatherReached === false ? 'Tap to retry' : 'Loading…'));
+
+  // Schedule tile — next event
+  if (overview.calendarReached === undefined) { setTileText('tileSchedValue', '—'); setTileText('tileSchedSub', 'Loading…'); }
+  else if (overview.calendarReached === false) { setTileText('tileSchedValue', '—'); setTileText('tileSchedSub', 'Tap to retry'); }
+  else {
+    const evs = todaysEvents();
+    const now = new Date();
+    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
+    if (!evs.length) { setTileText('tileSchedValue', 'Clear'); setTileText('tileSchedSub', 'No events today'); }
+    else if (!next) { setTileText('tileSchedValue', 'Done'); setTileText('tileSchedSub', `${evs.length} event${evs.length > 1 ? 's' : ''}, all done`); }
+    else { setTileText('tileSchedValue', next.allDay ? 'All day' : fmtClock(next.start)); setTileText('tileSchedSub', next.summary); }
+  }
+
+  // Tasks tile — count due today
+  if (overview.remindersReached === undefined) { setTileText('tileTasksValue', '—'); setTileText('tileTasksSub', 'Loading…'); }
+  else if (overview.remindersReached === false) { setTileText('tileTasksValue', '—'); setTileText('tileTasksSub', 'Tap to retry'); }
+  else if (overview.remindersConfigured === false) { setTileText('tileTasksValue', '—'); setTileText('tileTasksSub', 'Not set up'); }
+  else { const n = todaysReminders().length; setTileText('tileTasksValue', String(n)); setTileText('tileTasksSub', n ? 'due today' : 'all clear'); }
+
+  // Inbox tile — unread + urgent
+  if (overview.emailReached === undefined) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Loading…'); }
+  else if (overview.emailReached === false) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Tap to retry'); }
+  else if (overview.emailConfigured === false) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Not set up'); }
+  else { const d = overview.emailData || { urgent: [], recent: [] }; setTileText('tileInboxValue', String(d.recent.length)); setTileText('tileInboxSub', `${d.urgent.length} urgent`); }
 }
 
 // ---------- Refresh orchestration ----------
@@ -1568,8 +1596,10 @@ document.addEventListener('click', (e) => {
     openDetail(trigger.getAttribute('data-detail'));
   }
 });
-document.getElementById('detailBack').addEventListener('click', closeDetail);
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && currentDetail) closeDetail(); });
+// Route the back button and Escape through history so the pushed state is
+// consumed (keeps the OS back gesture in sync via the popstate listener).
+document.getElementById('detailBack').addEventListener('click', () => { if (currentDetail !== null) history.back(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && currentDetail !== null) history.back(); });
 
 document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   e.currentTarget.classList.remove('spinning');
