@@ -74,7 +74,14 @@ function getMsCreds() {
 async function fetchIcsEvents(envVarName) {
   const raw = process.env[envVarName];
   if (!raw) return { events: [], errors: [], configured: false };
-  const urls = raw.split(',').map((u) => u.trim()).filter(Boolean);
+  // Apple's "Public Calendar" share links come out as webcal:// (and sometimes
+  // webcals://), which fetch() can't handle ("URL is invalid"). They're plain
+  // HTTPS .ics feeds underneath, so normalize the scheme before fetching.
+  const urls = raw
+    .split(',')
+    .map((u) => u.trim())
+    .filter(Boolean)
+    .map((u) => u.replace(/^webcals:\/\//i, 'https://').replace(/^webcal:\/\//i, 'https://'));
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 48 * 3600 * 1000);
 
