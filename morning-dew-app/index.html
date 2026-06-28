@@ -227,6 +227,29 @@
   }
   .refresh-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.16); }
 
+  /* Floating page-reload button, pinned top-right above everything */
+  .page-refresh-btn {
+    position: fixed;
+    z-index: 5;
+    top: calc(env(safe-area-inset-top) + 0.75rem);
+    right: calc(env(safe-area-inset-right) + 0.9rem);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--text);
+    border-radius: 50%;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    transition: transform 0.2s ease, background 0.15s ease;
+  }
+  .page-refresh-btn:active { background: rgba(255, 255, 255, 0.16); }
+  .page-refresh-btn.spinning { transform: rotate(360deg); }
+
   /* ---- AI overview ---- */
   .overview-card { padding: 1rem 1.1rem; }
   .overview-label {
@@ -253,6 +276,8 @@
 </style>
 </head>
 <body>
+
+<button class="page-refresh-btn" id="pageRefreshBtn" aria-label="Reload page" title="Reload">↻</button>
 
 <div class="blob blob-a"></div>
 <div class="blob blob-b"></div>
@@ -693,6 +718,10 @@ async function loadEmail() {
 }
 
 renderGreeting();
+document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
+  e.currentTarget.classList.add('spinning');
+  location.reload();
+});
 document.getElementById('refreshBtn').addEventListener('click', loadWeather);
 loadWeather();
 loadCalendar();
