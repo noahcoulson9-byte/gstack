@@ -102,11 +102,18 @@ Weather works the moment you open the app — no action needed for that part.
 
 ## Deployment
 
-The static frontend (`morning-dew-app/public/`) deploys the same way as this
+The static frontend (`morning-dew-app/index.html` + its sibling
+`manifest.json`/`sw.js`/`offline.html`/`icons/`) deploys the same way as this
 repo's other apps — pushed to `main`, served via the same GitHub Pages
-configuration already pointed at this repo's root, so it will be reachable at
-the analogous `/morning-dew-app/` path once GitHub Pages rebuilds (a minute
-or two after push, same as every other app in this repo).
+configuration already pointed at this repo's root, reachable at the
+`/morning-dew-app/` path once GitHub Pages rebuilds (a minute or two after
+push, same as every other app in this repo). These files live directly in
+`morning-dew-app/`, not in a `public/` subfolder — GitHub Pages can only be
+configured to serve a repo's root or `/docs`, and falls back to rendering
+`README.md` as the page for any directory with no `index.html` directly
+inside it. An earlier version of this app nested the frontend under
+`public/`, which is exactly why the deployed URL was showing a rendered
+`README.md` instead of the app; see DECISIONS.md for the fix.
 
 The backend (`morning-dew-app/server/`) is **not** deployed anywhere — GitHub
 Pages can't run a persistent process, and no cloud account/credentials were

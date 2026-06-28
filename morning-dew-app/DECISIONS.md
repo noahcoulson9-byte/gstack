@@ -155,3 +155,38 @@ since none do, and the Graph calls that would follow are blocked anyway, no
 live Outlook request of any kind was attempted. Code review against the
 documented Graph API contract is the verification ceiling here, same as for
 the Gmail and iCloud paths.
+
+## 12. Frontend moved out of `public/` to the app root — GitHub Pages can't serve a nested folder
+
+Noah reported the deployed URL (`/morning-dew-app/`) was rendering a styled
+`README.md` instead of the app. Root cause: GitHub Pages' "deploy from a
+branch" mode only supports two source folders — repo root or `/docs` — it
+cannot be pointed at an arbitrary nested path like `morning-dew-app/public/`.
+This repo serves Pages from its root, so every app is reachable at
+`/<repo>/<app-folder>/` only because that app folder's `index.html` sits
+directly inside it (confirmed against `weather-timer-app/`, which has no
+`public/` subfolder). Morning Dew's frontend was nested one level deeper at
+`morning-dew-app/public/index.html`, so the URL `morning-dew-app/` resolved
+to a directory with no `index.html` in it. GitHub Pages defaults to Jekyll
+processing, and Jekyll's fallback for an index-less directory is to render
+that directory's `README.md` as the page — exactly what the screenshot showed.
+
+Decision: move `index.html`, `manifest.json`, `sw.js`, `offline.html`, and
+`icons/` up to `morning-dew-app/` directly, removing `public/` entirely. All
+three files' internal paths (`manifest.json`'s `start_url`/`scope`/icon
+`src`, `sw.js`'s `ASSETS` cache list, `index.html`'s `<link>`/`register()`
+calls) were already relative, so no path edits were needed beyond the move
+itself.
+
+This puts the frontend files in the same directory as `.env`, `server/`
+source, and the markdown docs for the first time. `server/server.js`'s
+`serveStatic()` previously trusted `PUBLIC_DIR` to be a dedicated,
+secrets-free directory and only filtered by MIME-type extension — adequate
+when `public/` held nothing else, not adequate once it's the app root.
+Replaced that with an explicit allowlist (`index.html`, `manifest.json`,
+`sw.js`, `offline.html`, plus the `icons/` prefix) so `.env`, `server/*.js`,
+and `*.md` files 404 regardless of what's on disk in that directory —
+verified by curling each of those paths against a locally running backend
+(see BUILD_SUMMARY.md). `sw.js`'s `CACHE_NAME` was bumped to `v2` so already
+installed PWA clients pick up the corrected file layout instead of serving a
+stale cached copy of the old structure.

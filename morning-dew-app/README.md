@@ -12,14 +12,13 @@ blocks anything else.
 
 ```
 morning-dew-app/
-├── public/        # static PWA frontend (deployed to GitHub Pages)
-│   ├── index.html
-│   ├── manifest.json
-│   ├── sw.js
-│   ├── offline.html
-│   └── icons/
+├── index.html      # static PWA frontend (deployed to GitHub Pages, at app root —
+├── manifest.json   # GitHub Pages only serves repo-root or /docs as a Pages source,
+├── sw.js           # and falls back to rendering README.md for any directory with
+├── offline.html    # no index.html directly inside it, so these files must live
+├── icons/          # at morning-dew-app/ directly, not nested under public/)
 ├── server/        # Bun backend — holds secrets, proxies calendar/reminders/email
-│   ├── server.js
+│   ├── server.js  # serves the frontend files above via an explicit allowlist
 │   ├── ics.js      # .ics parser + RRULE expansion
 │   ├── gmail.js    # Gmail API client (OAuth refresh-token flow)
 │   └── outlook.js  # Microsoft Graph client (calendar, tasks, mail)
@@ -60,11 +59,21 @@ only, everything else shows "couldn't reach the service"):
 bun run dev:static   # python3 -m http.server on :8080, no API routes
 ```
 
+This serves the whole app folder as-is (no allowlist, unlike `server/server.js`)
+— fine for a quick local frontend-only preview, but don't expose port 8080
+beyond your own machine while using it, since `.env` and `server/` would be
+readable too.
+
 ## Deploying
 
-The `public/` folder is a standard static PWA — deploy it the same way as
-this repo's other apps (GitHub Pages: Settings → Pages → Deploy from branch →
-point at this folder, or any static host: Netlify/Vercel/Cloudflare Pages).
+The frontend files at this app's root (`index.html`, `manifest.json`, `sw.js`,
+`offline.html`, `icons/`) are a standard static PWA — deploy them the same way
+as this repo's other apps. For GitHub Pages specifically: Pages can only be
+pointed at a repo's root or `/docs`, not at an arbitrary nested folder, so
+these files live directly in `morning-dew-app/` (not in a `public/`
+subfolder) — that's also why GitHub Pages can find `index.html` here instead
+of falling back to rendering `README.md`. Any static host works the same way
+(Netlify/Vercel/Cloudflare Pages, pointed at this folder).
 
 The `server/` backend needs a host that keeps a process running — GitHub
 Pages can't do this. Run it on whatever machine you leave on overnight (a
