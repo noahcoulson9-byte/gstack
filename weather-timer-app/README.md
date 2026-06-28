@@ -17,11 +17,14 @@ python3 -m http.server 8080
 
 The simplest free host is **GitHub Pages**:
 
-1. In the repo on GitHub: **Settings → Pages**.
-2. Under "Build and deployment", set **Source: Deploy from a branch**.
-3. Pick this branch and `/weather-timer-app` as the folder (or merge this
-   folder into `main` first, then point Pages at `main` + `/weather-timer-app`).
-4. Save — GitHub gives you a URL like
+1. Merge this folder into `main` if it isn't there already — GitHub Pages'
+   "Deploy from a branch" source can only be the repo root (`/`) or `/docs`,
+   never an arbitrary subfolder like `/weather-timer-app`.
+2. In the repo on GitHub: **Settings → Pages**.
+3. Under "Build and deployment", set **Source: Deploy from a branch**, pick
+   `main`, and pick `/` (root) as the folder.
+4. Save — because this app's `index.html` lives directly in
+   `weather-timer-app/` at the repo root, GitHub serves it at
    `https://<your-username>.github.io/<repo>/weather-timer-app/`.
 
 Then on the iPhone:
