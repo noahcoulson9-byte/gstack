@@ -6,7 +6,7 @@
 <title>Morning Dew</title>
 
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#3a8dff" />
+<meta name="theme-color" content="#1c130c" />
 
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,12 +15,13 @@
 
 <style>
   :root {
-    --text: #f5f7fb;
-    --muted: rgba(245, 247, 251, 0.62);
-    --glass-bg: rgba(255, 255, 255, 0.10);
-    --glass-bg-soft: rgba(255, 255, 255, 0.07);
-    --glass-border: rgba(255, 255, 255, 0.28);
-    --glass-highlight: rgba(255, 255, 255, 0.45);
+    --text: #f3ead9;
+    --muted: rgba(243, 234, 217, 0.58);
+    --glass-bg: rgba(58, 42, 31, 0.46);
+    --glass-bg-soft: rgba(58, 42, 31, 0.30);
+    --glass-border: rgba(255, 234, 205, 0.16);
+    --glass-highlight: rgba(255, 226, 188, 0.30);
+    --accent: #ffb22e;
     --danger: #ff6b6b;
     --ok: #34e0c4;
   }
@@ -34,7 +35,8 @@
   }
   body {
     position: relative;
-    background: #060912;
+    background: linear-gradient(168deg, #2a1d13 0%, #1c130c 55%, #130d08 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -46,28 +48,29 @@
   .blob {
     position: fixed;
     border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.55;
+    filter: blur(64px);
+    opacity: 0.5;
     z-index: 0;
     will-change: transform;
   }
   .blob-a {
-    width: 60vw; height: 60vw;
-    top: -15vw; left: -20vw;
-    background: radial-gradient(circle, #3a8dff, transparent 70%);
+    width: 65vw; height: 65vw;
+    top: -18vw; left: -15vw;
+    background: radial-gradient(circle, #ff9d3c, transparent 70%);
     animation: drift1 22s ease-in-out infinite alternate;
   }
   .blob-b {
     width: 70vw; height: 70vw;
-    bottom: -25vw; right: -25vw;
-    background: radial-gradient(circle, #7c5cff, transparent 70%);
+    bottom: -28vw; right: -25vw;
+    background: radial-gradient(circle, #d9762a, transparent 70%);
+    opacity: 0.4;
     animation: drift2 26s ease-in-out infinite alternate;
   }
   .blob-c {
-    width: 50vw; height: 50vw;
-    top: 30vh; right: -15vw;
-    background: radial-gradient(circle, #34e0c4, transparent 70%);
-    opacity: 0.35;
+    width: 48vw; height: 48vw;
+    top: 32vh; right: -18vw;
+    background: radial-gradient(circle, #ffc24d, transparent 70%);
+    opacity: 0.28;
     animation: drift3 30s ease-in-out infinite alternate;
   }
   @keyframes drift1 { from { transform: translate(0,0); } to { transform: translate(6vw, 8vh); } }
@@ -131,6 +134,76 @@
     opacity: 0.22;
     pointer-events: none;
   }
+
+  /* ---- Card colour variants (locally re-scope text vars so children adapt) ---- */
+  .card-cream {
+    background: #efe5d4;
+    --text: #33241a; --muted: rgba(51,36,26,0.62); --glass-border: rgba(0,0,0,0.08);
+    color: var(--text);
+  }
+  .card-amber {
+    background: linear-gradient(150deg, #ffc24d 0%, #f5a623 100%);
+    --text: #3a2710; --muted: rgba(58,39,16,0.66); --glass-border: rgba(0,0,0,0.10);
+    color: var(--text);
+  }
+  .card-tan {
+    background: #d9bfa6;
+    --text: #3a2a1c; --muted: rgba(58,42,28,0.62); --glass-border: rgba(0,0,0,0.08);
+    color: var(--text);
+  }
+  .card-dark { background: rgba(28,20,14,0.62); }
+  .card-cream::before, .card-amber::before, .card-tan::before { opacity: 0; }
+
+  /* ---- Welcome header ---- */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0.25rem; }
+  .brand { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent); }
+  .brand small { display: block; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); margin-top: -0.1rem; }
+  .welcome { padding: 0 0.25rem; }
+  .welcome-hi { font-size: 1.15rem; font-weight: 600; color: var(--muted); }
+  .welcome-name {
+    margin: 0.1rem 0 0; font-size: 2.7rem; font-weight: 800; line-height: 1.02; letter-spacing: -0.02em;
+    background: linear-gradient(110deg, #fff5e6, var(--accent)); -webkit-background-clip: text;
+    background-clip: text; color: transparent;
+  }
+  .welcome-date { color: var(--muted); font-size: 0.86rem; font-weight: 600; margin-top: 0.5rem; }
+
+  /* ---- Bento grid ---- */
+  .bento {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.7rem; align-items: start;
+  }
+  .bento > * { min-width: 0; }
+  .span2 { grid-column: span 2; }
+  .bento-card { padding: 1rem 1.05rem; }
+  .bento-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.6rem; letter-spacing: -0.01em; }
+  .bento-head { display: flex; align-items: center; gap: 0.5rem; }
+  .bento-head .bento-title { margin-bottom: 0; margin-right: auto; }
+
+  /* Stat tiles */
+  .stat-tile { padding: 0.8rem 0.9rem; }
+
+  /* Schedule pills (cream card) */
+  .sched-item {
+    display: flex; flex-direction: column; gap: 0.1rem;
+    background: #2a1c12; color: #f3ead9;
+    border-radius: 16px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
+    text-decoration: none;
+  }
+  .sched-item:last-child { margin-bottom: 0; }
+  .sched-item:nth-child(even) { background: #d9b08a; color: #33241a; }
+  .sched-item:active { filter: brightness(1.08); }
+  .sched-time { font-size: 0.72rem; font-weight: 700; opacity: 0.85; }
+  .sched-title { font-size: 0.95rem; font-weight: 700; }
+
+  /* Task checklist (cream card) */
+  .task-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; }
+  .task-box {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 6px;
+    border: 2px solid rgba(51,36,26,0.4);
+  }
+  .task-title { font-size: 0.95rem; font-weight: 600; }
+  .task-title .task-time { color: var(--muted); font-weight: 600; font-size: 0.82rem; margin-left: 0.3rem; }
 
   .section-title {
     position: relative;
@@ -390,10 +463,6 @@
   .weather-hilo .hi { color: var(--text); }
   .weather-hilo .lo { color: var(--muted); }
   .weather-sun { color: var(--muted); font-size: 0.82rem; margin-top: 0.25rem; }
-  .weather-card.cond-clear { background: linear-gradient(160deg, rgba(255,196,84,0.16), var(--glass-bg)); }
-  .weather-card.cond-cloud { background: linear-gradient(160deg, rgba(150,170,200,0.16), var(--glass-bg)); }
-  .weather-card.cond-rain { background: linear-gradient(160deg, rgba(74,150,255,0.20), var(--glass-bg)); }
-  .weather-card.cond-storm { background: linear-gradient(160deg, rgba(124,92,255,0.22), var(--glass-bg)); }
 
   /* ---- Today timeline ---- */
   .timeline-row {
@@ -411,25 +480,12 @@
   .tl-meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.1rem; }
   .tl-time { flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: var(--muted); white-space: nowrap; margin-top: 0.1rem; }
 
-  /* ---- Time-of-day theming (overrides page bg + blob colors) ---- */
-  body.theme-dawn  { background: #1a1320; }
-  body.theme-day   { background: #060912; }
-  body.theme-dusk  { background: #1a1018; }
-  body.theme-night { background: #04060d; }
-  body.theme-dawn  .blob-a { background: radial-gradient(circle, #ff9e6d, transparent 70%); }
-  body.theme-dawn  .blob-b { background: radial-gradient(circle, #ffd27a, transparent 70%); }
-  body.theme-dawn  .blob-c { background: radial-gradient(circle, #c86b9a, transparent 70%); }
-  body.theme-dusk  .blob-a { background: radial-gradient(circle, #ff7e5f, transparent 70%); }
-  body.theme-dusk  .blob-b { background: radial-gradient(circle, #9b5de5, transparent 70%); }
-  body.theme-dusk  .blob-c { background: radial-gradient(circle, #5a4b8a, transparent 70%); }
-  body.theme-night .blob-a { background: radial-gradient(circle, #1e3a6e, transparent 70%); }
-  body.theme-night .blob-b { background: radial-gradient(circle, #2a2f6e, transparent 70%); }
-  body.theme-night .blob-c { background: radial-gradient(circle, #14304a, transparent 70%); }
-
-  /* Warm amber ambient glow (the signature look from the reference shots) */
-  body.theme-day  .blob-a { background: radial-gradient(circle, #ff9d4d, transparent 70%); }
-  body.theme-day  .blob-b { background: radial-gradient(circle, #ffc24d, transparent 70%); opacity: 0.45; }
-  body.theme-day  .blob-c { background: radial-gradient(circle, #ff7e5f, transparent 70%); }
+  /* ---- Time-of-day theming: subtle warm shifts on the same espresso base ---- */
+  body.theme-dawn  { background: linear-gradient(168deg, #34241699 0%, #1c130c 60%, #130d08 100%), linear-gradient(168deg, #2a1d13, #130d08); }
+  body.theme-day   { background: linear-gradient(168deg, #2a1d13 0%, #1c130c 55%, #130d08 100%); }
+  body.theme-dusk  { background: linear-gradient(168deg, #3a221699 0%, #1a110b 60%, #110b07 100%), linear-gradient(168deg, #2a1d13, #110b07); }
+  body.theme-night { background: linear-gradient(168deg, #1f150d 0%, #150e08 60%, #0d0805 100%); }
+  body.theme-night .blob { opacity: 0.32; }
 
   /* ---- Drill-in affordance + detail screens ---- */
   .card-drill {
@@ -438,18 +494,18 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 0.95rem; color: var(--text);
     border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.16);
+    border: 1px solid rgba(0,0,0,0.12);
   }
-  .card-drill:active { background: rgba(255,255,255,0.24); }
+  .card-drill:active { background: rgba(0,0,0,0.28); }
   .header-drill {
     display: inline-flex; align-items: center; gap: 0.25rem;
-    font-size: 0.74rem; font-weight: 700; color: var(--text);
-    background: rgba(255,255,255,0.12);
-    border: 1px solid var(--glass-border);
+    font-size: 0.74rem; font-weight: 700; color: var(--accent);
+    background: rgba(255,178,46,0.18);
+    border: 1px solid rgba(255,178,46,0.38);
     border-radius: 999px; padding: 0.2rem 0.6rem;
   }
-  .header-drill:active { background: rgba(255,255,255,0.24); }
+  .header-drill:active { background: rgba(255,178,46,0.32); }
 
   .detail-overlay {
     position: fixed; inset: 0; z-index: 50;
@@ -542,69 +598,73 @@
 <div class="blob blob-c"></div>
 
 <main>
-  <div class="greeting-block">
-    <div class="greeting-date" id="dateLabel"></div>
-    <div class="greeting-phrase" id="greetingPhrase">Good day</div>
-    <div class="greeting-name">Noah</div>
-    <div class="updated-label" id="updatedLabel">Updating…</div>
-  </div>
+  <header class="topbar">
+    <div class="brand">Morning Dew<small>Your daily briefing</small></div>
+  </header>
 
-  <section class="glass overview-card" id="overviewCard">
+  <section class="welcome">
+    <div class="welcome-hi">Welcome back!</div>
+    <h1 class="welcome-name">Noah</h1>
+    <div class="welcome-date" id="dateLabel"></div>
+    <div class="updated-label" id="updatedLabel">Updating…</div>
+  </section>
+
+  <section class="glass card-dark overview-card" id="overviewCard">
     <div class="overview-label">Today at a glance</div>
     <div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>
   </section>
 
-  <section class="glass weather-card" id="weatherCard">
-    <button class="card-drill" data-detail="weather" aria-label="Weather details">↗</button>
-    <div class="weather-icon" id="weatherIcon">⏳</div>
-    <div class="temp" id="temp">--°</div>
-    <div class="desc" id="desc">Loading weather...</div>
-    <div class="location" id="location">Brisbane, QLD</div>
-    <div class="weather-hilo" id="weatherHilo"></div>
-    <div class="weather-sun" id="weatherSun"></div>
-  </section>
+  <div class="bento">
+    <section class="glass card-amber weather-card span2" id="weatherCard">
+      <button class="card-drill" data-detail="weather" aria-label="Weather details">↗</button>
+      <div class="weather-icon" id="weatherIcon">⏳</div>
+      <div class="temp" id="temp">--°</div>
+      <div class="desc" id="desc">Loading weather...</div>
+      <div class="location" id="location">Brisbane, QLD</div>
+      <div class="weather-hilo" id="weatherHilo"></div>
+      <div class="weather-sun" id="weatherSun"></div>
+    </section>
 
-  <section class="stats-grid">
-    <div class="glass stat-card"><div class="stat-label">Feels like</div><div class="stat-value" id="feelsLike">--°</div></div>
-    <div class="glass stat-card"><div class="stat-label">Humidity</div><div class="stat-value" id="humidity">--%</div></div>
-    <div class="glass stat-card"><div class="stat-label">Wind</div><div class="stat-value" id="wind">-- km/h</div></div>
-    <div class="glass stat-card"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></div>
-  </section>
+    <section class="glass card-dark stat-tile"><div class="stat-label">Feels like</div><div class="stat-value" id="feelsLike">--°</div></section>
+    <section class="glass card-dark stat-tile"><div class="stat-label">Humidity</div><div class="stat-value" id="humidity">--%</div></section>
+    <section class="glass card-dark stat-tile"><div class="stat-label">Wind</div><div class="stat-value" id="wind">-- km/h</div></section>
+    <section class="glass card-dark stat-tile"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></section>
 
-  <div class="section-title">Hourly</div>
-  <section class="glass hourly-card" id="hourlyCard">
-    <div class="loading-state">Loading hourly forecast...</div>
-  </section>
+    <section class="glass card-cream bento-card span2" id="scheduleCard">
+      <div class="bento-head">
+        <span class="bento-title">Schedule</span>
+        <a class="icon-link" href="calshow://" aria-label="Open Apple Calendar">📅</a>
+        <button class="header-drill" data-detail="today">Plan my day ↗</button>
+      </div>
+      <div id="scheduleList"><div class="loading-state">Loading…</div></div>
+    </section>
 
-  <div class="section-title">7-day forecast</div>
-  <section class="glass forecast-card" id="forecastCard">
-    <div class="loading-state">Loading forecast...</div>
-  </section>
+    <section class="glass card-cream bento-card span2" id="tasksCard">
+      <div class="bento-title">Tasks</div>
+      <div id="tasksList"><div class="loading-state">Loading…</div></div>
+    </section>
 
-  <div class="section-title-row">
-    <div class="section-title">Today</div>
-    <a class="icon-link" href="calshow://" aria-label="Open Apple Calendar">📅</a>
-    <button class="header-drill" data-detail="today">Plan my day ↗</button>
+    <section class="glass card-dark hourly-card span2" id="hourlyCard">
+      <div class="loading-state">Loading hourly forecast...</div>
+    </section>
+
+    <section class="glass card-dark forecast-card span2" id="forecastCard">
+      <div class="loading-state">Loading forecast...</div>
+    </section>
+
+    <div class="bento-head span2">
+      <span class="bento-title">Urgent emails</span>
+      <button class="header-drill" data-detail="email">Inbox insights ↗</button>
+    </div>
+    <section class="glass card-dark mail-card span2" id="urgentEmailCard">
+      <div class="loading-state">Loading email...</div>
+    </section>
+
+    <div class="bento-title span2">New emails</div>
+    <section class="glass card-dark mail-card span2" id="newEmailCard">
+      <div class="loading-state">Loading email...</div>
+    </section>
   </div>
-  <section class="glass list-card" id="todayCard">
-    <div class="loading-state">Loading today...</div>
-  </section>
-
-  <div class="section-title" id="upcomingTitle" hidden>Upcoming</div>
-  <section class="glass list-card" id="upcomingCard" hidden></section>
-
-  <div class="section-title-row">
-    <div class="section-title">Urgent emails</div>
-    <button class="header-drill" data-detail="email">Inbox insights ↗</button>
-  </div>
-  <section class="glass mail-card" id="urgentEmailCard">
-    <div class="loading-state">Loading email...</div>
-  </section>
-
-  <div class="section-title">New emails</div>
-  <section class="glass mail-card" id="newEmailCard">
-    <div class="loading-state">Loading email...</div>
-  </section>
 </main>
 
 <footer>Morning Dew · weather from Open-Meteo · calendar, reminders &amp; email refresh automatically</footer>
@@ -780,10 +840,7 @@ async function fetchWithTimeout(url, opts = {}) {
 
 function renderGreeting() {
   const now = new Date();
-  const hour = now.getHours();
-  const phrase = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('greetingPhrase').textContent = phrase;
-  document.getElementById('dateLabel').textContent = now.toLocaleDateString(undefined, {
+  document.getElementById('dateLabel').textContent = '📅 Today, ' + now.toLocaleDateString(undefined, {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 }
@@ -884,7 +941,6 @@ async function loadWeather() {
       document.getElementById('weatherSun').textContent =
         `🌅 ${fmtClock(daily.sunrise[0])}  ·  🌇 ${fmtClock(daily.sunset[0])}`;
     }
-    applyConditionTint(cur.weather_code);
     applyTheme(cur.is_day);
 
     overview.weather = {
@@ -910,18 +966,6 @@ async function loadWeather() {
     document.getElementById('hourlyCard').innerHTML =
       `<div class="error-state">Couldn't load the hourly forecast.</div>`;
   }
-}
-
-// Tints the hero weather card by broad condition group.
-function applyConditionTint(code) {
-  const card = document.getElementById('weatherCard');
-  card.classList.remove('cond-clear', 'cond-cloud', 'cond-rain', 'cond-storm');
-  let cls = 'cond-cloud';
-  if (code === 0 || code === 1) cls = 'cond-clear';
-  else if ([95, 96, 99, 82].includes(code)) cls = 'cond-storm';
-  else if (code >= 51) cls = 'cond-rain';
-  else if (code <= 3) cls = code <= 1 ? 'cond-clear' : 'cond-cloud';
-  card.classList.add(cls);
 }
 
 // Recolors the ambient background by time of day. Uses the API's is_day when
@@ -1055,93 +1099,62 @@ function fmtEventTime(iso, allDay) {
   return d.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
-function timelineRow(it) {
-  const icon = it.type === 'event' ? '📅' : '✅';
-  const time = it.allDay ? 'All day' : (it.start ? fmtClock(it.start) : '');
-  const meta = [it.location, it.source].filter(Boolean).map(escapeHtml).join(' · ');
-  const inner = `
-      <span class="tl-icon">${icon}</span>
-      <span class="tl-body">
-        <span class="tl-title">${escapeHtml(it.summary)}</span>
-        ${meta ? `<span class="tl-meta">${meta}</span>` : ''}
-      </span>
-      ${time ? `<span class="tl-time">${escapeHtml(time)}</span>` : ''}`;
-  // Events deep-link to Apple Calendar; reminders have no reliable per-item
-  // deep link on iOS, so they're listed but not tappable.
-  return it.type === 'event'
-    ? `<a class="timeline-row" href="calshow://">${inner}</a>`
-    : `<div class="timeline-row">${inner}</div>`;
-}
-
-// Chronological merge of today's events + today/undated reminders. Reads the
+// Re-renders the Schedule (events) and Tasks (reminders) bento cards from the
 // already-fetched overview.calendar / overview.reminders — no extra network.
 function renderToday() {
-  const card = document.getElementById('todayCard');
-  const calReached = overview.calendarReached;
-  const remReached = overview.remindersReached;
-  if (calReached === undefined && remReached === undefined) return; // still loading
-
-  if (calReached === false && remReached === false) {
-    card.innerHTML = `<div class="error-state">Couldn't reach the service. Pull down to retry, or check the ⚙ Server setting.</div>`;
-    renderUpcoming();
-    return;
-  }
-
-  const events = overview.calendar || [];
-  const reminders = overview.reminders || [];
-
-  const todayEvents = events
-    .filter((ev) => ev.start && isToday(ev.start))
-    .map((ev) => ({
-      type: 'event', summary: ev.summary, start: ev.start, allDay: ev.allDay,
-      location: ev.location, source: ev.source,
-      sortKey: ev.allDay ? 0 : new Date(ev.start).getTime(),
-    }));
-  const todayReminders = reminders
-    .filter((r) => !r.start || isToday(r.start))
-    .map((r) => ({
-      type: 'reminder', summary: r.summary, start: r.start, allDay: r.allDay, source: r.source,
-      sortKey: r.start && !r.allDay ? new Date(r.start).getTime() : -1,
-    }));
-
-  const items = [...todayReminders, ...todayEvents].sort((a, b) => a.sortKey - b.sortKey);
-
-  const errBits = [];
-  if (overview.calendarError) errBits.push(`Some calendars didn't load: ${overview.calendarError}`);
-  if (overview.remindersError) errBits.push(`Some reminders didn't load: ${overview.remindersError}`);
-  const errNote = errBits.length ? `<div class="error-state">${escapeHtml(errBits.join(' · '))}</div>` : '';
-
-  if (!items.length) {
-    card.innerHTML = errNote || `<div class="empty-state">Nothing scheduled today. Enjoy it. 🌤️</div>`;
-  } else {
-    card.innerHTML = errNote + items.map(timelineRow).join('');
-  }
-  renderUpcoming();
+  renderSchedule();
+  renderTasks();
   if (currentDetail === 'today') openDetail('today');
 }
 
-// Events beyond today within the fetched window (i.e. tomorrow). Hidden if empty.
-function renderUpcoming() {
-  const title = document.getElementById('upcomingTitle');
-  const card = document.getElementById('upcomingCard');
-  const upcoming = (overview.calendar || [])
-    .filter((ev) => ev.start && !isToday(ev.start))
-    .sort((a, b) => new Date(a.start) - new Date(b.start));
-  if (!upcoming.length) {
-    title.hidden = true;
-    card.hidden = true;
+// Schedule card: today's events as time pills (newest reference's "Schedule").
+function renderSchedule() {
+  const card = document.getElementById('scheduleList');
+  if (!card) return;
+  if (overview.calendarReached === false) {
+    card.innerHTML = `<div class="error-state">Couldn't reach the calendar. Pull down to retry.</div>`;
     return;
   }
-  title.hidden = false;
-  card.hidden = false;
-  card.innerHTML = upcoming.map((ev) => `
-    <a class="timeline-row" href="calshow://">
-      <span class="tl-icon">📅</span>
-      <span class="tl-body">
-        <span class="tl-title">${escapeHtml(ev.summary)}</span>
-        <span class="tl-meta">${escapeHtml(fmtEventTime(ev.start, ev.allDay))}${ev.source ? ' · ' + escapeHtml(ev.source) : ''}</span>
-      </span>
+  if (overview.calendarReached === undefined) return; // still loading
+  const events = (overview.calendar || [])
+    .filter((ev) => ev.start && isToday(ev.start))
+    .sort((a, b) => (a.allDay ? 0 : new Date(a.start)) - (b.allDay ? 0 : new Date(b.start)));
+  const errNote = overview.calendarError ? `<div class="error-state">Some calendars didn't load: ${escapeHtml(overview.calendarError)}</div>` : '';
+  if (!events.length) {
+    card.innerHTML = errNote || `<div class="empty-state">No events today. 🌤️</div>`;
+    return;
+  }
+  card.innerHTML = errNote + events.map((ev) => `
+    <a class="sched-item" href="calshow://">
+      <span class="sched-time">${ev.allDay ? 'ALL DAY' : escapeHtml(fmtClock(ev.start))}${ev.source ? ' · ' + escapeHtml(ev.source) : ''}</span>
+      <span class="sched-title">${escapeHtml(ev.summary)}</span>
     </a>`).join('');
+}
+
+// Tasks card: today/undated reminders as a checklist (reference's "Tasks").
+function renderTasks() {
+  const card = document.getElementById('tasksList');
+  if (!card) return;
+  if (overview.remindersReached === false) {
+    card.innerHTML = `<div class="error-state">Couldn't reach reminders. Pull down to retry.</div>`;
+    return;
+  }
+  if (overview.remindersReached === undefined) return; // still loading
+  if (overview.remindersConfigured === false) {
+    card.innerHTML = `<div class="placeholder-state">No reminders feed connected. Set <code>REMINDERS_ICS_URL</code> on the server.</div>`;
+    return;
+  }
+  const rems = (overview.reminders || []).filter((r) => !r.start || isToday(r.start));
+  const errNote = overview.remindersError ? `<div class="error-state">Some reminders didn't load: ${escapeHtml(overview.remindersError)}</div>` : '';
+  if (!rems.length) {
+    card.innerHTML = errNote || `<div class="empty-state">No tasks due today. ✅</div>`;
+    return;
+  }
+  card.innerHTML = errNote + rems.map((r) => `
+    <div class="task-item">
+      <span class="task-box"></span>
+      <span class="task-title">${escapeHtml(r.summary)}${r.start && !r.allDay ? `<span class="task-time">${escapeHtml(fmtClock(r.start))}</span>` : ''}</span>
+    </div>`).join('');
 }
 
 async function loadCalendar() {
