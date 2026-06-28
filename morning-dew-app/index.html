@@ -205,6 +205,52 @@
   .tag-urgent { background: rgba(255, 107, 107, 0.18); color: var(--danger); }
   .tag-new { background: rgba(52, 224, 196, 0.18); color: var(--ok); }
 
+  /* ---- Outlook-style email list ---- */
+  .mail-card { padding: 0.4rem 0.6rem; }
+  .mail-scroll {
+    position: relative; z-index: 1;
+    max-height: 320px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mail-row {
+    display: flex; align-items: flex-start; gap: 0.7rem;
+    padding: 0.7rem 0.45rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none; color: var(--text);
+    transition: background 0.12s ease;
+  }
+  .mail-row:last-child { border-bottom: none; }
+  .mail-row:active { background: rgba(255,255,255,0.08); }
+  .mail-avatar {
+    flex-shrink: 0;
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; font-weight: 700; color: #fff;
+    margin-top: 0.1rem;
+  }
+  .mail-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .mail-top {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+  }
+  .mail-sender {
+    font-weight: 700; font-size: 0.95rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mail-date { flex-shrink: 0; color: var(--muted); font-size: 0.78rem; }
+  .mail-subject {
+    font-size: 0.9rem; margin-top: 0.05rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mail-snippet {
+    color: var(--muted); font-size: 0.82rem; line-height: 1.3; margin-top: 0.1rem;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .mail-unread-dot {
+    flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%;
+    background: #3a8dff; margin: 0.5rem 0 0 -0.2rem;
+  }
+
   button {
     font-family: inherit;
     border: none;
@@ -326,12 +372,12 @@
   </section>
 
   <div class="section-title">Urgent emails</div>
-  <section class="glass list-card" id="urgentEmailCard">
+  <section class="glass mail-card" id="urgentEmailCard">
     <div class="loading-state">Loading email...</div>
   </section>
 
   <div class="section-title">New emails</div>
-  <section class="glass list-card" id="newEmailCard">
+  <section class="glass mail-card" id="newEmailCard">
     <div class="loading-state">Loading email...</div>
   </section>
 </main>
@@ -677,18 +723,72 @@ async function loadReminders() {
   }
 }
 
-// ---------- Email ----------
+// ---------- Email (Outlook-style) ----------
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// "TikTok" <no-reply@tiktok.com>  ->  TikTok   |   bob@x.com -> bob
+function senderName(from) {
+  if (!from) return 'Unknown';
+  const m = from.match(/^\s*"?([^"<]*?)"?\s*<.*>\s*$/);
+  let name = m && m[1] ? m[1].trim() : '';
+  if (!name) {
+    const emailMatch = from.match(/[\w.+-]+@[\w.-]+/);
+    name = emailMatch ? emailMatch[0].split('@')[0] : from.trim();
+  }
+  return name || 'Unknown';
+}
+
+const AVATAR_COLORS = ['#3a8dff', '#7c5cff', '#e0457b', '#1aa179', '#d98300', '#0a8fa6', '#b5468a', '#5a7d2a'];
+function avatarColor(key) {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+// Outlook-style relative date: today -> time, this week -> weekday, else -> date.
+function fmtMailDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const days = Math.floor((now - d) / 86400000);
+  if (days >= 0 && days < 7) return d.toLocaleDateString(undefined, { weekday: 'long' });
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function mailRow(m) {
+  const name = senderName(m.from);
+  const initial = escapeHtml(name.charAt(0).toUpperCase() || '?');
+  const color = avatarColor(name + (m.source || ''));
+  // ms-outlook:// opens the Outlook app. iOS can't deep-link to a specific
+  // message from a Gmail API id, so this lands in the Outlook inbox.
+  return `
+    <a class="mail-row" href="ms-outlook://">
+      <span class="mail-unread-dot"></span>
+      <span class="mail-avatar" style="background:${color}">${initial}</span>
+      <span class="mail-body">
+        <span class="mail-top">
+          <span class="mail-sender">${escapeHtml(name)}</span>
+          <span class="mail-date">${escapeHtml(fmtMailDate(m.date))}</span>
+        </span>
+        <span class="mail-subject">${escapeHtml(m.subject)}</span>
+        <span class="mail-snippet">${escapeHtml(m.snippet)}</span>
+      </span>
+    </a>`;
+}
+
 function renderEmailList(card, items, emptyMsg, tagClass, tagLabel, errorNote) {
   if (!items.length) {
     card.innerHTML = errorNote || `<div class="empty-state">${emptyMsg}</div>`;
     return;
   }
-  card.innerHTML = (errorNote || '') + items.map((m) => `
-    <div class="list-row">
-      <span class="tag ${tagClass}">${tagLabel}${m.source ? ' · ' + m.source : ''}</span>
-      <div class="list-row-title">${m.subject}</div>
-      <div class="list-row-meta">${m.from}</div>
-    </div>`).join('');
+  card.innerHTML = (errorNote || '') + `<div class="mail-scroll">${items.map(mailRow).join('')}</div>`;
 }
 
 async function loadEmail() {
