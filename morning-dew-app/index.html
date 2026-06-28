@@ -175,6 +175,34 @@
   .stat-label { color: var(--muted); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
   .stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.15rem; }
 
+  /* ---- 7-day forecast ---- */
+  .forecast-card { padding: 0.5rem 1.1rem; }
+  .forecast-row {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .forecast-row:last-child { border-bottom: none; }
+  .fc-day { width: 2.6rem; font-weight: 600; font-size: 0.92rem; }
+  .fc-icon { width: 1.9rem; text-align: center; font-size: 1.3rem; }
+  .fc-rain {
+    width: 3.1rem; font-size: 0.8rem; font-weight: 600;
+    color: #5fb0ff; text-align: right; white-space: nowrap;
+  }
+  .fc-rain.dry { color: var(--muted); opacity: 0.5; }
+  .fc-temps { flex: 1; display: flex; align-items: center; gap: 0.5rem; }
+  .fc-lo { color: var(--muted); font-size: 0.9rem; width: 1.9rem; text-align: right; }
+  .fc-hi { font-weight: 700; font-size: 0.95rem; width: 1.9rem; }
+  .fc-track {
+    flex: 1; height: 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.12); overflow: hidden; position: relative;
+  }
+  .fc-fill {
+    position: absolute; top: 0; height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #4aa3ff, #ff8a3a);
+  }
+
   /* ---- generic list cards (calendar / reminders / email) ---- */
   .list-card { padding: 1rem 1.1rem; }
   .list-row {
@@ -353,6 +381,11 @@
     <div class="glass stat-card"><div class="stat-label">Humidity</div><div class="stat-value" id="humidity">--%</div></div>
     <div class="glass stat-card"><div class="stat-label">Wind</div><div class="stat-value" id="wind">-- km/h</div></div>
     <div class="glass stat-card"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></div>
+  </section>
+
+  <div class="section-title">7-day forecast</div>
+  <section class="glass forecast-card" id="forecastCard">
+    <div class="loading-state">Loading forecast...</div>
   </section>
 
   <button class="refresh-btn" id="refreshBtn">Refresh weather</button>
@@ -624,7 +657,7 @@ async function loadWeather() {
   }
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`;
     const res = await fetchWithTimeout(url);
     if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
     const data = await res.json();
@@ -646,12 +679,62 @@ async function loadWeather() {
       fallback: usedFallback,
     };
     renderOverview();
+
+    renderForecast(data.daily);
   } catch (err) {
     descEl.textContent = err.name === 'AbortError'
       ? 'Weather timed out. Tap Refresh to retry.'
       : 'Could not load weather. Tap Refresh to retry.';
     iconEl.textContent = '⚠️';
+    document.getElementById('forecastCard').innerHTML =
+      `<div class="error-state">Couldn't load the forecast. Tap Refresh to retry.</div>`;
   }
+}
+
+// Map a temperature to a color on a cold→hot scale (blue → red).
+function tempColor(t) {
+  const hue = Math.max(0, Math.min(210, 210 - (t / 40) * 210));
+  return `hsl(${hue}, 80%, 58%)`;
+}
+
+function renderForecast(daily) {
+  const card = document.getElementById('forecastCard');
+  if (!daily || !daily.time || !daily.time.length) {
+    card.innerHTML = `<div class="empty-state">Forecast unavailable.</div>`;
+    return;
+  }
+  const highs = daily.temperature_2m_max;
+  const lows = daily.temperature_2m_min;
+  const weekMax = Math.max(...highs);
+  const weekMin = Math.min(...lows);
+  const span = weekMax - weekMin || 1;
+
+  const rows = daily.time.map((iso, i) => {
+    const d = new Date(iso + 'T00:00');
+    const dayLabel = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+    const [, icon] = describeWeather(daily.weather_code[i]);
+    const rain = Math.round(daily.precipitation_probability_max[i] ?? 0);
+    const lo = Math.round(lows[i]);
+    const hi = Math.round(highs[i]);
+
+    const left = ((lows[i] - weekMin) / span) * 100;
+    const width = Math.max(6, ((highs[i] - lows[i]) / span) * 100);
+    const fill = `left:${left}%;width:${width}%;background:linear-gradient(90deg, ${tempColor(lows[i])}, ${tempColor(highs[i])});`;
+
+    return `
+      <div class="forecast-row">
+        <span class="fc-day">${dayLabel}</span>
+        <span class="fc-icon">${icon}</span>
+        <span class="fc-rain ${rain > 0 ? '' : 'dry'}">${rain > 0 ? '💧' + rain + '%' : '—'}</span>
+        <span class="fc-temps">
+          <span class="fc-lo">${lo}°</span>
+          <span class="fc-track"><span class="fc-fill" style="${fill}"></span></span>
+          <span class="fc-hi">${hi}°</span>
+        </span>
+      </div>`;
+  });
+
+  card.innerHTML = rows.join('');
 }
 
 // ---------- Calendar ----------
