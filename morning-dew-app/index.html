@@ -146,10 +146,10 @@
   .section-title-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.5rem;
     margin-top: 0.2rem;
   }
-  .section-title-row .section-title { margin-top: 0; }
+  .section-title-row .section-title { margin-top: 0; margin-right: auto; }
   .icon-link {
     position: relative;
     z-index: 1;
@@ -426,6 +426,85 @@
   body.theme-night .blob-b { background: radial-gradient(circle, #2a2f6e, transparent 70%); }
   body.theme-night .blob-c { background: radial-gradient(circle, #14304a, transparent 70%); }
 
+  /* Warm amber ambient glow (the signature look from the reference shots) */
+  body.theme-day  .blob-a { background: radial-gradient(circle, #ff9d4d, transparent 70%); }
+  body.theme-day  .blob-b { background: radial-gradient(circle, #ffc24d, transparent 70%); opacity: 0.45; }
+  body.theme-day  .blob-c { background: radial-gradient(circle, #ff7e5f, transparent 70%); }
+
+  /* ---- Drill-in affordance + detail screens ---- */
+  .card-drill {
+    position: absolute; top: 0.7rem; right: 0.7rem; z-index: 2;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; color: var(--text);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid var(--glass-border);
+  }
+  .card-drill:active { background: rgba(255,255,255,0.24); }
+  .header-drill {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.74rem; font-weight: 700; color: var(--text);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid var(--glass-border);
+    border-radius: 999px; padding: 0.2rem 0.6rem;
+  }
+  .header-drill:active { background: rgba(255,255,255,0.24); }
+
+  .detail-overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(6,9,18,0.86);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(env(safe-area-inset-top) + 0.8rem) 1.1rem calc(env(safe-area-inset-bottom) + 2rem);
+    display: flex; flex-direction: column; gap: 1rem;
+    animation: detailIn 0.22s ease;
+  }
+  .detail-overlay[hidden] { display: none; }
+  @keyframes detailIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .detail-header { display: flex; align-items: center; gap: 0.8rem; }
+  .detail-back {
+    width: 40px; height: 40px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: var(--text);
+    border-radius: 50%; background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+  }
+  .detail-back:active { background: rgba(255,255,255,0.16); }
+  .detail-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; }
+
+  .detail-hero { padding: 1.2rem 1.2rem; }
+  .metric-big { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+  .metric-sub { color: var(--muted); font-size: 0.92rem; margin-top: 0.35rem; }
+  .metric-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+  .metric-chip {
+    background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
+    border-radius: 14px; padding: 0.5rem 0.7rem; flex: 1; min-width: 5.5rem;
+  }
+  .metric-chip .k { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+  .metric-chip .v { font-size: 1.15rem; font-weight: 700; margin-top: 0.15rem; }
+
+  .insight-card { padding: 1rem 1.1rem; }
+  .insight-head {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); margin-bottom: 0.6rem;
+  }
+  .insight-line {
+    position: relative; z-index: 1;
+    display: flex; gap: 0.55rem; align-items: flex-start;
+    font-size: 0.95rem; line-height: 1.4; padding: 0.32rem 0;
+  }
+  .insight-line .ico { flex-shrink: 0; }
+
+  /* Horizontal labelled bar chart (free-time blocks, top senders, etc.) */
+  .bars { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.2rem; }
+  .bar-row { display: grid; grid-template-columns: 4.5rem 1fr auto; align-items: center; gap: 0.5rem; }
+  .bar-row .bl { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.10); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #ff9d4d, #ffc24d); }
+  .bar-row .bv { font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
+
   /* ---- AI overview ---- */
   .overview-card { padding: 1rem 1.1rem; }
   .overview-label {
@@ -476,6 +555,7 @@
   </section>
 
   <section class="glass weather-card" id="weatherCard">
+    <button class="card-drill" data-detail="weather" aria-label="Weather details">↗</button>
     <div class="weather-icon" id="weatherIcon">⏳</div>
     <div class="temp" id="temp">--°</div>
     <div class="desc" id="desc">Loading weather...</div>
@@ -504,6 +584,7 @@
   <div class="section-title-row">
     <div class="section-title">Today</div>
     <a class="icon-link" href="calshow://" aria-label="Open Apple Calendar">📅</a>
+    <button class="header-drill" data-detail="today">Plan my day ↗</button>
   </div>
   <section class="glass list-card" id="todayCard">
     <div class="loading-state">Loading today...</div>
@@ -512,7 +593,10 @@
   <div class="section-title" id="upcomingTitle" hidden>Upcoming</div>
   <section class="glass list-card" id="upcomingCard" hidden></section>
 
-  <div class="section-title">Urgent emails</div>
+  <div class="section-title-row">
+    <div class="section-title">Urgent emails</div>
+    <button class="header-drill" data-detail="email">Inbox insights ↗</button>
+  </div>
   <section class="glass mail-card" id="urgentEmailCard">
     <div class="loading-state">Loading email...</div>
   </section>
@@ -524,6 +608,14 @@
 </main>
 
 <footer>Morning Dew · weather from Open-Meteo · calendar, reminders &amp; email refresh automatically</footer>
+
+<div class="detail-overlay" id="detailOverlay" hidden>
+  <div class="detail-header">
+    <button class="detail-back" id="detailBack" aria-label="Back">‹</button>
+    <div class="detail-title" id="detailTitle"></div>
+  </div>
+  <div id="detailContent"></div>
+</div>
 
 <script>
 const BRISBANE = { latitude: -27.4698, longitude: 153.0251 };
@@ -802,7 +894,9 @@ async function loadWeather() {
       fallback: usedFallback,
       nudges: weatherNudges(cur, data.hourly, daily),
     };
+    overview.weatherRaw = { current: cur, hourly: data.hourly, daily };
     renderOverview();
+    if (currentDetail === 'weather') openDetail('weather');
 
     renderHourly(data.hourly);
     renderForecast(daily);
@@ -1023,6 +1117,7 @@ function renderToday() {
     card.innerHTML = errNote + items.map(timelineRow).join('');
   }
   renderUpcoming();
+  if (currentDetail === 'today') openDetail('today');
 }
 
 // Events beyond today within the fetched window (i.e. tomorrow). Hidden if empty.
@@ -1186,7 +1281,9 @@ async function loadEmail() {
     renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New', errorNote);
 
     overview.email = { urgent: data.urgent.length };
+    overview.emailData = { urgent: data.urgent, recent: data.recent };
     renderOverview();
+    if (currentDetail === 'email') openDetail('email');
     return true;
   } catch (err) {
     const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
@@ -1194,6 +1291,207 @@ async function loadEmail() {
     newCard.innerHTML = msg;
     return false;
   }
+}
+
+// ---------- Detail screens (drill-in + smart insights, no AI key) ----------
+let currentDetail = null;
+
+function pct(v, max) { return max > 0 ? Math.max(2, Math.round((v / max) * 100)) : 0; }
+function barRow(label, value, max, valueText, color) {
+  const style = color ? ` style="background:${color}"` : '';
+  return `
+    <div class="bar-row">
+      <span class="bl">${escapeHtml(label)}</span>
+      <span class="bar-track"><span class="bar-fill"${style ? ` style="width:${pct(value, max)}%;background:${color}"` : ` style="width:${pct(value, max)}%"`}></span></span>
+      <span class="bv">${escapeHtml(valueText)}</span>
+    </div>`;
+}
+function insightLines(items) {
+  return items.map((i) => `<div class="insight-line"><span class="ico">${i.ico}</span><span>${i.text}</span></div>`).join('');
+}
+
+// ---- Weather detail ----
+function weatherDetailHtml() {
+  const raw = overview.weatherRaw;
+  if (!raw) return `<section class="glass insight-card"><div class="empty-state">Weather is still loading…</div></section>`;
+  const { current: cur, daily } = raw;
+  const [label] = describeWeather(cur.weather_code);
+  const days = daily.time.map((iso, i) => ({
+    iso, i,
+    hi: Math.round(daily.temperature_2m_max[i]),
+    lo: Math.round(daily.temperature_2m_min[i]),
+    rain: Math.round(daily.precipitation_probability_max[i] ?? 0),
+    code: daily.weather_code[i],
+    name: i === 0 ? 'Today' : new Date(iso + 'T00:00').toLocaleDateString(undefined, { weekday: 'short' }),
+  }));
+  const driest = days.reduce((a, b) => (b.rain < a.rain ? b : a));
+  const warmest = days.reduce((a, b) => (b.hi > a.hi ? b : a));
+  const rainiest = days.reduce((a, b) => (b.rain > a.rain ? b : a));
+  const maxRain = Math.max(...days.map((d) => d.rain), 100);
+
+  const tips = [];
+  tips.push({ ico: '🌤️', text: `Driest day this week is <b>${driest.name}</b> (${driest.rain}% rain) — best for anything outdoors.` });
+  if (rainiest.rain >= 50) tips.push({ ico: '☔', text: `Wettest is <b>${rainiest.name}</b> at ${rainiest.rain}% — plan indoor things or carry an umbrella.` });
+  tips.push({ ico: '🌡️', text: `Warmest is <b>${warmest.name}</b> at ${warmest.hi}°.` });
+  (overview.weather && overview.weather.nudges || []).forEach((n) => tips.push({ ico: n.icon, text: n.text }));
+
+  const rainBars = days.map((d) => barRow(d.name, d.rain, maxRain, d.rain + '%', '#5fb0ff')).join('');
+
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${Math.round(cur.temperature_2m)}°</div>
+      <div class="metric-sub">${escapeHtml(label)} · feels ${Math.round(cur.apparent_temperature)}°</div>
+      <div class="metric-row">
+        <div class="metric-chip"><div class="k">Rain now</div><div class="v">${Math.round(cur.precipitation_probability ?? 0)}%</div></div>
+        <div class="metric-chip"><div class="k">UV</div><div class="v">${Math.round(cur.uv_index ?? 0)}</div></div>
+        <div class="metric-chip"><div class="k">Wind</div><div class="v">${Math.round(cur.wind_speed_10m)}</div></div>
+        <div class="metric-chip"><div class="k">Humidity</div><div class="v">${Math.round(cur.relative_humidity_2m)}%</div></div>
+      </div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">What to plan around</div>
+      ${insightLines(tips)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Rain chance, next 7 days</div>
+      <div class="bars">${rainBars}</div>
+    </section>`;
+}
+
+// ---- Today detail: in-depth day plan ----
+function allFreeBlocks(events) {
+  const now = new Date();
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22, 0, 0);
+  const busy = events
+    .filter((ev) => ev.start && !ev.allDay && isToday(ev.start))
+    .map((ev) => ({ start: new Date(ev.start), end: ev.end ? new Date(ev.end) : new Date(new Date(ev.start).getTime() + 30 * 60000) }))
+    .filter((ev) => ev.end > now)
+    .sort((a, b) => a.start - b.start);
+  const blocks = [];
+  let cursor = now;
+  for (const ev of busy) {
+    if (ev.start > cursor) blocks.push({ start: cursor, end: ev.start, ms: ev.start - cursor });
+    if (ev.end > cursor) cursor = ev.end;
+  }
+  if (cursor < dayEnd) blocks.push({ start: cursor, end: dayEnd, ms: dayEnd - cursor });
+  return blocks.filter((b) => b.ms >= 15 * 60000);
+}
+
+function todayDetailHtml() {
+  if (overview.calendarReached === false && overview.remindersReached === false) {
+    return `<section class="glass insight-card"><div class="error-state">Couldn't reach the service. Pull down to retry.</div></section>`;
+  }
+  const events = (overview.calendar || []).filter((ev) => ev.start && isToday(ev.start)).sort((a, b) => new Date(a.start) - new Date(b.start));
+  const reminders = (overview.reminders || []).filter((r) => !r.start || isToday(r.start));
+  const timed = events.filter((ev) => !ev.allDay);
+  const free = allFreeBlocks(overview.calendar || []);
+  const biggest = free.reduce((a, b) => (!a || b.ms > a.ms ? b : a), null);
+  const now = new Date();
+
+  // Recommended plan
+  const plan = [];
+  if (!events.length && !reminders.length) {
+    plan.push({ ico: '🌤️', text: 'Clear day — nothing scheduled. A good chance to get ahead or genuinely rest.' });
+  }
+  if (timed.length) {
+    const next = timed.find((ev) => new Date(ev.end || ev.start) > now);
+    if (next) {
+      const mins = Math.round((new Date(next.start) - now) / 60000);
+      plan.push({ ico: '⏭️', text: `Next up: <b>${escapeHtml(next.summary)}</b> at ${fmtClock(next.start)}${mins > 0 && mins < 180 ? ` (in ${fmtDuration(mins * 60000)})` : ''}.` });
+    }
+  }
+  if (biggest) {
+    plan.push({ ico: '🎯', text: `Your best free block is <b>${fmtClock(biggest.start)}–${fmtClock(biggest.end)}</b> (${fmtDuration(biggest.ms)}). ${reminders.length ? 'Good window to clear your reminders or do focused work.' : 'Good window for focused work.'}` });
+  }
+  if (reminders.length) {
+    const dueTimed = reminders.filter((r) => r.start && !r.allDay).sort((a, b) => new Date(a.start) - new Date(b.start));
+    if (dueTimed.length) plan.push({ ico: '✅', text: `Earliest reminder due: <b>${escapeHtml(dueTimed[0].summary)}</b> at ${fmtClock(dueTimed[0].start)} — do it before then.` });
+    else plan.push({ ico: '✅', text: `${reminders.length} reminder${reminders.length > 1 ? 's' : ''} with no set time — slot ${reminders.length > 1 ? 'them' : 'it'} into a free block.` });
+  }
+  // Tight turnarounds
+  for (let i = 1; i < timed.length; i++) {
+    const gap = (new Date(timed[i].start) - new Date(timed[i - 1].end || timed[i - 1].start)) / 60000;
+    if (gap >= 0 && gap < 15) {
+      plan.push({ ico: '⚠️', text: `Tight gap (${Math.round(gap)} min) between <b>${escapeHtml(timed[i - 1].summary)}</b> and <b>${escapeHtml(timed[i].summary)}</b>.` });
+      break;
+    }
+  }
+
+  const freeBars = free.length
+    ? `<section class="glass insight-card"><div class="insight-head">Free blocks today</div><div class="bars">${
+        free.map((b) => barRow(`${fmtClock(b.start)}`, b.ms, Math.max(...free.map((x) => x.ms)), fmtDuration(b.ms), '#46d39a')).join('')
+      }</div></section>`
+    : '';
+
+  const totalFree = free.reduce((s, b) => s + b.ms, 0);
+
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${events.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> event${events.length === 1 ? '' : 's'}</span></div>
+      <div class="metric-sub">${reminders.length} reminder${reminders.length === 1 ? '' : 's'} · ${fmtDuration(totalFree)} free time left today</div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">How to plan your day</div>
+      ${insightLines(plan)}
+    </section>
+    ${freeBars}`;
+}
+
+// ---- Email detail: inbox insights ----
+function emailDetailHtml() {
+  const d = overview.emailData;
+  if (!d) return `<section class="glass insight-card"><div class="empty-state">Email is still loading…</div></section>`;
+  const all = [...d.urgent, ...d.recent];
+  if (!all.length) return `<section class="glass insight-card"><div class="empty-state">Inbox is clear — nothing urgent or new. 🎉</div></section>`;
+
+  // Top senders across unread
+  const counts = {};
+  all.forEach((m) => { const s = senderName(m.from); counts[s] = (counts[s] || 0) + 1; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const maxCount = Math.max(...top.map((t) => t[1]), 1);
+  const senderBars = top.map(([name, n]) => barRow(name, n, maxCount, String(n))).join('');
+
+  const tips = [];
+  if (d.urgent.length) tips.push({ ico: '🚩', text: `<b>${d.urgent.length}</b> urgent email${d.urgent.length > 1 ? 's' : ''} flagged important — clear ${d.urgent.length > 1 ? 'these' : 'this'} first.` });
+  tips.push({ ico: '📥', text: `<b>${d.recent.length}</b> new unread in the last day.` });
+  if (top.length) tips.push({ ico: '👤', text: `Most is from <b>${escapeHtml(top[0][0])}</b> (${top[0][1]}).` });
+
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${d.recent.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> new</span></div>
+      <div class="metric-sub">${d.urgent.length} urgent · tap any sender's mail on the home screen to open it</div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Triage</div>
+      ${insightLines(tips)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Who's emailing you</div>
+      <div class="bars">${senderBars}</div>
+    </section>`;
+}
+
+const DETAILS = {
+  weather: { title: 'Weather', build: weatherDetailHtml },
+  today: { title: 'Your day', build: todayDetailHtml },
+  email: { title: 'Inbox', build: emailDetailHtml },
+};
+
+function openDetail(type) {
+  const d = DETAILS[type];
+  if (!d) return;
+  currentDetail = type;
+  document.getElementById('detailTitle').textContent = d.title;
+  document.getElementById('detailContent').innerHTML = d.build();
+  const ov = document.getElementById('detailOverlay');
+  ov.hidden = false;
+  ov.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+function closeDetail() {
+  currentDetail = null;
+  document.getElementById('detailOverlay').hidden = true;
+  document.body.style.overflow = '';
 }
 
 // ---------- Refresh orchestration ----------
@@ -1248,6 +1546,18 @@ function openServerSetting() {
 }
 
 document.getElementById('settingsBtn').addEventListener('click', openServerSetting);
+
+// ---------- Detail-screen wiring ----------
+document.addEventListener('click', (e) => {
+  const trigger = e.target.closest('[data-detail]');
+  if (trigger) {
+    e.preventDefault();
+    openDetail(trigger.getAttribute('data-detail'));
+  }
+});
+document.getElementById('detailBack').addEventListener('click', closeDetail);
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && currentDetail) closeDetail(); });
+
 document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   e.currentTarget.classList.remove('spinning');
   // reflow so the animation restarts on every tap
@@ -1263,7 +1573,7 @@ document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   let startY = 0;
   let pulling = false;
   window.addEventListener('touchstart', (e) => {
-    if (window.scrollY <= 0 && e.touches.length === 1) {
+    if (!currentDetail && window.scrollY <= 0 && e.touches.length === 1) {
       startY = e.touches[0].clientY;
       pulling = true;
     } else {
