@@ -139,6 +139,30 @@
     padding: 0 0.25rem;
     margin-top: 0.2rem;
   }
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.2rem;
+  }
+  .section-title-row .section-title { margin-top: 0; }
+  .icon-link {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 8px;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    font-size: 1rem;
+    line-height: 1;
+    text-decoration: none;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .icon-link:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.16); }
 
   /* ---- weather ---- */
   .weather-card { padding: 1.5rem 1.4rem; text-align: center; }
@@ -244,7 +268,10 @@
   <button class="refresh-btn" id="refreshBtn">Refresh weather</button>
   <button class="refresh-btn" id="serverBtn">Server: not set</button>
 
-  <div class="section-title">Next 48 hours</div>
+  <div class="section-title-row">
+    <div class="section-title">Next 48 hours</div>
+    <a class="icon-link" href="calshow://" aria-label="Open Apple Calendar">📅</a>
+  </div>
   <section class="glass list-card" id="calendarCard">
     <div class="loading-state">Loading calendar...</div>
   </section>
