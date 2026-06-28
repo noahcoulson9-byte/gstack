@@ -227,6 +227,20 @@
   }
   .refresh-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.16); }
 
+  /* ---- AI overview ---- */
+  .overview-card { padding: 1rem 1.1rem; }
+  .overview-label {
+    position: relative; z-index: 1;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.5rem;
+  }
+  .overview-line {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    font-size: 0.92rem; line-height: 1.35; padding: 0.3rem 0;
+  }
+  .overview-line .icon { flex-shrink: 0; }
+
   footer {
     position: relative;
     z-index: 1;
@@ -250,6 +264,11 @@
     <div class="greeting-phrase" id="greetingPhrase">Good day</div>
     <div class="greeting-name">Noah</div>
   </div>
+
+  <section class="glass overview-card" id="overviewCard">
+    <div class="overview-label">Today at a glance</div>
+    <div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>
+  </section>
 
   <section class="glass weather-card" id="weatherCard">
     <div class="weather-icon" id="weatherIcon">⏳</div>
@@ -329,6 +348,111 @@ document.getElementById('serverBtn').addEventListener('click', () => {
   loadEmail();
 });
 updateServerBtnLabel();
+
+// ---------- AI overview ----------
+// Pure client-side aggregation over data the other cards already fetched —
+// no extra network calls, just a different view onto the same weather/
+// calendar/reminders/email state. Each load*() function below updates its
+// slice and calls renderOverview(); whichever finishes last produces the
+// freshest combined summary, and any slice that's still loading or failed
+// is simply omitted rather than blocking the others.
+const overview = { weather: null, calendar: null, reminders: null, email: null };
+
+function isToday(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function fmtClock(iso) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function fmtDuration(ms) {
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+// Finds the largest open gap between now and the end of the day, given
+// today's (sorted, non-all-day) events — used to answer "when am I free?"
+// rather than just listing what's busy.
+function findFreeBlock(todaysEvents) {
+  const now = new Date();
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 0, 0);
+  const busy = todaysEvents
+    .filter((ev) => !ev.allDay)
+    .map((ev) => ({ start: new Date(ev.start), end: ev.end ? new Date(ev.end) : new Date(new Date(ev.start).getTime() + 30 * 60000) }))
+    .filter((ev) => ev.end > now)
+    .sort((a, b) => a.start - b.start);
+
+  let cursor = now;
+  let best = null;
+  for (const ev of busy) {
+    const gapStart = cursor;
+    const gapEnd = ev.start > cursor ? ev.start : cursor;
+    if (gapEnd > gapStart) {
+      const gapMs = gapEnd - gapStart;
+      if (!best || gapMs > best.ms) best = { start: gapStart, end: gapEnd, ms: gapMs };
+    }
+    if (ev.end > cursor) cursor = ev.end;
+  }
+  if (cursor < dayEnd) {
+    const gapMs = dayEnd - cursor;
+    if (!best || gapMs > best.ms) best = { start: cursor, end: dayEnd, ms: gapMs };
+  }
+  return best;
+}
+
+function renderOverview() {
+  const card = document.getElementById('overviewCard');
+  const lines = [];
+
+  if (overview.weather) {
+    const { label, temp, precip, fallback } = overview.weather;
+    lines.push(`<div class="overview-line"><span class="icon">🌡️</span><span>${temp}° and ${label.toLowerCase()}, ${precip}% chance of rain${fallback ? ' (showing Brisbane — location unavailable)' : ''}.</span></div>`);
+  }
+
+  if (overview.calendar) {
+    const todays = overview.calendar.filter((ev) => isToday(ev.start)).sort((a, b) => new Date(a.start) - new Date(b.start));
+    const now = new Date();
+    const upcoming = todays.filter((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
+    if (!todays.length) {
+      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>Nothing on the calendar today.</span></div>`);
+    } else if (!upcoming.length) {
+      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>${todays.length} event${todays.length > 1 ? 's' : ''} today, all done.</span></div>`);
+    } else {
+      const next = upcoming[0];
+      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>${todays.length} event${todays.length > 1 ? 's' : ''} today — next: ${next.summary}${next.allDay ? ' (all day)' : ' at ' + fmtClock(next.start)}.</span></div>`);
+    }
+    const free = findFreeBlock(todays);
+    if (free && free.ms >= 15 * 60000) {
+      lines.push(`<div class="overview-line"><span class="icon">🕒</span><span>Free for ${fmtDuration(free.ms)}, until ${fmtClock(free.end)}.</span></div>`);
+    }
+  }
+
+  if (overview.reminders) {
+    const dueToday = overview.reminders.filter((ev) => isToday(ev.start)).length;
+    if (dueToday) {
+      lines.push(`<div class="overview-line"><span class="icon">✅</span><span>${dueToday} reminder${dueToday > 1 ? 's' : ''} due today.</span></div>`);
+    }
+  }
+
+  if (overview.email) {
+    const { urgent } = overview.email;
+    if (urgent > 0) {
+      lines.push(`<div class="overview-line"><span class="icon">✉️</span><span>${urgent} urgent email${urgent > 1 ? 's' : ''} waiting.</span></div>`);
+    }
+  }
+
+  if (!lines.length) {
+    card.innerHTML = `<div class="overview-label">Today at a glance</div><div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>`;
+    return;
+  }
+  card.innerHTML = `<div class="overview-label">Today at a glance</div>${lines.join('')}`;
+}
 
 const WEATHER_CODES = {
   0: ['Clear sky', '☀️'], 1: ['Mainly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'],
@@ -417,6 +541,7 @@ async function loadWeather() {
 
   let { latitude, longitude } = BRISBANE;
   locationEl.textContent = 'Current location';
+  let usedFallback = false;
   try {
     const pos = await getCurrentPosition();
     latitude = pos.coords.latitude;
@@ -424,6 +549,7 @@ async function loadWeather() {
     updateLocationLabel(latitude, longitude);
   } catch {
     locationEl.textContent = 'Brisbane, QLD (location unavailable)';
+    usedFallback = true;
   }
 
   try {
@@ -441,6 +567,14 @@ async function loadWeather() {
     document.getElementById('precip').textContent = `${Math.round(cur.precipitation_probability ?? 0)}%`;
     descEl.textContent = label;
     iconEl.textContent = icon;
+
+    overview.weather = {
+      label,
+      temp: Math.round(cur.temperature_2m),
+      precip: Math.round(cur.precipitation_probability ?? 0),
+      fallback: usedFallback,
+    };
+    renderOverview();
   } catch (err) {
     descEl.textContent = err.name === 'AbortError'
       ? 'Weather timed out. Tap Refresh to retry.'
@@ -470,6 +604,8 @@ async function loadCalendar() {
     const errorNote = data.error ? `<div class="error-state">Some calendars didn't load: ${data.error}</div>` : '';
     if (!data.events.length) {
       card.innerHTML = errorNote || `<div class="empty-state">Nothing on the calendar in the next 48 hours.</div>`;
+      overview.calendar = [];
+      renderOverview();
       return;
     }
     card.innerHTML = errorNote + data.events.map((ev) => `
@@ -477,6 +613,9 @@ async function loadCalendar() {
         <div class="list-row-title">${ev.summary}</div>
         <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}${ev.source ? ' · ' + ev.source : ''}</div>
       </div>`).join('');
+
+    overview.calendar = data.events;
+    renderOverview();
   } catch (err) {
     card.innerHTML = `<div class="error-state">Couldn't reach the calendar service. Is the Morning Dew server running?</div>`;
   }
@@ -496,6 +635,8 @@ async function loadReminders() {
     const errorNote = data.error ? `<div class="error-state">Some reminders didn't load: ${data.error}</div>` : '';
     if (!data.events.length) {
       card.innerHTML = errorNote || `<div class="empty-state">No open reminders due soon.</div>`;
+      overview.reminders = [];
+      renderOverview();
       return;
     }
     card.innerHTML = errorNote + data.events.map((ev) => `
@@ -503,6 +644,9 @@ async function loadReminders() {
         <div class="list-row-title">${ev.summary}</div>
         <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.source ? ' · ' + ev.source : ''}</div>
       </div>`).join('');
+
+    overview.reminders = data.events;
+    renderOverview();
   } catch (err) {
     card.innerHTML = `<div class="error-state">Couldn't reach the reminders service. Is the Morning Dew server running?</div>`;
   }
@@ -538,6 +682,9 @@ async function loadEmail() {
     const errorNote = data.error ? `<div class="error-state">Some email sources didn't load: ${data.error}</div>` : '';
     renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent', errorNote);
     renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New', errorNote);
+
+    overview.email = { urgent: data.urgent.length };
+    renderOverview();
   } catch (err) {
     const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
     urgentCard.innerHTML = msg;
