@@ -2,11 +2,9 @@ name: Keep Morning Dew backend awake
 
 # Render's free tier spins the service down after ~15 minutes idle, so the first
 # request after a quiet period waits 10-30s while it wakes. This workflow pings
-# the backend every ~10 minutes during Brisbane waking hours so the app is
-# instant when opened.
-#
-# Brisbane is UTC+10 (no daylight saving in Queensland). 05:00-23:59 AEST maps to
-# 19:00-13:59 UTC, which wraps midnight UTC and so needs two cron ranges.
+# the backend every ~10 minutes, around the clock, so the app is instant whenever
+# it's opened — including first thing in the morning. (The repo is public, so
+# GitHub Actions minutes are free and unlimited.)
 #
 # NOTE: GitHub only runs scheduled workflows from the repository's DEFAULT branch
 # (main), which is why this file lives on main. GitHub's scheduler is best-effort
@@ -15,8 +13,7 @@ name: Keep Morning Dew backend awake
 # tick (or the request itself) brings it up.
 on:
   schedule:
-    - cron: '*/10 19-23 * * *'   # 05:00-09:59 Brisbane
-    - cron: '*/10 0-13 * * *'    # 10:00-23:59 Brisbane
+    - cron: '*/10 * * * *'   # every 10 minutes, 24/7
   workflow_dispatch:
 
 permissions: {}
