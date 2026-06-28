@@ -1,0 +1,33 @@
+# Render Blueprint for the Morning Dew backend (morning-dew-app/server).
+# Connect this repo at https://dashboard.render.com/blueprints and Render
+# auto-detects this file. The env vars below are intentionally left unset
+# here (sync: false) — fill them in via the Render dashboard after the
+# first deploy, since they're secrets. See morning-dew-app/README.md
+# "Deploying the backend" for the full walkthrough.
+services:
+  - type: web
+    name: morning-dew-backend
+    runtime: docker
+    rootDir: morning-dew-app
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: ICLOUD_ICS_URL
+        sync: false
+      - key: REMINDERS_ICS_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REFRESH_TOKEN
+        sync: false
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: MS_CLIENT_SECRET
+        sync: false
+      - key: MS_REFRESH_TOKEN
+        sync: false
+      - key: MS_TENANT_ID
+        sync: false
