@@ -2010,6 +2010,7 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-task-add-inline]')) { commitTaskInput(); return; }
   if (e.target.closest('[data-brief-refresh]')) { fetchBrief(true); return; }
+  if (e.target.closest('[data-set-recovery]')) { setRecoveryManual(); return; }
   if (e.target.closest('[data-enable-push]')) { enablePush(); return; }
   if (e.target.closest('[data-review-rollover]')) {
     const today = localDateStr(new Date());
@@ -2213,7 +2214,7 @@ function renderHealth() {
   const rec = h ? h.recovery : null;
   if (rec == null) {
     card.innerHTML = `<div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">Athlytic</span></div>
-      <div class="nd-recov-sub">Connect your Watch — set up the Shortcut to see today's recovery.</div></div>${ND_CHEV_MUTED}`;
+      <div class="nd-recov-sub">Tap to enter today's recovery →</div></div>${ND_CHEV_MUTED}`;
     return;
   }
   const src = (h && h.source) ? h.source : 'Athlytic';
@@ -2226,18 +2227,35 @@ function renderHealth() {
 function healthDetailHtml() {
   const h = overview.health;
   const rec = h ? h.recovery : null;
+  const setBtn = `<button class="brief-refresh" data-set-recovery style="margin-top:1rem">${rec == null ? "Enter today's recovery" : 'Update recovery'}</button>`;
   if (rec == null) {
-    return `<div class="health-foot-note">No recovery data yet.<br><br>
-      Set up the one-time <b>Morning Dew</b> iOS Shortcut to push your Athlytic recovery
-      here each morning. Until then this stays empty.</div>`;
+    return `<div class="health-foot-note">No recovery yet. Tap below and type today's number from Athlytic — it saves on this device, no setup needed.<br><br>
+      <span style="opacity:0.75">Optional: a one-time iOS Shortcut can push it automatically each morning instead.</span></div>${setBtn}`;
   }
   const bits = [];
-  if (h.source) bits.push(`from ${escapeHtml(h.source)}`);
+  if (h.source) bits.push(`${escapeHtml(h.source)}`);
   if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
   return `<div class="health-detail-rings" style="grid-template-columns:1fr;justify-items:center">
       <div class="hring"><div class="hring-wrap" style="width:9rem;height:9rem">${ringSvg(rec, 'gRecovery')}<span class="hring-val" style="font-size:2rem">${rec}%</span></div><span class="hring-label">Recovery</span></div>
     </div>
-    <div class="health-foot-note">${recoveryWord(rec)}.${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>`;
+    <div class="health-foot-note">${recoveryWord(rec)}.${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${setBtn}`;
+}
+
+// Manual entry — type today's recovery from Athlytic; saved on-device (no
+// Shortcut / backend / token needed). The Shortcut path still overrides this
+// automatically if it's ever set up.
+function setRecoveryManual() {
+  const cur = (overview.health && overview.health.recovery != null) ? String(overview.health.recovery) : '';
+  const v = prompt("Today's Recovery % from Athlytic (0–100):", cur);
+  if (v === null) return;
+  const m = String(v).match(/-?\d+(?:\.\d+)?/);
+  if (!m) { alert('Please enter a number from 0 to 100.'); return; }
+  const rec = Math.max(0, Math.min(100, Math.round(Number(m[0]))));
+  const data = Object.assign({}, overview.health, { recovery: rec, source: 'Manual', updatedAt: new Date().toISOString() });
+  overview.health = data;
+  lsSet(HEALTH_CACHE_KEY, data);
+  renderHealth();
+  if (currentDetail === 'health') openDetail('health');
 }
 
 // ---------- Refresh orchestration ----------
