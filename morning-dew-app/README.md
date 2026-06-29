@@ -147,6 +147,27 @@ tasks, weather, and email senders/subjects — to Anthropic to write the plan. I
 `ANTHROPIC_API_KEY` is unset, the app falls back to the free computed glance and
 sends nothing.
 
+### Morning push notification (optional)
+
+Delivers a "your brief is ready" nudge to the **installed** app around 7am. iOS
+only supports this for a PWA added to the Home Screen (16.4+). Setup:
+
+1. **VAPID keys** (sign the push). Generate a pair (e.g. `npx web-push generate-vapid-keys`)
+   and set on the server: `VAPID_PUBLIC`, `VAPID_PRIVATE`, and `VAPID_SUBJECT`
+   (a `mailto:you@example.com`).
+2. **Subscription storage** — the 7am job runs while the app is asleep, and Render's
+   free disk is ephemeral, so subscriptions live in a free **Upstash Redis**: create a
+   database at [upstash.com](https://upstash.com/), then set `UPSTASH_REDIS_REST_URL`
+   and `UPSTASH_REDIS_REST_TOKEN` on the server.
+3. **Cron trigger** — set a shared `CRON_SECRET` on the server, and add the same value
+   as a GitHub Actions secret. The `morning-dew-ping` workflow's 7am job POSTs to
+   `/api/cron/morning-push` with that secret; the backend composes the nudge from the
+   day's counts and sends the push.
+4. In the app, open **Your brief → "Get this brief at 7am"** and allow notifications.
+
+If any of these aren't set, the button just reports push isn't configured — nothing
+else breaks.
+
 ### Getting `ICLOUD_ICS_URL`
 
 1. On Mac: open Calendar.app → right-click the calendar you want → **Share

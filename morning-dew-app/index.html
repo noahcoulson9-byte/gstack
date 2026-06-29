@@ -604,6 +604,7 @@
   .brief-ul { margin: 0.4rem 0; padding-left: 1.1rem; }
   .brief-ul li { margin: 0.3rem 0; font-size: 0.95rem; }
   .brief-actions { text-align: center; padding: 0.2rem 0; }
+  .push-status { text-align: center; color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 0.3rem 0; }
   .brief-refresh {
     font-size: 0.85rem; font-weight: 700; color: var(--accent);
     background: rgba(255,178,46,0.16); border: 1px solid rgba(255,178,46,0.36);
@@ -995,6 +996,41 @@ async function fetchBrief(force) {
     overview.briefFetching = false;
     renderOverview();
     if (currentDetail === 'brief') openDetail('brief');
+  }
+}
+
+// ---------- Push notifications (morning brief at ~7am) ----------
+const PUSH_KEY = 'morningDewPush';
+function pushSupported() { return 'serviceWorker' in navigator && 'PushManager' in window; }
+function pushEnabled() { return localStorage.getItem(PUSH_KEY) === 'on'; }
+function pushButtonHtml() {
+  if (!pushSupported()) return `<div class="push-status">🔔 Add to your Home Screen to enable morning alerts</div>`;
+  return pushEnabled()
+    ? `<div class="push-status">🔔 Morning notifications on</div>`
+    : `<button class="brief-refresh" data-enable-push>🔔 Get this brief at 7am</button>`;
+}
+function urlBase64ToUint8Array(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const base = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+async function enablePush() {
+  if (!pushSupported()) { alert('Notifications need the installed app. Add Morning Dew to your Home Screen first, then try again.'); return; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { alert('Notifications were not allowed. You can enable them in Settings.'); return; }
+    const cfg = await (await fetchWithTimeout(apiUrl('/api/push/config'))).json();
+    if (!cfg.configured || !cfg.publicKey) { alert('Push is not set up on the server yet (VAPID keys + Upstash).'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(cfg.publicKey) });
+    const res = await fetchWithTimeout(apiUrl('/api/push/subscribe'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) });
+    if (!res.ok) throw new Error('server rejected the subscription');
+    localStorage.setItem(PUSH_KEY, 'on');
+    refreshOpenSection();
+    alert('Morning brief notifications enabled. You will get a nudge around 7am.');
+  } catch (err) {
+    alert('Could not enable notifications: ' + (err.message || err));
   }
 }
 
@@ -1684,9 +1720,12 @@ function briefDetailHtml() {
     return `<section class="glass insight-card"><div class="loading-state">✨ Writing your morning brief…</div></section>`;
   }
   if (!overview.brief) {
-    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-brief-refresh>Generate brief</button></div></section>`;
+    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-brief-refresh>Generate brief</button></div></section>
+      <div class="brief-actions">${pushButtonHtml()}</div>`;
   }
-  return `<section class="glass insight-card brief-card">${mdToHtml(overview.brief)}</section><div class="brief-actions"><button class="brief-refresh" data-brief-refresh>↻ Regenerate</button></div>`;
+  return `<section class="glass insight-card brief-card">${mdToHtml(overview.brief)}</section>
+    <div class="brief-actions"><button class="brief-refresh" data-brief-refresh>↻ Regenerate</button></div>
+    <div class="brief-actions">${pushButtonHtml()}</div>`;
 }
 
 // ---- Review section: end-of-day wrap + streak ----
@@ -1802,6 +1841,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-brief-refresh]')) { fetchBrief(true); return; }
+  if (e.target.closest('[data-enable-push]')) { enablePush(); return; }
   if (e.target.closest('[data-review-rollover]')) {
     const today = localDateStr(new Date());
     loadTasks().filter((t) => !t.done && (!t.due || t.due <= today)).forEach((t) => snoozeTask(t.id));
