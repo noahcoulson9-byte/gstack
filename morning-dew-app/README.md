@@ -134,6 +134,7 @@ All optional — every missing one degrades to a placeholder, nothing blocks.
 | `MS_CLIENT_SECRET` | Outlook calendar/tasks/mail | See below |
 | `MS_REFRESH_TOKEN` | Outlook calendar/tasks/mail | See below |
 | `MS_TENANT_ID` | Outlook calendar/tasks/mail | See below (defaults to `common`) |
+| `HEALTH_TOKEN` | Apple Watch readiness rings (Strain/Recovery/Sleep) | Any secret you pick — see below |
 
 ### Getting `ANTHROPIC_API_KEY` (AI Morning Brief)
 
@@ -167,6 +168,36 @@ only supports this for a PWA added to the Home Screen (16.4+). Setup:
 
 If any of these aren't set, the button just reports push isn't configured — nothing
 else breaks.
+
+### Apple Watch readiness rings (Strain / Recovery / Sleep)
+
+The **Readiness** card mirrors the three rings from your Apple Watch (via the
+[Bevel](https://apps.apple.com/us/app/bevel-ai-health-coach/id6456176249) app or
+Apple Health). A website/PWA can't read Apple Health directly, so an iOS **Shortcut**
+*pushes* the numbers to the backend each morning, and the app reads them back.
+
+Reuses the same **Upstash Redis** as push (set `UPSTASH_REDIS_REST_URL` /
+`UPSTASH_REDIS_REST_TOKEN`). Then:
+
+1. **Pick a secret** and set it on the server as `HEALTH_TOKEN` (Render → Environment).
+   Any long random string — it's what stops anyone else from writing to your rings.
+2. **Build the Shortcut** (iOS Shortcuts app → new Shortcut):
+   - Get today's **Strain**, **Recovery**, and **Sleep** values. If Bevel exposes a
+     Shortcuts action that outputs them, use it for the exact Bevel scores. Otherwise
+     use **Find Health Samples** (sleep, HRV, resting heart rate) and map those.
+   - Add **Get Contents of URL**:
+     - URL: `https://<your-backend>.onrender.com/api/health`
+     - Method: **POST**, Request Body: **JSON**
+     - Header: `x-health-token` = your `HEALTH_TOKEN`
+     - JSON fields: `strain`, `recovery`, `sleep` (0–100 integers), optional
+       `sleepHours` (number) and `source` (e.g. `"Bevel"`).
+3. **Automate it** — Shortcuts → Automation → new Personal Automation → Time of Day
+   (e.g. 7am) → run the Shortcut. (Or tap the Shortcut whenever you want fresh values.)
+
+Verify by opening `https://<your-backend>.onrender.com/api/health` in a browser: after
+the Shortcut runs it returns `{"configured":true,"data":{"strain":…,"recovery":…,"sleep":…}}`.
+Until then the card shows a "connect your Apple Watch" prompt. The values are
+not real-time — they refresh when the automation fires or you run the Shortcut.
 
 ### Getting `ICLOUD_ICS_URL`
 
