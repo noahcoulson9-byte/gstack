@@ -718,6 +718,15 @@
   .nd-recov-title { display: flex; align-items: center; gap: 0.5rem; }
   .nd-recov-title b { font-size: 1rem; font-weight: 800; }
   .nd-tag { font-size: 0.64rem; font-weight: 600; color: var(--muted); background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border); border-radius: 999px; padding: 0.1rem 0.5rem; }
+  .nd-trend { font-size: 0.66rem; font-weight: 800; border-radius: 999px; padding: 0.08rem 0.42rem; letter-spacing: 0.01em; }
+  .nd-trend.up { color: #5fd39b; background: rgba(70,201,139,0.16); }
+  .nd-trend.down { color: #ff9a9a; background: rgba(255,107,107,0.16); }
+  .recov-chart { display: flex; gap: 0.4rem; align-items: flex-end; margin: 0.3rem 0 1.1rem; padding: 0 0.1rem; }
+  .recov-chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .recov-chart .bar { width: 100%; height: 70px; background: rgba(255,255,255,0.07); border-radius: 5px; display: flex; align-items: flex-end; overflow: hidden; }
+  .recov-chart .fill { width: 100%; background: linear-gradient(#aee63b, #27b24a); }
+  .recov-chart .d { font-size: 0.6rem; color: var(--muted); }
+  .recov-chart .v { font-size: 0.64rem; font-weight: 700; }
   .nd-recov-sub { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
   .nd-rtrack { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 16; }
   .nd-chev { margin-left: auto; color: var(--muted); opacity: 0.55; flex-shrink: 0; align-self: center; }
@@ -1137,12 +1146,15 @@ function briefContext() {
   } : null;
 
   const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+  const trend = recoveryTrend();
   const recovery = (health && health.recovery != null)
     ? {
         score: health.recovery,
         band: health.recovery >= 67 ? 'high' : health.recovery >= 34 ? 'moderate' : 'low',
         read: recoveryWord(health.recovery),
         source: health.source || null,
+        vsPrevious: trend ? { delta: trend.delta, previousScore: trend.previousScore, previousDate: trend.previousDate } : null,
+        recent: recoveryHistory().slice(0, 7),
       }
     : null;
 
@@ -2259,12 +2271,37 @@ function recoveryWord(r) {
   return 'Low — take it easy today';
 }
 
+// On-device recovery history (date -> score) so the card and the brief can show a
+// trend, even though the server only keeps the latest snapshot. Keyed by local
+// date; today's value is overwritten with the latest, capped at 30 days.
+const HEALTH_HIST_KEY = 'morningDewHealthHist';
+function recordRecoveryHistory(rec) {
+  if (rec == null || !Number.isFinite(Number(rec))) return;
+  const hist = lsGet(HEALTH_HIST_KEY, {});
+  hist[localDateStr(new Date())] = Math.round(Number(rec));
+  for (const d of Object.keys(hist).sort().slice(0, -30)) delete hist[d];
+  lsSet(HEALTH_HIST_KEY, hist);
+}
+function recoveryHistory() {
+  const hist = lsGet(HEALTH_HIST_KEY, {});
+  return Object.keys(hist).sort().reverse().map((d) => ({ date: d, score: hist[d] }));
+}
+function recoveryTrend() {
+  const h = recoveryHistory();
+  if (h.length < 2) return null;
+  return { delta: h[0].score - h[1].score, previousScore: h[1].score, previousDate: h[1].date };
+}
+function trendChip(t) {
+  if (!t || t.delta === 0) return '';
+  return t.delta > 0 ? `▲${t.delta}` : `▼${Math.abs(t.delta)}`;
+}
+
 async function fetchHealth() {
   try {
     const res = await fetchWithTimeout(apiUrl('/api/health'));
     const data = await res.json();
     overview.healthConfigured = data.configured;
-    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); }
+    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); recordRecoveryHistory(data.data.recovery); }
     else if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
   } catch {
     if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
@@ -2285,8 +2322,11 @@ function renderHealth() {
   }
   const src = (h && h.source) ? h.source : 'Athlytic';
   const upd = (h && h.updatedAt) ? ' · ' + fmtAgo(new Date(h.updatedAt).getTime()) : '';
+  const t = recoveryTrend();
+  const chip = trendChip(t);
+  const chipHtml = chip ? `<span class="nd-trend ${t.delta > 0 ? 'up' : 'down'}">${chip}</span>` : '';
   card.innerHTML = `<div class="nd-recov-wrap">${ringSvg(rec, 'gRecovery')}<span class="nd-recov-val">${rec}%</span></div>
-    <div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">${escapeHtml(src)}</span></div>
+    <div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</div>
       <div class="nd-recov-sub">${recoveryWord(rec)}${upd}</div></div>${ND_CHEV_MUTED}`;
 }
 
@@ -2301,10 +2341,18 @@ function healthDetailHtml() {
   const bits = [];
   if (h.source) bits.push(`${escapeHtml(h.source)}`);
   if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
+  const t = recoveryTrend();
+  const momentum = t && t.delta !== 0 ? ` ${t.delta > 0 ? 'Up' : 'Down'} ${Math.abs(t.delta)} from ${t.previousScore} last reading.` : '';
+  const hist = recoveryHistory().slice(0, 7).reverse();
+  const chart = hist.length >= 2 ? `<div class="recov-chart">${hist.map((d) => {
+    const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
+    return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
+  }).join('')}</div>` : '';
   return `<div class="health-detail-rings" style="grid-template-columns:1fr;justify-items:center">
       <div class="hring"><div class="hring-wrap" style="width:9rem;height:9rem">${ringSvg(rec, 'gRecovery')}<span class="hring-val" style="font-size:2rem">${rec}%</span></div><span class="hring-label">Recovery</span></div>
     </div>
-    <div class="health-foot-note">${recoveryWord(rec)}.${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${setBtn}`;
+    ${chart}
+    <div class="health-foot-note">${recoveryWord(rec)}.${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${setBtn}`;
 }
 
 // Manual entry — type today's recovery from Athlytic; saved on-device (no
@@ -2320,6 +2368,7 @@ function setRecoveryManual() {
   const data = Object.assign({}, overview.health, { recovery: rec, source: 'Manual', updatedAt: new Date().toISOString() });
   overview.health = data;
   lsSet(HEALTH_CACHE_KEY, data);
+  recordRecoveryHistory(rec);
   renderHealth();
   if (currentDetail === 'health') openDetail('health');
 }
