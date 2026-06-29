@@ -169,35 +169,51 @@ only supports this for a PWA added to the Home Screen (16.4+). Setup:
 If any of these aren't set, the button just reports push isn't configured — nothing
 else breaks.
 
-### Apple Watch readiness rings (Strain / Recovery / Sleep)
+### Recovery (from Apple Health, with our own score)
 
-The **Readiness** card mirrors the three rings from your Apple Watch (via the
-[Bevel](https://apps.apple.com/us/app/bevel-ai-health-coach/id6456176249) app or
-Apple Health). A website/PWA can't read Apple Health directly, so an iOS **Shortcut**
-*pushes* the numbers to the backend each morning, and the app reads them back.
+The **Recovery** card shows a 0–100 readiness score. There are three ways to feed it,
+in increasing order of automation:
 
-Reuses the same **Upstash Redis** as push (set `UPSTASH_REDIS_REST_URL` /
-`UPSTASH_REDIS_REST_TOKEN`). Then:
+1. **Manual (zero setup):** tap the Recovery card and type today's number (from
+   Athlytic/Whoop/Bevel or your own judgement). Saves on-device; drives the ring,
+   the 7-day trend, and the brief's Recovery section. Always works, no backend.
+2. **A score from another app:** an iOS Shortcut POSTs a ready-made `recovery`
+   number (e.g. Athlytic's "View my Recovery").
+3. **Our own score from Apple Health:** an iOS Shortcut sends your raw Apple Watch
+   metrics and the backend computes recovery itself (`server/recovery.js`) — HRV-led,
+   refined by resting heart rate and sleep, scored against your personal rolling
+   baseline. No third-party recovery app needed.
 
-1. **Pick a secret** and set it on the server as `HEALTH_TOKEN` (Render → Environment).
-   Any long random string — it's what stops anyone else from writing to your rings.
-2. **Build the Shortcut** (iOS Shortcuts app → new Shortcut):
-   - Get today's **Strain**, **Recovery**, and **Sleep** values. If Bevel exposes a
-     Shortcuts action that outputs them, use it for the exact Bevel scores. Otherwise
-     use **Find Health Samples** (sleep, HRV, resting heart rate) and map those.
-   - Add **Get Contents of URL**:
-     - URL: `https://<your-backend>.onrender.com/api/health`
-     - Method: **POST**, Request Body: **JSON**
-     - Header: `x-health-token` = your `HEALTH_TOKEN`
-     - JSON fields: `strain`, `recovery`, `sleep` (0–100 integers), optional
-       `sleepHours` (number) and `source` (e.g. `"Bevel"`).
-3. **Automate it** — Shortcuts → Automation → new Personal Automation → Time of Day
-   (e.g. 7am) → run the Shortcut. (Or tap the Shortcut whenever you want fresh values.)
+A website/PWA can't read Apple Health directly, so paths 2–3 use an iOS **Shortcut**
+that *pushes* values to the backend; the app reads them back. Both reuse the same
+**Upstash Redis** as push (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`).
 
-Verify by opening `https://<your-backend>.onrender.com/api/health` in a browser: after
-the Shortcut runs it returns `{"configured":true,"data":{"strain":…,"recovery":…,"sleep":…}}`.
-Until then the card shows a "connect your Apple Watch" prompt. The values are
-not real-time — they refresh when the automation fires or you run the Shortcut.
+**Setup for the Apple Health path:**
+
+1. **Pick a secret** → set as `HEALTH_TOKEN` on the server (Render → Environment).
+2. **Build the Shortcut** (iOS Shortcuts → new Shortcut). Use **Find Health Samples**
+   to get the latest of each, then a value action to get the number:
+   - **Heart Rate Variability (SDNN)** → `hrv` (ms)
+   - **Resting Heart Rate** → `restingHeartRate` (bpm)
+   - **Sleep** → `sleepHours` (hours)
+   Then **Get Contents of URL**:
+   - URL: `https://<your-backend>.onrender.com/api/health`
+   - Method: **POST**, Request Body: **JSON**
+   - Header: `x-health-token` = your `HEALTH_TOKEN`
+   - JSON fields: `hrv`, `restingHeartRate`, `sleepHours` (numbers), plus
+     `source` = `"Apple Health"`. (Send any subset; HRV alone already yields a score.)
+3. **Automate** — Shortcuts → Automation → Time of Day (e.g. 7am) → run it.
+
+The backend computes `recovery` from whatever metrics arrive and stores both the
+score and the inputs; `GET /api/health` returns
+`{"configured":true,"data":{"recovery":…,"hrv":…,"restingHeartRate":…,"sleepHours":…,"computed":true}}`.
+The score is an honest approximation that sharpens once a few days of baseline
+accumulate (it's marked `calibrating` until then). A directly-supplied `recovery`
+field always overrides the computed one. Values refresh when the automation fires
+or you run the Shortcut — not real-time.
+
+> Note: the iOS variable picker can freeze on low battery; a full power-off restart
+> clears it. Until then, the manual path above gives the full feature with no Shortcut.
 
 ### Getting `ICLOUD_ICS_URL`
 
