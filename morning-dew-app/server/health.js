@@ -35,4 +35,20 @@ async function getHealth() {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-module.exports = { healthConfigured, storeHealth, getHealth };
+// Rolling per-day metric history (date -> { hrv, rhr, sleepHours, recovery }),
+// used to build the personal baseline the recovery score is scored against.
+const HIST_KEY = 'morningdew:health:history';
+async function getHistory() {
+  let raw;
+  try { raw = await redis(['GET', HIST_KEY]); } catch { return {}; }
+  if (!raw) return {};
+  try { return JSON.parse(raw) || {}; } catch { return {}; }
+}
+async function setHistory(hist) {
+  // Cap to the most recent 60 days so the baseline stays current and small.
+  const keys = Object.keys(hist).sort();
+  for (const d of keys.slice(0, -60)) delete hist[d];
+  await redis(['SET', HIST_KEY, JSON.stringify(hist)]);
+}
+
+module.exports = { healthConfigured, storeHealth, getHealth, getHistory, setHistory };
