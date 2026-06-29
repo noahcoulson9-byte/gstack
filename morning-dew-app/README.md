@@ -124,6 +124,7 @@ All optional — every missing one degrades to a placeholder, nothing blocks.
 | Variable | Used for | How to get it |
 |---|---|---|
 | `PORT` | Backend listen port | Defaults to `8787` |
+| `ANTHROPIC_API_KEY` | AI Morning Brief (written daily plan) | console.anthropic.com → API keys |
 | `ICLOUD_ICS_URL` | Upcoming calendar events | See below |
 | `REMINDERS_ICS_URL` | Open reminders | See below |
 | `GOOGLE_CLIENT_ID` | Gmail triage | See below |
@@ -133,6 +134,18 @@ All optional — every missing one degrades to a placeholder, nothing blocks.
 | `MS_CLIENT_SECRET` | Outlook calendar/tasks/mail | See below |
 | `MS_REFRESH_TOKEN` | Outlook calendar/tasks/mail | See below |
 | `MS_TENANT_ID` | Outlook calendar/tasks/mail | See below (defaults to `common`) |
+
+### Getting `ANTHROPIC_API_KEY` (AI Morning Brief)
+
+1. Go to [console.anthropic.com](https://console.anthropic.com/), sign in, add a
+   little credit, and create an **API key**.
+2. Set it as `ANTHROPIC_API_KEY` on the server (Render → Environment).
+
+The brief is generated once per day (cached on your device), so cost is a few cents
+a month. **Privacy:** generating the brief sends that day's context — your events,
+tasks, weather, and email senders/subjects — to Anthropic to write the plan. If
+`ANTHROPIC_API_KEY` is unset, the app falls back to the free computed glance and
+sends nothing.
 
 ### Getting `ICLOUD_ICS_URL`
 
