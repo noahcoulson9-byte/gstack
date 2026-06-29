@@ -13,7 +13,8 @@ name: Keep Morning Dew backend awake
 # tick (or the request itself) brings it up.
 on:
   schedule:
-    - cron: '*/10 * * * *'   # every 10 minutes, 24/7
+    - cron: '*/10 * * * *'   # every 10 minutes, 24/7 — keep the backend warm
+    - cron: '0 21 * * *'     # 07:00 Brisbane (UTC+10) — send the morning brief push
   workflow_dispatch:
 
 permissions: {}
@@ -24,6 +25,7 @@ concurrency:
 
 jobs:
   ping:
+    if: github.event.schedule != '0 21 * * *'
     runs-on: ubuntu-latest
     steps:
       - name: Ping backend until awake
@@ -41,3 +43,16 @@ jobs:
           # Don't fail the job (avoids noisy failure emails) — the request itself
           # has already triggered the wake; the next scheduled tick will confirm.
           echo "Backend not confirmed 200 yet; it is likely still waking."
+
+  # Fires only on the 07:00-Brisbane schedule (or a manual run): asks the backend
+  # to push the morning brief to subscribed devices. Guarded by CRON_SECRET.
+  morning-push:
+    if: github.event.schedule == '0 21 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send morning brief push
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST --max-time 90 \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "https://morning-dew-backend-3w0m.onrender.com/api/cron/morning-push" || echo "000")
+          echo "morning-push HTTP $code"
