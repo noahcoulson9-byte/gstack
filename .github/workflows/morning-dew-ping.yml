@@ -1,48 +1,42 @@
-name: Keep Morning Dew backend awake
+# Keep Morning Dew backend awake
 
 # Render's free tier spins the service down after ~15 minutes idle, so the first
-# request after a quiet period waits 10-30s while it wakes. This workflow pings
-# the backend every ~10 minutes, around the clock, so the app is instant whenever
-# it's opened — including first thing in the morning. (The repo is public, so
-# GitHub Actions minutes are free and unlimited.)
-#
-# NOTE: GitHub only runs scheduled workflows from the repository's DEFAULT branch
-# (main), which is why this file lives on main. GitHub's scheduler is best-effort
-# and can run a few minutes late under load; that's fine for a ~15-minute idle
-# window. If a run shows a non-200, the backend was simply mid-wake and the next
-# tick (or the request itself) brings it up.
+# request after a quiet period drops or waits 10-30s while it wakes. GitHub only
+# runs scheduled workflows from the default branch (main) and throttles a */10
+# cron to roughly once every few hours, so a single ping per run isn't enough to
+# keep the backend warm. Instead, each ping run LOOPS for ~5h50m (just under the
+# 6h job limit), pinging every 4 minutes, so one triggered run keeps the service
+# warm until the next scheduled run takes over. The repo is public, so GitHub
+# Actions minutes are free and unlimited.
 on:
   schedule:
-    - cron: '*/10 * * * *'   # every 10 minutes, 24/7 — keep the backend warm
+    - cron: '*/10 * * * *'   # re-arm the warm-keeper frequently (GitHub throttles this)
     - cron: '0 21 * * *'     # 07:00 Brisbane (UTC+10) — send the morning brief push
   workflow_dispatch:
 
 permissions: {}
 
-concurrency:
-  group: morning-dew-ping
-  cancel-in-progress: false
-
 jobs:
   ping:
     if: github.event.schedule != '0 21 * * *'
     runs-on: ubuntu-latest
+    # Scoped to the ping job only (not the whole workflow) so a long-running
+    # warm-keeper never blocks the 07:00 morning-push job. One warm-keeper runs
+    # at a time; the next scheduled run queues and takes over when this one ends.
+    concurrency:
+      group: morning-dew-warm
+      cancel-in-progress: false
     steps:
-      - name: Ping backend until awake
+      - name: Keep backend warm
         run: |
-          URL="https://morning-dew-backend-3w0m.onrender.com/"
-          for i in 1 2 3 4; do
+          URL="https://morning-dew-backend-3w0m.onrender.com/api/health"
+          END=$(( $(date +%s) + 21000 ))   # ~5h50m shift, then the next run takes over
+          while [ "$(date +%s)" -lt "$END" ]; do
             code=$(curl -sS -L -o /dev/null -w "%{http_code}" --max-time 70 "$URL" || echo "000")
-            echo "Attempt $i: HTTP $code"
-            if [ "$code" = "200" ]; then
-              echo "Backend is awake."
-              exit 0
-            fi
-            sleep 20
+            echo "$(date -u +%H:%M:%S) HTTP $code"
+            sleep 240   # every 4 minutes — well under Render's ~15-minute sleep
           done
-          # Don't fail the job (avoids noisy failure emails) — the request itself
-          # has already triggered the wake; the next scheduled tick will confirm.
-          echo "Backend not confirmed 200 yet; it is likely still waking."
+          echo "Warm-keeper shift complete; the next scheduled run continues."
 
   # Fires only on the 07:00-Brisbane schedule (or a manual run): asks the backend
   # to push the morning brief to subscribed devices. Guarded by CRON_SECRET.
