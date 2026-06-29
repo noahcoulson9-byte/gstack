@@ -623,7 +623,9 @@
   /* ---- Brief section (rendered markdown) ---- */
   .brief-card { line-height: 1.5; }
   .brief-h { font-size: 1.25rem; font-weight: 800; margin: 0 0 0.6rem; letter-spacing: -0.01em; }
-  .brief-p { margin: 0.5rem 0; font-size: 0.95rem; }
+  .brief-h3 { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); margin: 1.1rem 0 0.35rem; }
+  .brief-h3:first-of-type { margin-top: 0.7rem; }
+  .brief-p { margin: 0.5rem 0; font-size: 0.95rem; line-height: 1.5; }
   .brief-ul { margin: 0.4rem 0; padding-left: 1.1rem; }
   .brief-ul li { margin: 0.3rem 0; font-size: 0.95rem; }
   .brief-actions { text-align: center; padding: 0.2rem 0; }
@@ -1070,7 +1072,8 @@ function mdToHtml(md) {
   for (const raw of lines) {
     const line = raw.trim();
     const bold = (s) => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-    if (line.startsWith('## ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h2 class="brief-h">${bold(line.slice(3))}</h2>`; }
+    if (line.startsWith('### ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h3 class="brief-h3">${bold(line.slice(4))}</h3>`; }
+    else if (line.startsWith('## ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h2 class="brief-h">${bold(line.slice(3))}</h2>`; }
     else if (line.startsWith('- ')) { if (!inList) { html += '<ul class="brief-ul">'; inList = true; } html += `<li>${bold(line.slice(2))}</li>`; }
     else if (!line) { if (inList) { html += '</ul>'; inList = false; } }
     else { if (inList) { html += '</ul>'; inList = false; } html += `<p class="brief-p">${bold(line)}</p>`; }
@@ -1079,21 +1082,79 @@ function mdToHtml(md) {
   return html;
 }
 function briefContext() {
-  const evs = todaysEvents().map((e) => ({ title: e.summary, start: e.start, end: e.end, allDay: e.allDay, location: e.location }));
-  const tasks = [
-    ...appTasksForToday().map((t) => ({ title: t.title, source: 'task' })),
-    ...todaysReminders().map((r) => ({ title: r.summary, due: r.start || null, source: 'reminder' })),
-  ];
-  const w = overview.weather ? {
-    temp: overview.weather.temp, condition: overview.weather.label, rainChance: overview.weather.precip,
-    nudges: (overview.weather.nudges || []).map((n) => n.text),
-  } : null;
-  const email = overview.emailData ? {
-    urgent: overview.emailData.urgent.length, new: overview.emailData.recent.length,
-    urgentSubjects: overview.emailData.urgent.slice(0, 5).map((m) => m.subject),
-  } : null;
   const now = new Date();
-  return { localTime: fmtClock(now.toISOString()), date: now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }), location: overview.locationLabel || null, events: evs, tasks, weather: w, email };
+  const evs = todaysEvents().map((e) => ({
+    title: e.summary,
+    start: e.allDay ? 'all day' : fmtClock(e.start),
+    end: e.end && !e.allDay ? fmtClock(e.end) : null,
+    location: e.location || null,
+    source: e.source || null,
+  }));
+  const freeBlocks = allFreeBlocks(overview.calendar || [])
+    .map((b) => ({ from: fmtClock(b.start.toISOString()), to: fmtClock(b.end.toISOString()), minutes: Math.round(b.ms / 60000) }))
+    .filter((b) => b.minutes >= 20);
+  const tasks = [
+    ...appTasksForToday().map((t) => ({ title: t.title, kind: 'task' })),
+    ...todaysReminders().map((r) => ({ title: r.summary, due: r.start ? fmtClock(r.start) : null, kind: 'reminder' })),
+  ];
+
+  // Rich weather from the raw Open-Meteo payload when available.
+  let weather = null;
+  const raw = overview.weatherRaw;
+  if (raw && raw.current) {
+    const cur = raw.current, daily = raw.daily || {}, hourly = raw.hourly;
+    let rainPeak = null;
+    if (hourly && hourly.time) {
+      let peak = { p: -1, t: null };
+      for (let i = 0; i < hourly.time.length; i++) {
+        const tt = new Date(hourly.time[i]).getTime();
+        if (tt < now.getTime() - 3600000 || tt > now.getTime() + 12 * 3600000) continue;
+        const p = hourly.precipitation_probability ? (hourly.precipitation_probability[i] ?? 0) : 0;
+        if (p > peak.p) peak = { p, t: hourly.time[i] };
+      }
+      if (peak.p >= 30) rainPeak = { chance: peak.p, time: fmtClock(peak.t) };
+    }
+    weather = {
+      now: `${Math.round(cur.temperature_2m)}° ${describeWeather(cur.weather_code)[0]}`,
+      feelsLike: cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : null,
+      high: daily.temperature_2m_max ? Math.round(daily.temperature_2m_max[0]) : null,
+      low: daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : null,
+      rainChanceNow: Math.round(cur.precipitation_probability ?? 0),
+      rainPeak,
+      uvMax: daily.uv_index_max ? Math.round(daily.uv_index_max[0]) : null,
+      sunrise: daily.sunrise ? fmtClock(daily.sunrise[0]) : null,
+      sunset: daily.sunset ? fmtClock(daily.sunset[0]) : null,
+      isDaytime: cur.is_day !== 0,
+    };
+  } else if (overview.weather) {
+    weather = { now: `${overview.weather.temp}° ${overview.weather.label}`, rainChanceNow: overview.weather.precip };
+  }
+
+  const email = overview.emailData ? {
+    urgent: overview.emailData.urgent.length,
+    unread: overview.emailData.recent.length,
+    urgentItems: overview.emailData.urgent.slice(0, 5).map((m) => ({ from: senderName(m.from), subject: m.subject })),
+  } : null;
+
+  const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+  const recovery = (health && health.recovery != null)
+    ? { score: health.recovery, read: recoveryWord(health.recovery), source: health.source || null }
+    : null;
+
+  const hour = now.getHours();
+  return {
+    localTime: fmtClock(now.toISOString()),
+    date: now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+    partOfDay: hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening',
+    location: overview.locationLabel || null,
+    recovery,
+    streakDays: currentStreak(),
+    weather,
+    events: evs,
+    freeBlocks,
+    tasks,
+    email,
+  };
 }
 async function fetchBrief(force) {
   if (!force) {
@@ -1108,7 +1169,7 @@ async function fetchBrief(force) {
   try {
     const res = await fetchWithTimeout(apiUrl('/api/brief'), {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(briefContext()),
-    }, 28000);
+    }, 45000);
     const data = await res.json();
     if (data.configured === false) { overview.briefConfigured = false; }
     else if (data.brief) {
