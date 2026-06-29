@@ -690,6 +690,97 @@
   }
   .overview-line .icon { flex-shrink: 0; }
 
+  /* ===================== New homepage (native-app tiles) ===================== */
+  main.home { gap: 0.8rem; min-height: auto; display: flex; flex-direction: column; }
+  .nd-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0.3rem; }
+  .nd-wordmark { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+
+  .nd-greet { padding: 0 0.3rem; }
+  .nd-greet-line { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.06; margin: 0; }
+  .nd-greet-line .accent { color: var(--accent); }
+  .nd-greet-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; flex-wrap: wrap; }
+  .nd-greet-date { color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+
+  .nd-hero { background: rgba(255,255,255,0.055); border: 1px solid var(--glass-border); border-radius: 22px; padding: 1.05rem 1.15rem; position: relative; overflow: hidden; }
+  .nd-hero::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(var(--accent), rgba(255,178,46,0.25)); }
+  .nd-hero-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .nd-hero-headline { font-size: 1.35rem; font-weight: 800; line-height: 1.16; letter-spacing: -0.01em; margin-top: 0.4rem; }
+  .nd-hero-preview { font-size: 0.95rem; color: var(--muted); line-height: 1.4; margin-top: 0.45rem; }
+  .nd-hero-cta { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.7rem; font-size: 0.92rem; font-weight: 700; color: var(--accent); cursor: pointer; }
+
+  .nd-readiness { display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 22px; padding: 0.95rem 1.1rem; cursor: pointer; }
+  .nd-recov-wrap { position: relative; width: 4.8rem; height: 4.8rem; flex-shrink: 0; }
+  .nd-recov-wrap svg { width: 100%; height: 100%; display: block; }
+  .nd-recov-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .nd-recov-body { flex: 1; min-width: 0; }
+  .nd-recov-title { display: flex; align-items: center; gap: 0.5rem; }
+  .nd-recov-title b { font-size: 1rem; font-weight: 800; }
+  .nd-tag { font-size: 0.64rem; font-weight: 600; color: var(--muted); background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border); border-radius: 999px; padding: 0.1rem 0.5rem; }
+  .nd-recov-sub { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+  .nd-rtrack { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 16; }
+  .nd-chev { margin-left: auto; color: var(--muted); opacity: 0.55; flex-shrink: 0; align-self: center; }
+
+  .nd-wx { border-radius: 22px; padding: 1.05rem 1.15rem; color: #fff; background: linear-gradient(165deg, #5d6b7d, #46525f 55%, #3a4450); box-shadow: 0 10px 26px rgba(0,0,0,0.3); cursor: pointer; }
+  .nd-wx-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .nd-wx-loc { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem; }
+  .nd-wx-temp { font-size: 3rem; font-weight: 300; line-height: 1; margin-top: 0.1rem; letter-spacing: -0.02em; }
+  .nd-wx-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+  .nd-wx-right > svg { width: 2.6rem; height: 2.1rem; display: block; margin-bottom: 0.1rem; }
+  .nd-wx-cond { font-size: 1.05rem; font-weight: 700; }
+  .nd-wx-hl { font-size: 0.9rem; font-weight: 700; color: #e7ebef; }
+  .nd-wx-hours { display: flex; justify-content: space-between; margin-top: 0.85rem; }
+  .nd-wx-hour { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; flex: 1; }
+  .nd-wx-hour .t { font-size: 0.72rem; color: #cfd6dd; font-weight: 600; }
+  .nd-wx-hour .v { font-size: 0.9rem; font-weight: 700; }
+  .nd-wx-hour svg { width: 1.7rem; height: 1.45rem; display: block; }
+  .nd-wx-msg { font-size: 0.9rem; color: #cfd6dd; margin-top: 0.3rem; }
+
+  .nd-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .nd-cal { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 22px; padding: 0.85rem 0.9rem; cursor: pointer; }
+  .nd-cal-head { display: flex; align-items: center; gap: 0.55rem; }
+  .nd-cal-glyph { width: 2.5rem; height: 2.5rem; border-radius: 0.55rem; background: #fff; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
+  .nd-cal-glyph .m { background: #ff3b30; color: #fff; font-size: 0.52rem; font-weight: 700; text-align: center; padding: 0.13rem 0 0.08rem; letter-spacing: 0.04em; }
+  .nd-cal-glyph .d { color: #1c1c1e; font-size: 1.35rem; font-weight: 700; text-align: center; line-height: 1; padding-top: 0.12rem; }
+  .nd-cal-title { min-width: 0; }
+  .nd-cal-title b { font-size: 0.92rem; font-weight: 700; display: block; }
+  .nd-cal-title span { font-size: 0.76rem; color: var(--muted); }
+  .nd-cal-ev { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+  .nd-cal-bar { width: 4px; border-radius: 2px; background: #ff3b30; flex-shrink: 0; }
+  .nd-cal-ev .et { font-size: 0.74rem; color: var(--muted); font-weight: 600; }
+  .nd-cal-ev .en { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd-cal-empty { font-size: 0.84rem; color: var(--muted); margin-top: 0.7rem; }
+
+  .nd-ol { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 22px; overflow: hidden; cursor: pointer; }
+  .nd-ol-head { display: flex; align-items: center; gap: 0.45rem; padding: 0.65rem 0.8rem; background: linear-gradient(180deg, rgba(43,111,214,0.16), transparent); }
+  .nd-ol-logo { width: 1.6rem; height: 1.6rem; border-radius: 0.4rem; background: #2b6fd6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .nd-ol-title { font-size: 0.92rem; font-weight: 700; }
+  .nd-ol-count { margin-left: auto; font-size: 0.7rem; font-weight: 700; color: #fff; background: #2b6fd6; border-radius: 999px; padding: 0.1rem 0.5rem; display: flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+  .nd-ol-count.urgent { background: #ff3b30; }
+  .nd-ol-row { display: flex; gap: 0.5rem; align-items: center; padding: 0.5rem 0.8rem; border-top: 1px solid var(--glass-border); }
+  .nd-ol-dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #2b6fd6; flex-shrink: 0; }
+  .nd-ol-dot.urgent { background: #ff3b30; }
+  .nd-ol-av { width: 1.7rem; height: 1.7rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .nd-ol-body { min-width: 0; flex: 1; }
+  .nd-ol-sender { font-size: 0.8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd-ol-subj { font-size: 0.73rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd-ol-empty { padding: 0.65rem 0.8rem; font-size: 0.82rem; color: var(--muted); }
+
+  .nd-glass-wrap { position: relative; }
+  .nd-glass-glow { position: absolute; inset: -6px; border-radius: 28px; background: radial-gradient(60% 120% at 20% 0%, rgba(255,178,46,0.4), transparent 60%), radial-gradient(60% 120% at 90% 100%, rgba(91,157,249,0.4), transparent 60%); filter: blur(26px); opacity: 0.5; pointer-events: none; }
+  .nd-glass { position: relative; border-radius: 26px; padding: 1rem 1.1rem; background: linear-gradient(150deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05) 60%); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border: 1.5px solid rgba(255,255,255,0.26); box-shadow: 0 16px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5); cursor: pointer; }
+  .nd-glass-head { display: flex; align-items: center; gap: 0.6rem; }
+  .nd-glass-icon { width: 2.3rem; height: 2.3rem; border-radius: 0.65rem; background: linear-gradient(150deg, rgba(255,255,255,0.4), rgba(255,255,255,0.12)); border: 1px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  .nd-glass-title b { font-size: 0.92rem; font-weight: 700; display: block; color: #fff; }
+  .nd-glass-title span { font-size: 0.76rem; color: rgba(255,255,255,0.7); }
+  .nd-glass-chev { margin-left: auto; color: rgba(255,255,255,0.55); }
+  .nd-gtasks { margin-top: 0.7rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .nd-gtask { display: flex; align-items: center; gap: 0.6rem; }
+  .nd-gcheck { width: 1.2rem; height: 1.2rem; border-radius: 0.38rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.08); }
+  .nd-gcheck.done { background: #fff; border-color: #fff; }
+  .nd-gname { font-size: 0.9rem; font-weight: 500; color: #fff; }
+  .nd-gtask.done .nd-gname { color: rgba(255,255,255,0.5); text-decoration: line-through; }
+  .nd-gadd { margin-top: 0.6rem; padding-top: 0.55rem; border-top: 1px solid rgba(255,255,255,0.18); font-size: 0.86rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 0.35rem; }
+
   footer {
     position: relative;
     z-index: 1;
@@ -713,67 +804,53 @@
 <div class="blob blob-c"></div>
 
 <main class="home">
-  <header class="topbar">
-    <div class="brand">Morning Dew<small>Your daily briefing</small></div>
+  <header class="nd-topbar">
+    <div class="nd-wordmark">Morning Dew</div>
   </header>
 
-  <section class="welcome">
-    <div class="welcome-hi">Welcome back!</div>
-    <h1 class="welcome-name">Noah</h1>
-    <div class="welcome-date" id="dateLabel"></div>
-    <div class="welcome-meta">
-      <span class="updated-label" id="updatedLabel">Updating…</span>
+  <section class="nd-greet">
+    <h1 class="nd-greet-line" id="greetLine">Good morning, <span class="accent">Noah</span></h1>
+    <div class="nd-greet-meta">
+      <span class="nd-greet-date" id="dateLabel"></span>
       <span class="streak-chip" id="streakLabel" style="display:none"></span>
+      <span class="updated-label" id="updatedLabel">Updating…</span>
     </div>
   </section>
-
-  <section class="glass card-dark overview-card" id="overviewCard">
-    <div class="overview-label">Today at a glance</div>
-    <div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>
-  </section>
-
-  <div class="home-tiles">
-    <button class="glass card-amber home-tile" data-detail="weather">
-      <span class="tile-icon" id="tileWeatherIcon">⏳</span>
-      <span class="tile-label">Weather</span>
-      <span class="tile-value" id="tileWeatherValue">--°</span>
-      <span class="tile-sub" id="tileWeatherSub">Loading…</span>
-    </button>
-    <button class="glass card-cream home-tile" data-detail="schedule">
-      <span class="tile-icon">📅</span>
-      <span class="tile-label">Schedule</span>
-      <span class="tile-value" id="tileSchedValue">—</span>
-      <span class="tile-sub" id="tileSchedSub">Loading…</span>
-    </button>
-    <button class="glass card-cream home-tile" data-detail="tasks">
-      <span class="tile-icon">✅</span>
-      <span class="tile-label">Tasks</span>
-      <span class="tile-value" id="tileTasksValue">—</span>
-      <span class="tile-sub" id="tileTasksSub">Loading…</span>
-    </button>
-    <button class="glass card-dark home-tile" data-detail="inbox">
-      <span class="tile-icon">✉️</span>
-      <span class="tile-label">Inbox</span>
-      <span class="tile-value" id="tileInboxValue">—</span>
-      <span class="tile-sub" id="tileInboxSub">Loading…</span>
-    </button>
-  </div>
 
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-    <linearGradient id="gStrain" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#fcc53a"/><stop offset="1" stop-color="#f08a1d"/></linearGradient>
     <linearGradient id="gRecovery" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aee63b"/><stop offset="1" stop-color="#27b24a"/></linearGradient>
-    <linearGradient id="gSleep" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aeb8ff"/><stop offset="1" stop-color="#5a62df"/></linearGradient>
   </defs></svg>
 
-  <section class="glass card-dark health-card" data-detail="health" id="healthCard">
-    <div class="health-card-head">
-      <span class="health-card-title">Readiness</span>
-      <span class="health-card-meta" id="healthMeta">Apple Watch</span>
-    </div>
-    <div class="health-rings" id="healthRings">
-      <div class="health-empty">Connecting your Apple Watch…</div>
-    </div>
+  <section class="nd-hero" id="overviewCard">
+    <div class="nd-hero-label">Your brief</div>
+    <div class="nd-hero-preview">Building your overview…</div>
   </section>
+
+  <section class="nd-readiness" data-detail="health" id="healthCard">
+    <div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">Athlytic</span></div>
+      <div class="nd-recov-sub">Connecting your Apple Watch…</div></div>
+  </section>
+
+  <section class="nd-wx" data-detail="weather" id="weatherCard">
+    <div class="nd-wx-loc">Weather</div>
+    <div class="nd-wx-msg">Loading…</div>
+  </section>
+
+  <div class="nd-row">
+    <section class="nd-cal" data-detail="schedule" id="scheduleCard">
+      <div class="nd-cal-empty">Loading…</div>
+    </section>
+    <section class="nd-ol" data-detail="inbox" id="inboxCard">
+      <div class="nd-ol-empty">Loading…</div>
+    </section>
+  </div>
+
+  <div class="nd-glass-wrap">
+    <div class="nd-glass-glow"></div>
+    <section class="nd-glass" data-detail="tasks" id="tasksCard">
+      <div class="nd-glass-head"><div class="nd-glass-title"><b>Tasks</b><span>Loading…</span></div></div>
+    </section>
+  </div>
 </main>
 
 <div class="detail-overlay" id="detailOverlay" hidden>
@@ -1087,33 +1164,48 @@ async function enablePush() {
 
 // Orchestrates the home hero card: evening → review prompt; else AI brief;
 // else the computed glance fallback.
+const ND_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+const ND_CHEV_MUTED = '<span class="nd-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
+
+// Short "what's today" line for the brief-card fallback before the AI brief lands.
+function glancePreviewHtml() {
+  const parts = [];
+  if (overview.weather) parts.push(`${overview.weather.temp}° ${overview.weather.label.toLowerCase()}`);
+  if (overview.calendar) {
+    const evs = todaysEvents();
+    const now = new Date();
+    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
+    if (next) parts.push(`next: ${next.summary}${next.allDay ? '' : ' at ' + fmtClock(next.start)}`);
+    else parts.push('calendar clear');
+  }
+  const urgent = overview.emailData ? overview.emailData.urgent.length : 0;
+  if (urgent) parts.push(`${urgent} urgent email${urgent > 1 ? 's' : ''}`);
+  return `<div class="nd-hero-preview">${parts.length ? escapeHtml(parts.join('  ·  ')) : 'Building your overview…'}</div>`;
+}
+
 function renderOverview() {
   const card = document.getElementById('overviewCard');
+  if (!card) return;
   const hour = new Date().getHours();
 
   if (hour >= 17 && !isReviewedToday()) {
-    card.innerHTML = `<div class="overview-label">Wrap up</div>
-      <button class="brief-cta" data-detail="review">
-        <span class="brief-emoji">🌙</span>
-        <span class="brief-text"><b>Review your day</b><span class="brief-sub">2 minutes · keep your streak going</span></span>
-        <span class="brief-arrow">→</span>
-      </button>`;
+    card.innerHTML = `<div class="nd-hero-label">Wrap up</div>
+      <div class="nd-hero-headline">Review your day</div>
+      <div class="nd-hero-preview">2 minutes to close out today and keep your streak alive.</div>
+      <div class="nd-hero-cta" data-detail="review">Start review ${ND_CHEV}</div>`;
     return;
   }
   if (overview.brief) {
-    card.innerHTML = `<div class="overview-label">Your brief</div>
-      <button class="brief-cta" data-detail="brief">
-        <span class="brief-emoji">✨</span>
-        <span class="brief-text"><b>${escapeHtml(briefHeadline(overview.brief))}</b><span class="brief-sub">Read your full plan</span></span>
-        <span class="brief-arrow">→</span>
-      </button>`;
+    card.innerHTML = `<div class="nd-hero-label">Your brief</div>
+      <div class="nd-hero-headline">${escapeHtml(briefHeadline(overview.brief))}</div>
+      <div class="nd-hero-cta" data-detail="brief">Read full plan ${ND_CHEV}</div>`;
     return;
   }
   if (overview.briefFetching) {
-    card.innerHTML = `<div class="overview-label">Your brief</div><div class="overview-line"><span class="icon">✨</span><span>Writing your morning brief…</span></div>`;
+    card.innerHTML = `<div class="nd-hero-label">Your brief</div><div class="nd-hero-preview">Writing your morning brief…</div>`;
     return;
   }
-  renderGlance();
+  card.innerHTML = `<div class="nd-hero-label">Today at a glance</div>${glancePreviewHtml()}`;
 }
 
 const WEATHER_CODES = {
@@ -1140,7 +1232,8 @@ async function fetchWithTimeout(url, opts = {}, ms = FETCH_TIMEOUT_MS) {
 
 function renderGreeting() {
   const now = new Date();
-  document.getElementById('dateLabel').textContent = '📅 Today, ' + now.toLocaleDateString(undefined, {
+  setGreeting();
+  document.getElementById('dateLabel').textContent = now.toLocaleDateString(undefined, {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 }
@@ -1933,42 +2026,139 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ---------- Home launcher tiles ----------
-function setTileText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+// ---------- Home cards (native-app tiles) ----------
+function setGreeting() {
+  const el = document.getElementById('greetLine');
+  if (!el) return;
+  const h = new Date().getHours();
+  const word = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  el.innerHTML = `${word}, <span class="accent">Noah</span>`;
+}
 
 function renderHome() {
-  // Weather tile
-  const w = overview.weather;
-  setTileText('tileWeatherIcon', w ? w.icon : (overview.weatherReached === false ? '⚠️' : '⏳'));
-  setTileText('tileWeatherValue', w ? `${w.temp}°` : '--°');
-  setTileText('tileWeatherSub', w ? `${w.label} · ${w.precip}% rain` : (overview.weatherReached === false ? 'Tap to retry' : 'Loading…'));
-
-  // Schedule tile — next event
-  if (overview.calendarReached === undefined) { setTileText('tileSchedValue', '—'); setTileText('tileSchedSub', 'Loading…'); }
-  else if (overview.calendarReached === false) { setTileText('tileSchedValue', '—'); setTileText('tileSchedSub', 'Tap to retry'); }
-  else {
-    const evs = todaysEvents();
-    const now = new Date();
-    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
-    if (!evs.length) { setTileText('tileSchedValue', 'Clear'); setTileText('tileSchedSub', 'No events today'); }
-    else if (!next) { setTileText('tileSchedValue', 'Done'); setTileText('tileSchedSub', `${evs.length} event${evs.length > 1 ? 's' : ''}, all done`); }
-    else { setTileText('tileSchedValue', next.allDay ? 'All day' : fmtClock(next.start)); setTileText('tileSchedSub', next.summary); }
-  }
-
-  // Tasks tile — app tasks + imported reminders due today
-  const appOpen = appTasksForToday().length;
-  const remOpen = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders().length : 0;
-  const taskTotal = appOpen + remOpen;
-  setTileText('tileTasksValue', String(taskTotal));
-  setTileText('tileTasksSub', taskTotal ? `${appOpen} task${appOpen === 1 ? '' : 's'} · ${remOpen} reminder${remOpen === 1 ? '' : 's'}` : 'all clear ✨');
-
-  // Inbox tile — unread + urgent
-  if (overview.emailReached === undefined) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Loading…'); }
-  else if (overview.emailReached === false) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Tap to retry'); }
-  else if (overview.emailConfigured === false) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Not set up'); }
-  else { const d = overview.emailData || { urgent: [], recent: [] }; setTileText('tileInboxValue', String(d.recent.length)); setTileText('tileInboxSub', `${d.urgent.length} urgent`); }
-
+  setGreeting();
+  renderWeatherCard();
+  renderScheduleCard();
+  renderInboxCard();
+  renderTasksCard();
   renderStreak();
+}
+
+// Apple-Weather-style multicolour glyph for an Open-Meteo weather code.
+function wxGlyph(code, isDay) {
+  const cloud = '<g fill="#eef2f6"><circle cx="18" cy="20" r="7"/><circle cx="27" cy="17" r="9"/><circle cx="35" cy="20" r="6.5"/><rect x="17" y="19" width="19" height="8" rx="4"/></g>';
+  const rain = '<g stroke="#5fb0ff" stroke-width="2.6" stroke-linecap="round"><line x1="20" y1="29" x2="18" y2="34"/><line x1="27" y1="29" x2="25" y2="34"/><line x1="34" y1="29" x2="32" y2="34"/></g>';
+  const drizzle = '<g stroke="#5fb0ff" stroke-width="2.6" stroke-linecap="round"><line x1="23" y1="29" x2="22" y2="33"/><line x1="31" y1="29" x2="30" y2="33"/></g>';
+  const sun = '<g><circle cx="24" cy="17" r="8" fill="#f7c044"/><g stroke="#f7c044" stroke-width="2.4" stroke-linecap="round"><line x1="24" y1="2" x2="24" y2="6"/><line x1="24" y1="28" x2="24" y2="32"/><line x1="9" y1="17" x2="5" y2="17"/><line x1="43" y1="17" x2="39" y2="17"/><line x1="13.5" y1="6.5" x2="10.5" y2="3.5"/><line x1="34.5" y1="6.5" x2="37.5" y2="3.5"/><line x1="13.5" y1="27.5" x2="10.5" y2="30.5"/><line x1="34.5" y1="27.5" x2="37.5" y2="30.5"/></g></g>';
+  const moon = '<path d="M31 19a11 11 0 1 1-12-11 8.5 8.5 0 0 0 12 11z" fill="#f3e2a0"/>';
+  const moonSm = '<circle cx="34" cy="11" r="6" fill="#f3e2a0"/>';
+  const sunSm = '<circle cx="16" cy="13" r="6.5" fill="#f7c044"/>';
+  const snow = '<g fill="#dbe6f0"><circle cx="20" cy="31" r="1.9"/><circle cx="27" cy="32" r="1.9"/><circle cx="34" cy="31" r="1.9"/></g>';
+  const bolt = '<path d="M27 27l-5 8 5.5-1-2 6 7.5-10-5.5 1 3-4z" fill="#f7c044"/>';
+  const w = (inner) => `<svg viewBox="0 0 48 36">${inner}</svg>`;
+  if (code === 0) return w(isDay ? sun : moon);
+  if (code === 1 || code === 2) return w((isDay ? sunSm : moonSm) + cloud);
+  if (code === 3 || code === 45 || code === 48) return w(cloud);
+  if (code >= 51 && code <= 57) return w((isDay ? '' : moonSm) + cloud + drizzle);
+  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return w((isDay ? '' : moonSm) + cloud + rain);
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return w(cloud + snow);
+  if (code >= 95) return w(cloud + bolt);
+  return w(cloud);
+}
+
+function renderWeatherCard() {
+  const el = document.getElementById('weatherCard');
+  if (!el) return;
+  if (overview.weatherReached === false) { el.innerHTML = `<div class="nd-wx-loc">Weather</div><div class="nd-wx-msg">Tap to retry</div>`; return; }
+  const raw = overview.weatherRaw;
+  if (!raw) { el.innerHTML = `<div class="nd-wx-loc">Weather</div><div class="nd-wx-msg">Loading…</div>`; return; }
+  const cur = raw.current, daily = raw.daily, hourly = raw.hourly;
+  const [label] = describeWeather(cur.weather_code);
+  const loc = (overview.locationLabel || 'Weather').replace(/\s*\(location unavailable\)/, '').split(',')[0];
+  const hi = Math.round(daily.temperature_2m_max[0]);
+  const lo = Math.round(daily.temperature_2m_min[0]);
+  let hours = '';
+  if (hourly && hourly.time) {
+    let start = hourly.time.findIndex((t) => new Date(t).getTime() >= Date.now() - 3600000);
+    if (start < 0) start = 0;
+    const cells = [];
+    for (let i = start; i < hourly.time.length && cells.length < 6; i++) {
+      const d = new Date(hourly.time[i]);
+      const hr = cells.length === 0 ? 'Now' : ((d.getHours() % 12) || 12) + (d.getHours() < 12 ? 'am' : 'pm');
+      const t = Math.round(hourly.temperature_2m[i]);
+      const day = d.getHours() >= 6 && d.getHours() < 19;
+      cells.push(`<div class="nd-wx-hour"><span class="t">${hr}</span>${wxGlyph(hourly.weather_code[i], day)}<span class="v">${t}°</span></div>`);
+    }
+    hours = cells.join('');
+  }
+  const arrow = '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>';
+  el.innerHTML = `<div class="nd-wx-top">
+      <div><div class="nd-wx-loc">${escapeHtml(loc)} ${arrow}</div><div class="nd-wx-temp">${Math.round(cur.temperature_2m)}°</div></div>
+      <div class="nd-wx-right">${wxGlyph(cur.weather_code, cur.is_day !== 0)}<div class="nd-wx-cond">${escapeHtml(label)}</div><div class="nd-wx-hl">L:${lo}° H:${hi}°</div></div>
+    </div>
+    <div class="nd-wx-hours">${hours}</div>`;
+}
+
+function renderScheduleCard() {
+  const el = document.getElementById('scheduleCard');
+  if (!el) return;
+  const now = new Date();
+  const mon = now.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
+  const dd = now.getDate();
+  let count = '', body = `<div class="nd-cal-empty">Loading…</div>`;
+  if (overview.calendarReached === false) { body = `<div class="nd-cal-empty">Tap to retry</div>`; }
+  else if (overview.calendarReached !== undefined) {
+    const evs = todaysEvents();
+    count = evs.length ? `${evs.length} event${evs.length > 1 ? 's' : ''}` : 'Free';
+    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now) || evs[0];
+    body = next
+      ? `<div class="nd-cal-ev"><div class="nd-cal-bar"></div><div><div class="et">${next.allDay ? 'All day' : escapeHtml(fmtClock(next.start))}</div><div class="en">${escapeHtml(next.summary)}</div></div></div>`
+      : `<div class="nd-cal-empty">Nothing today</div>`;
+  }
+  el.innerHTML = `<div class="nd-cal-head"><div class="nd-cal-glyph"><div class="m">${mon}</div><div class="d">${dd}</div></div>
+    <div class="nd-cal-title"><b>Schedule</b><span>${count}</span></div></div>${body}`;
+}
+
+function renderInboxCard() {
+  const el = document.getElementById('inboxCard');
+  if (!el) return;
+  const logo = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M13 4h7a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-7z" opacity="0.55"/><rect x="2" y="6" width="12" height="12" rx="2.5"/></svg>';
+  const head = (countHtml) => `<div class="nd-ol-head"><div class="nd-ol-logo">${logo}</div><span class="nd-ol-title">Inbox</span>${countHtml}</div>`;
+  if (overview.emailReached === false) { el.innerHTML = head('') + `<div class="nd-ol-empty">Tap to retry</div>`; return; }
+  if (overview.emailReached === undefined) { el.innerHTML = head('') + `<div class="nd-ol-empty">Loading…</div>`; return; }
+  if (overview.emailConfigured === false) { el.innerHTML = head('') + `<div class="nd-ol-empty">Not set up</div>`; return; }
+  const d = overview.emailData || { urgent: [], recent: [] };
+  const urgent = d.urgent || [];
+  if (urgent.length) {
+    const warn = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 17H2.5z"/><line x1="12" y1="9.5" x2="12" y2="14"/></svg>';
+    const rows = urgent.slice(0, 2).map((m) => {
+      const name = senderName(m.from);
+      const color = avatarColor(name + (m.source || ''));
+      return `<div class="nd-ol-row"><span class="nd-ol-dot urgent"></span><div class="nd-ol-av" style="background:${color}">${escapeHtml((name.charAt(0) || '?').toUpperCase())}</div><div class="nd-ol-body"><div class="nd-ol-sender">${escapeHtml(name)}</div><div class="nd-ol-subj">${escapeHtml(m.subject || '')}</div></div></div>`;
+    }).join('');
+    el.innerHTML = head(`<span class="nd-ol-count urgent">${warn}${urgent.length} urgent</span>`) + rows;
+  } else {
+    const n = (d.recent || []).length;
+    el.innerHTML = head(`<span class="nd-ol-count">${n}</span>`) + `<div class="nd-ol-empty">No urgent mail ✨</div>`;
+  }
+}
+
+function renderTasksCard() {
+  const el = document.getElementById('tasksCard');
+  if (!el) return;
+  const icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="8.5 12.5 11 15 16 9.5"/></svg>';
+  const chev = '<span class="nd-glass-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
+  const app = appTasksForToday();
+  const rems = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders() : [];
+  const open = app.length + rems.length;
+  const rows = [];
+  app.slice(0, 3).forEach((t) => rows.push(`<div class="nd-gtask"><span class="nd-gcheck"></span><span class="nd-gname">${escapeHtml(t.title)}</span></div>`));
+  rems.slice(0, Math.max(0, 3 - rows.length)).forEach((r) => rows.push(`<div class="nd-gtask"><span class="nd-gcheck"></span><span class="nd-gname">${escapeHtml(r.summary)}</span></div>`));
+  const sub = open ? `${open} open today` : 'All clear';
+  const bodyRows = rows.length ? `<div class="nd-gtasks">${rows.join('')}</div>` : '';
+  el.innerHTML = `<div class="nd-glass-head"><div class="nd-glass-icon">${icon}</div><div class="nd-glass-title"><b>Tasks</b><span>${sub}</span></div>${chev}</div>
+    ${bodyRows}
+    <div class="nd-gadd"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add a reminder…</div>`;
 }
 
 function renderStreak() {
@@ -1979,29 +2169,27 @@ function renderStreak() {
   el.style.display = n > 0 ? '' : 'none';
 }
 
-// ---------- Readiness rings (Apple Watch / Bevel via the iOS Shortcut) ----------
+// ---------- Readiness (Recovery, from Athlytic via the iOS Shortcut) ----------
 const HEALTH_CACHE_KEY = 'morningDewHealth';
 const RING_R = 82;
 const RING_C = 2 * Math.PI * RING_R; // ~515.2
 
 // One progress ring. pct 0–100; grad is a <linearGradient> id. Starts at 12
-// o'clock and sweeps clockwise, matching the Bevel widget.
+// o'clock and sweeps clockwise.
 function ringSvg(pct, grad) {
   const p = Math.max(0, Math.min(100, Number(pct) || 0));
   const arc = (p / 100) * RING_C;
   return `<svg viewBox="0 0 200 200">
-    <circle class="rtrack" cx="100" cy="100" r="${RING_R}"/>
+    <circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/>
     <circle cx="100" cy="100" r="${RING_R}" fill="none" stroke="url(#${grad})" stroke-width="16" stroke-linecap="round"
       stroke-dasharray="${arc.toFixed(1)} ${RING_C.toFixed(1)}" transform="rotate(-90 100 100)"/>
   </svg>`;
 }
 
-function ringBlock(pct, label, grad) {
-  const has = pct !== null && pct !== undefined;
-  return `<div class="hring">
-    <div class="hring-wrap">${ringSvg(has ? pct : 0, grad)}<span class="hring-val">${has ? pct + '%' : '–'}</span></div>
-    <span class="hring-label">${label}</span>
-  </div>`;
+function recoveryWord(r) {
+  if (r >= 67) return 'Primed — a good day to push';
+  if (r >= 34) return 'Moderate — pace yourself';
+  return 'Low — take it easy today';
 }
 
 async function fetchHealth() {
@@ -2019,37 +2207,37 @@ async function fetchHealth() {
 }
 
 function renderHealth() {
-  const el = document.getElementById('healthRings');
-  const meta = document.getElementById('healthMeta');
-  if (!el) return;
+  const card = document.getElementById('healthCard');
+  if (!card) return;
   const h = overview.health;
-  if (!h || (h.strain == null && h.recovery == null && h.sleep == null)) {
-    el.innerHTML = `<div class="health-empty">Connect your Apple Watch — set up the <b>Morning Dew</b> Shortcut to see today's strain, recovery and sleep here.</div>`;
-    if (meta) meta.textContent = 'Not connected';
+  const rec = h ? h.recovery : null;
+  if (rec == null) {
+    card.innerHTML = `<div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">Athlytic</span></div>
+      <div class="nd-recov-sub">Connect your Watch — set up the Shortcut to see today's recovery.</div></div>${ND_CHEV_MUTED}`;
     return;
   }
-  el.innerHTML = ringBlock(h.strain, 'Strain', 'gStrain')
-    + ringBlock(h.recovery, 'Recovery', 'gRecovery')
-    + ringBlock(h.sleep, 'Sleep', 'gSleep');
-  if (meta) meta.textContent = h.source || 'Apple Watch';
+  const src = (h && h.source) ? h.source : 'Athlytic';
+  const upd = (h && h.updatedAt) ? ' · ' + fmtAgo(new Date(h.updatedAt).getTime()) : '';
+  card.innerHTML = `<div class="nd-recov-wrap">${ringSvg(rec, 'gRecovery')}<span class="nd-recov-val">${rec}%</span></div>
+    <div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">${escapeHtml(src)}</span></div>
+      <div class="nd-recov-sub">${recoveryWord(rec)}${upd}</div></div>${ND_CHEV_MUTED}`;
 }
 
 function healthDetailHtml() {
   const h = overview.health;
-  if (!h || (h.strain == null && h.recovery == null && h.sleep == null)) {
-    return `<div class="health-foot-note">No readiness data yet.<br><br>
-      Set up the one-time <b>Morning Dew</b> iOS Shortcut to push your Apple Watch / Bevel
-      numbers (strain, recovery, sleep) here each morning. Until then this section stays empty.</div>`;
+  const rec = h ? h.recovery : null;
+  if (rec == null) {
+    return `<div class="health-foot-note">No recovery data yet.<br><br>
+      Set up the one-time <b>Morning Dew</b> iOS Shortcut to push your Athlytic recovery
+      here each morning. Until then this stays empty.</div>`;
   }
-  const rings = ringBlock(h.strain, 'Strain', 'gStrain')
-    + ringBlock(h.recovery, 'Recovery', 'gRecovery')
-    + ringBlock(h.sleep, 'Sleep', 'gSleep');
   const bits = [];
-  if (h.sleepHours != null) bits.push(`${h.sleepHours}h of sleep`);
   if (h.source) bits.push(`from ${escapeHtml(h.source)}`);
   if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
-  return `<div class="health-detail-rings">${rings}</div>
-    <div class="health-foot-note">${bits.join(' · ') || 'Today\'s readiness from your Apple Watch.'}</div>`;
+  return `<div class="health-detail-rings" style="grid-template-columns:1fr;justify-items:center">
+      <div class="hring"><div class="hring-wrap" style="width:9rem;height:9rem">${ringSvg(rec, 'gRecovery')}<span class="hring-val" style="font-size:2rem">${rec}%</span></div><span class="hring-label">Recovery</span></div>
+    </div>
+    <div class="health-foot-note">${recoveryWord(rec)}.${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>`;
 }
 
 // ---------- Refresh orchestration ----------
