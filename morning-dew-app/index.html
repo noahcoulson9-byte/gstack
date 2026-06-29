@@ -37,8 +37,10 @@
     position: relative;
     background: linear-gradient(168deg, #2a1d13 0%, #1c130c 55%, #130d08 100%);
     background-attachment: fixed;
-    height: 100dvh;
-    overflow: hidden;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -191,7 +193,7 @@
     display: flex; flex-direction: column; gap: 0.85rem;
   }
   .home-tiles {
-    flex: 1 1 auto; min-height: 0;
+    min-height: 46vh;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.7rem;
   }
   .home-tile {
@@ -202,6 +204,27 @@
     transition: transform 0.12s ease;
   }
   .home-tile:active { transform: scale(0.97); }
+
+  /* ---- Readiness (Apple Watch / Bevel) ---- */
+  .health-card { padding: 1rem 1.1rem 1.1rem; text-align: left; cursor: pointer; transition: transform 0.12s ease; }
+  .health-card:active { transform: scale(0.99); }
+  .health-card-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.7rem; }
+  .health-card-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; }
+  .health-card-meta { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-left: auto; }
+  .health-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+  .hring { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; }
+  .hring-wrap { position: relative; width: 5.4rem; height: 5.4rem; }
+  .hring-wrap svg { width: 100%; height: 100%; display: block; }
+  .hring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+  .hring-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .rtrack { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 16; }
+  .health-empty { color: var(--muted); font-size: 0.86rem; line-height: 1.4; padding: 0.3rem 0.1rem; }
+  .health-empty b { color: var(--text); font-weight: 700; }
+  /* Detail-section rings (larger) */
+  .health-detail-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; margin: 0.4rem 0 1.2rem; }
+  .health-detail-rings .hring-wrap { width: 6.6rem; height: 6.6rem; }
+  .health-detail-rings .hring-val { font-size: 1.55rem; }
+  .health-foot-note { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
   .tile-icon { font-size: 1.7rem; line-height: 1; }
   .tile-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
   .tile-value { font-size: 1.55rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
@@ -735,6 +758,22 @@
       <span class="tile-sub" id="tileInboxSub">Loading…</span>
     </button>
   </div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="gStrain" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#fcc53a"/><stop offset="1" stop-color="#f08a1d"/></linearGradient>
+    <linearGradient id="gRecovery" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aee63b"/><stop offset="1" stop-color="#27b24a"/></linearGradient>
+    <linearGradient id="gSleep" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aeb8ff"/><stop offset="1" stop-color="#5a62df"/></linearGradient>
+  </defs></svg>
+
+  <section class="glass card-dark health-card" data-detail="health" id="healthCard">
+    <div class="health-card-head">
+      <span class="health-card-title">Readiness</span>
+      <span class="health-card-meta" id="healthMeta">Apple Watch</span>
+    </div>
+    <div class="health-rings" id="healthRings">
+      <div class="health-empty">Connecting your Apple Watch…</div>
+    </div>
+  </section>
 </main>
 
 <div class="detail-overlay" id="detailOverlay" hidden>
@@ -1830,6 +1869,7 @@ const DETAILS = {
   tasks: { title: 'Tasks', build: tasksDetailHtml },
   inbox: { title: 'Inbox', build: inboxDetailHtml },
   review: { title: 'Review your day', build: reviewDetailHtml },
+  health: { title: 'Readiness', build: healthDetailHtml },
 };
 
 function openDetail(type) {
@@ -1939,6 +1979,79 @@ function renderStreak() {
   el.style.display = n > 0 ? '' : 'none';
 }
 
+// ---------- Readiness rings (Apple Watch / Bevel via the iOS Shortcut) ----------
+const HEALTH_CACHE_KEY = 'morningDewHealth';
+const RING_R = 82;
+const RING_C = 2 * Math.PI * RING_R; // ~515.2
+
+// One progress ring. pct 0–100; grad is a <linearGradient> id. Starts at 12
+// o'clock and sweeps clockwise, matching the Bevel widget.
+function ringSvg(pct, grad) {
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  const arc = (p / 100) * RING_C;
+  return `<svg viewBox="0 0 200 200">
+    <circle class="rtrack" cx="100" cy="100" r="${RING_R}"/>
+    <circle cx="100" cy="100" r="${RING_R}" fill="none" stroke="url(#${grad})" stroke-width="16" stroke-linecap="round"
+      stroke-dasharray="${arc.toFixed(1)} ${RING_C.toFixed(1)}" transform="rotate(-90 100 100)"/>
+  </svg>`;
+}
+
+function ringBlock(pct, label, grad) {
+  const has = pct !== null && pct !== undefined;
+  return `<div class="hring">
+    <div class="hring-wrap">${ringSvg(has ? pct : 0, grad)}<span class="hring-val">${has ? pct + '%' : '–'}</span></div>
+    <span class="hring-label">${label}</span>
+  </div>`;
+}
+
+async function fetchHealth() {
+  try {
+    const res = await fetchWithTimeout(apiUrl('/api/health'));
+    const data = await res.json();
+    overview.healthConfigured = data.configured;
+    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); }
+    else if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
+  } catch {
+    if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
+  }
+  renderHealth();
+  if (currentDetail === 'health') openDetail('health');
+}
+
+function renderHealth() {
+  const el = document.getElementById('healthRings');
+  const meta = document.getElementById('healthMeta');
+  if (!el) return;
+  const h = overview.health;
+  if (!h || (h.strain == null && h.recovery == null && h.sleep == null)) {
+    el.innerHTML = `<div class="health-empty">Connect your Apple Watch — set up the <b>Morning Dew</b> Shortcut to see today's strain, recovery and sleep here.</div>`;
+    if (meta) meta.textContent = 'Not connected';
+    return;
+  }
+  el.innerHTML = ringBlock(h.strain, 'Strain', 'gStrain')
+    + ringBlock(h.recovery, 'Recovery', 'gRecovery')
+    + ringBlock(h.sleep, 'Sleep', 'gSleep');
+  if (meta) meta.textContent = h.source || 'Apple Watch';
+}
+
+function healthDetailHtml() {
+  const h = overview.health;
+  if (!h || (h.strain == null && h.recovery == null && h.sleep == null)) {
+    return `<div class="health-foot-note">No readiness data yet.<br><br>
+      Set up the one-time <b>Morning Dew</b> iOS Shortcut to push your Apple Watch / Bevel
+      numbers (strain, recovery, sleep) here each morning. Until then this section stays empty.</div>`;
+  }
+  const rings = ringBlock(h.strain, 'Strain', 'gStrain')
+    + ringBlock(h.recovery, 'Recovery', 'gRecovery')
+    + ringBlock(h.sleep, 'Sleep', 'gSleep');
+  const bits = [];
+  if (h.sleepHours != null) bits.push(`${h.sleepHours}h of sleep`);
+  if (h.source) bits.push(`from ${escapeHtml(h.source)}`);
+  if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
+  return `<div class="health-detail-rings">${rings}</div>
+    <div class="health-foot-note">${bits.join(' · ') || 'Today\'s readiness from your Apple Watch.'}</div>`;
+}
+
 // ---------- Refresh orchestration ----------
 let lastUpdated = 0;
 
@@ -1976,6 +2089,7 @@ function refreshAll() {
   withColdStartRetry(loadCalendar);
   withColdStartRetry(loadReminders);
   withColdStartRetry(loadEmail);
+  fetchHealth();
 }
 
 // ---------- Controls ----------
