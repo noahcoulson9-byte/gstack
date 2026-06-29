@@ -1138,7 +1138,12 @@ function briefContext() {
 
   const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
   const recovery = (health && health.recovery != null)
-    ? { score: health.recovery, read: recoveryWord(health.recovery), source: health.source || null }
+    ? {
+        score: health.recovery,
+        band: health.recovery >= 67 ? 'high' : health.recovery >= 34 ? 'moderate' : 'low',
+        read: recoveryWord(health.recovery),
+        source: health.source || null,
+      }
     : null;
 
   const hour = now.getHours();
