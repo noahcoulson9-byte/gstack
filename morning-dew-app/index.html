@@ -620,6 +620,18 @@
     border-radius: 14px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
   }
   .task-add:active { background: rgba(255,178,46,0.24); }
+  .task-input-row { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
+  .task-text-input {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 0.95rem;
+    color: var(--text); background: rgba(0,0,0,0.06);
+    border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.6rem 0.7rem;
+  }
+  .task-text-input::placeholder { color: var(--muted); }
+  .task-add-btn {
+    flex-shrink: 0; font-size: 0.9rem; font-weight: 800; color: #3a2710;
+    background: var(--accent); border-radius: 12px; padding: 0.6rem 1rem;
+  }
+  .task-add-btn:active { filter: brightness(0.95); }
   .app-task .task-box { cursor: pointer; transition: background 0.12s ease; }
   .task-box.checked { background: var(--ok); border-color: var(--ok); position: relative; }
   .task-box.checked::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #06231d; }
@@ -1324,7 +1336,8 @@ function fmtEventTime(iso, allDay) {
 function renderToday() {
   renderHome();
   if (currentDetail === 'schedule') openDetail('schedule');
-  if (currentDetail === 'tasks') openDetail('tasks');
+  // Tasks intentionally NOT re-opened on background refresh — it would wipe the
+  // checklist input mid-type. Its app-task list re-renders on your edits instead.
 }
 
 function todaysEvents() {
@@ -1689,15 +1702,38 @@ function appTaskRows(list, done) {
       <button class="task-mini" data-task-action="delete" data-task-id="${t.id}" title="Delete">×</button>
     </div>`).join('');
 }
-function appTasksHtml() {
+// Just the checklist rows (open + done-today), re-rendered on its own so the
+// type-ahead input above it keeps focus while you add items.
+function appTaskListInnerHtml() {
   const today = localDateStr(new Date());
   const all = loadTasks();
   const open = all.filter((t) => !t.done && (!t.due || t.due <= today)).sort((a, b) => a.createdAt - b.createdAt);
   const doneToday = all.filter((t) => t.done && t.doneAt && isToday(new Date(t.doneAt).toISOString()));
-  let html = `<button class="task-add" data-task-add>+ Add a task</button>`;
-  html += open.length ? appTaskRows(open, false) : `<div class="empty-state">No tasks yet — add one above.</div>`;
+  let html = open.length ? appTaskRows(open, false) : `<div class="empty-state">Nothing yet — write a reminder above.</div>`;
   if (doneToday.length) html += `<div class="task-done-head">Done today</div>` + appTaskRows(doneToday, true);
   return html;
+}
+function appTasksHtml() {
+  return `
+    <div class="task-input-row">
+      <input id="taskInput" class="task-text-input" placeholder="Write a reminder…" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" />
+      <button class="task-add-btn" data-task-add-inline>Add</button>
+    </div>
+    <div id="appTaskList">${appTaskListInnerHtml()}</div>`;
+}
+// Adds whatever is in the input, then re-renders just the list and refocuses
+// the box so you can keep writing the next item.
+function commitTaskInput() {
+  const input = document.getElementById('taskInput');
+  if (!input) return;
+  const title = input.value.trim();
+  if (!title) { input.focus(); return; }
+  addTask(title);
+  input.value = '';
+  const listEl = document.getElementById('appTaskList');
+  if (listEl) listEl.innerHTML = appTaskListInnerHtml();
+  renderHome();
+  input.focus();
 }
 function tasksDetailHtml() {
   const openCount = appTasksForToday().length;
@@ -1831,15 +1867,15 @@ document.addEventListener('click', (e) => {
     if (action === 'toggle') toggleTask(id);
     else if (action === 'snooze') snoozeTask(id);
     else if (action === 'delete') deleteTask(id);
-    refreshOpenSection();
+    // Re-render just the checklist (keeps the type-ahead input intact) when in
+    // the Tasks section; full re-render elsewhere.
+    const listEl = document.getElementById('appTaskList');
+    if (listEl) listEl.innerHTML = appTaskListInnerHtml();
+    else refreshOpenSection();
     renderHome();
     return;
   }
-  if (e.target.closest('[data-task-add]')) {
-    const title = prompt('New task');
-    if (title && title.trim()) { addTask(title); refreshOpenSection(); renderHome(); }
-    return;
-  }
+  if (e.target.closest('[data-task-add-inline]')) { commitTaskInput(); return; }
   if (e.target.closest('[data-brief-refresh]')) { fetchBrief(true); return; }
   if (e.target.closest('[data-enable-push]')) { enablePush(); return; }
   if (e.target.closest('[data-review-rollover]')) {
@@ -1968,6 +2004,10 @@ document.addEventListener('click', (e) => {
 // consumed (keeps the OS back gesture in sync via the popstate listener).
 document.getElementById('detailBack').addEventListener('click', () => { if (currentDetail !== null) history.back(); });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && currentDetail !== null) history.back(); });
+// Pressing Return in the checklist input adds the reminder and keeps you typing.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target && e.target.id === 'taskInput') { e.preventDefault(); commitTaskInput(); }
+});
 
 document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   e.currentTarget.classList.remove('spinning');
