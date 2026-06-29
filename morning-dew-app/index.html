@@ -585,6 +585,61 @@
   .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #ff9d4d, #ffc24d); }
   .bar-row .bv { font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
 
+  /* ---- Brief / review CTA on the home hero card ---- */
+  .brief-cta {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 0.7rem; width: 100%;
+    background: transparent; border: none; padding: 0.15rem 0; text-align: left; color: var(--text);
+  }
+  .brief-emoji { font-size: 1.5rem; flex-shrink: 0; }
+  .brief-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .brief-text b { font-size: 1rem; font-weight: 700; line-height: 1.25; }
+  .brief-sub { color: var(--muted); font-size: 0.8rem; margin-top: 0.1rem; }
+  .brief-arrow { flex-shrink: 0; color: var(--accent); font-size: 1.2rem; font-weight: 700; }
+
+  /* ---- Brief section (rendered markdown) ---- */
+  .brief-card { line-height: 1.5; }
+  .brief-h { font-size: 1.25rem; font-weight: 800; margin: 0 0 0.6rem; letter-spacing: -0.01em; }
+  .brief-p { margin: 0.5rem 0; font-size: 0.95rem; }
+  .brief-ul { margin: 0.4rem 0; padding-left: 1.1rem; }
+  .brief-ul li { margin: 0.3rem 0; font-size: 0.95rem; }
+  .brief-actions { text-align: center; padding: 0.2rem 0; }
+  .brief-refresh {
+    font-size: 0.85rem; font-weight: 700; color: var(--accent);
+    background: rgba(255,178,46,0.16); border: 1px solid rgba(255,178,46,0.36);
+    border-radius: 999px; padding: 0.5rem 1.1rem;
+  }
+  .brief-refresh:active { background: rgba(255,178,46,0.3); }
+
+  /* ---- Two-way task controls ---- */
+  .task-add {
+    display: block; width: 100%; text-align: left;
+    font-size: 0.9rem; font-weight: 700; color: var(--accent);
+    background: rgba(255,178,46,0.12); border: 1px dashed rgba(255,178,46,0.45);
+    border-radius: 14px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
+  }
+  .task-add:active { background: rgba(255,178,46,0.24); }
+  .app-task .task-box { cursor: pointer; transition: background 0.12s ease; }
+  .task-box.checked { background: var(--ok); border-color: var(--ok); position: relative; }
+  .task-box.checked::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #06231d; }
+  .task-done .task-title { text-decoration: line-through; opacity: 0.55; }
+  .task-mini { margin-left: 0.2rem; width: 24px; height: 24px; flex-shrink: 0; border-radius: 8px; background: rgba(0,0,0,0.08); color: var(--muted); font-size: 0.95rem; font-weight: 700; }
+  .task-done-head { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0.7rem 0 0.2rem; }
+  .review-note {
+    width: 100%; min-height: 64px; resize: vertical; box-sizing: border-box;
+    border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.10);
+    color: var(--text); font-family: inherit; font-size: 0.92rem; padding: 0.6rem 0.7rem; margin-top: 0.2rem;
+  }
+
+  /* ---- Streak chip in header ---- */
+  .welcome-meta { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; margin-top: 0.45rem; }
+  .welcome-meta .updated-label { margin-top: 0; }
+  .streak-chip {
+    font-size: 0.74rem; font-weight: 800; color: #ffcaa0;
+    background: rgba(255,126,60,0.18); border: 1px solid rgba(255,126,60,0.4);
+    border-radius: 999px; padding: 0.1rem 0.55rem;
+  }
+
   /* ---- AI overview ---- */
   .overview-card { padding: 1rem 1.1rem; }
   .overview-label {
@@ -630,7 +685,10 @@
     <div class="welcome-hi">Welcome back!</div>
     <h1 class="welcome-name">Noah</h1>
     <div class="welcome-date" id="dateLabel"></div>
-    <div class="updated-label" id="updatedLabel">Updating…</div>
+    <div class="welcome-meta">
+      <span class="updated-label" id="updatedLabel">Updating…</span>
+      <span class="streak-chip" id="streakLabel" style="display:none"></span>
+    </div>
   </section>
 
   <section class="glass card-dark overview-card" id="overviewCard">
@@ -720,6 +778,56 @@ function isToday(iso) {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
 }
 
+// ---------- Local stores (single-user, on-device): tasks, review, streak ----------
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function lsGet(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* quota */ } }
+
+const TASKS_KEY = 'morningDewTasks';
+function loadTasks() { return lsGet(TASKS_KEY, []); }
+function saveTasks(t) { lsSet(TASKS_KEY, t); }
+function addTask(title) {
+  const t = loadTasks();
+  t.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: title.trim(), done: false, due: localDateStr(new Date()), createdAt: Date.now() });
+  saveTasks(t);
+}
+function mutateTask(id, fn) { const t = loadTasks(); const x = t.find((i) => i.id === id); if (x) fn(x, t); saveTasks(t); }
+function toggleTask(id) { mutateTask(id, (x) => { x.done = !x.done; x.doneAt = x.done ? Date.now() : null; }); }
+function snoozeTask(id) {
+  mutateTask(id, (x) => { const d = new Date(); d.setDate(d.getDate() + 1); x.due = localDateStr(d); });
+}
+function deleteTask(id) { saveTasks(loadTasks().filter((t) => t.id !== id)); }
+// App tasks that belong on today's list: not done, due today or overdue.
+function appTasksForToday() {
+  const today = localDateStr(new Date());
+  return loadTasks().filter((t) => !t.done && (!t.due || t.due <= today));
+}
+
+const REVIEW_KEY = 'morningDewReview';
+const STREAK_KEY = 'morningDewStreak';
+function isReviewedToday() { const r = lsGet(REVIEW_KEY, {}); return !!r[localDateStr(new Date())]; }
+function finishReview(note) {
+  const today = localDateStr(new Date());
+  const r = lsGet(REVIEW_KEY, {}); r[today] = { reviewed: true, note: note || '', at: Date.now() }; lsSet(REVIEW_KEY, r);
+  // Streak: +1 if last review was yesterday, reset to 1 on a gap, no-op if already today.
+  const s = lsGet(STREAK_KEY, { count: 0, lastDate: null });
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (s.lastDate === today) { /* already counted */ }
+  else if (s.lastDate === localDateStr(y)) { s.count += 1; s.lastDate = today; }
+  else { s.count = 1; s.lastDate = today; }
+  lsSet(STREAK_KEY, s);
+}
+function currentStreak() {
+  const s = lsGet(STREAK_KEY, { count: 0, lastDate: null });
+  if (!s.lastDate || !s.count) return 0;
+  const today = localDateStr(new Date());
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  // Streak only "counts" if kept up to yesterday/today; otherwise it's lapsed.
+  return (s.lastDate === today || s.lastDate === localDateStr(y)) ? s.count : 0;
+}
+
 function fmtClock(iso) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
@@ -762,7 +870,7 @@ function findFreeBlock(todaysEvents) {
   return best;
 }
 
-function renderOverview() {
+function renderGlance() {
   const card = document.getElementById('overviewCard');
   const lines = [];
 
@@ -814,6 +922,113 @@ function renderOverview() {
   card.innerHTML = `<div class="overview-label">Today at a glance</div>${lines.slice(0, 3).join('')}`;
 }
 
+// ---------- AI Morning Brief ----------
+const BRIEF_KEY = 'morningDewBrief';
+function cachedBrief() {
+  const b = lsGet(BRIEF_KEY, null);
+  return b && b.date === localDateStr(new Date()) ? b.brief : null;
+}
+function briefHeadline(md) {
+  if (!md) return '';
+  const h = md.split('\n').find((l) => l.startsWith('## '));
+  return (h ? h.slice(3) : md.split('\n').find((l) => l.trim())).replace(/\*\*/g, '').trim();
+}
+// Tiny markdown → HTML for the brief (## heading, **bold**, - bullets).
+function mdToHtml(md) {
+  const lines = escapeHtml(md).split('\n');
+  let html = '';
+  let inList = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    const bold = (s) => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    if (line.startsWith('## ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h2 class="brief-h">${bold(line.slice(3))}</h2>`; }
+    else if (line.startsWith('- ')) { if (!inList) { html += '<ul class="brief-ul">'; inList = true; } html += `<li>${bold(line.slice(2))}</li>`; }
+    else if (!line) { if (inList) { html += '</ul>'; inList = false; } }
+    else { if (inList) { html += '</ul>'; inList = false; } html += `<p class="brief-p">${bold(line)}</p>`; }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+function briefContext() {
+  const evs = todaysEvents().map((e) => ({ title: e.summary, start: e.start, end: e.end, allDay: e.allDay, location: e.location }));
+  const tasks = [
+    ...appTasksForToday().map((t) => ({ title: t.title, source: 'task' })),
+    ...todaysReminders().map((r) => ({ title: r.summary, due: r.start || null, source: 'reminder' })),
+  ];
+  const w = overview.weather ? {
+    temp: overview.weather.temp, condition: overview.weather.label, rainChance: overview.weather.precip,
+    nudges: (overview.weather.nudges || []).map((n) => n.text),
+  } : null;
+  const email = overview.emailData ? {
+    urgent: overview.emailData.urgent.length, new: overview.emailData.recent.length,
+    urgentSubjects: overview.emailData.urgent.slice(0, 5).map((m) => m.subject),
+  } : null;
+  const now = new Date();
+  return { localTime: fmtClock(now.toISOString()), date: now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }), location: overview.locationLabel || null, events: evs, tasks, weather: w, email };
+}
+async function fetchBrief(force) {
+  if (!force) {
+    const c = cachedBrief();
+    if (c) { overview.brief = c; renderOverview(); return; }
+  }
+  if (overview.briefFetching) return;
+  // Wait until the core data is in so the brief is built from a full picture.
+  if (overview.weatherReached === undefined || overview.calendarReached === undefined) return;
+  overview.briefFetching = true;
+  if (currentDetail === 'brief') openDetail('brief');
+  try {
+    const res = await fetchWithTimeout(apiUrl('/api/brief'), {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(briefContext()),
+    }, 28000);
+    const data = await res.json();
+    if (data.configured === false) { overview.briefConfigured = false; }
+    else if (data.brief) {
+      overview.brief = data.brief;
+      overview.briefConfigured = true;
+      lsSet(BRIEF_KEY, { date: localDateStr(new Date()), brief: data.brief });
+    } else if (data.error) {
+      overview.briefError = data.error;
+    }
+  } catch (err) {
+    overview.briefError = 'timed out';
+  } finally {
+    overview.briefFetching = false;
+    renderOverview();
+    if (currentDetail === 'brief') openDetail('brief');
+  }
+}
+
+// Orchestrates the home hero card: evening → review prompt; else AI brief;
+// else the computed glance fallback.
+function renderOverview() {
+  const card = document.getElementById('overviewCard');
+  const hour = new Date().getHours();
+
+  if (hour >= 17 && !isReviewedToday()) {
+    card.innerHTML = `<div class="overview-label">Wrap up</div>
+      <button class="brief-cta" data-detail="review">
+        <span class="brief-emoji">🌙</span>
+        <span class="brief-text"><b>Review your day</b><span class="brief-sub">2 minutes · keep your streak going</span></span>
+        <span class="brief-arrow">→</span>
+      </button>`;
+    return;
+  }
+  if (overview.brief) {
+    card.innerHTML = `<div class="overview-label">Your brief</div>
+      <button class="brief-cta" data-detail="brief">
+        <span class="brief-emoji">✨</span>
+        <span class="brief-text"><b>${escapeHtml(briefHeadline(overview.brief))}</b><span class="brief-sub">Read your full plan</span></span>
+        <span class="brief-arrow">→</span>
+      </button>`;
+    return;
+  }
+  if (overview.briefFetching) {
+    card.innerHTML = `<div class="overview-label">Your brief</div><div class="overview-line"><span class="icon">✨</span><span>Writing your morning brief…</span></div>`;
+    return;
+  }
+  renderGlance();
+}
+
 const WEATHER_CODES = {
   0: ['Clear sky', '☀️'], 1: ['Mainly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'],
   45: ['Fog', '🌫️'], 48: ['Freezing fog', '🌫️'], 51: ['Light drizzle', '🌦️'], 53: ['Drizzle', '🌦️'],
@@ -826,9 +1041,9 @@ const WEATHER_CODES = {
 };
 function describeWeather(code) { return WEATHER_CODES[code] || ['Unknown', '❔']; }
 
-async function fetchWithTimeout(url, opts = {}) {
+async function fetchWithTimeout(url, opts = {}, ms = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
     return await fetch(url, { ...opts, signal: controller.signal });
   } finally {
@@ -932,6 +1147,7 @@ async function loadWeather() {
     overview.weatherReached = true;
     renderOverview();
     renderHome();
+    fetchBrief();
     if (currentDetail === 'weather') openDetail('weather');
   } catch (err) {
     overview.weatherReached = false;
@@ -1124,6 +1340,7 @@ async function loadCalendar() {
     overview.calendarReached = true;
     renderOverview();
     renderToday();
+    fetchBrief();
     return true;
   } catch (err) {
     overview.calendarReached = false;
@@ -1426,15 +1643,76 @@ function scheduleDetailHtml() {
     ${upcomingHtml}`;
 }
 
-// ---- Tasks section: reminders checklist ----
+// ---- Tasks section: two-way app tasks + read-only imported reminders ----
+function appTaskRows(list, done) {
+  return list.map((t) => `
+    <div class="task-item app-task${done ? ' task-done' : ''}">
+      <button class="task-box${done ? ' checked' : ''}" data-task-action="toggle" data-task-id="${t.id}" aria-label="Toggle done"></button>
+      <span class="task-title">${escapeHtml(t.title)}</span>
+      ${done ? '' : `<button class="task-mini" data-task-action="snooze" data-task-id="${t.id}" title="Move to tomorrow">→</button>`}
+      <button class="task-mini" data-task-action="delete" data-task-id="${t.id}" title="Delete">×</button>
+    </div>`).join('');
+}
+function appTasksHtml() {
+  const today = localDateStr(new Date());
+  const all = loadTasks();
+  const open = all.filter((t) => !t.done && (!t.due || t.due <= today)).sort((a, b) => a.createdAt - b.createdAt);
+  const doneToday = all.filter((t) => t.done && t.doneAt && isToday(new Date(t.doneAt).toISOString()));
+  let html = `<button class="task-add" data-task-add>+ Add a task</button>`;
+  html += open.length ? appTaskRows(open, false) : `<div class="empty-state">No tasks yet — add one above.</div>`;
+  if (doneToday.length) html += `<div class="task-done-head">Done today</div>` + appTaskRows(doneToday, true);
+  return html;
+}
 function tasksDetailHtml() {
-  const rems = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders() : [];
+  const openCount = appTasksForToday().length;
+  const remCount = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders().length : 0;
   return `
     <section class="glass detail-hero">
-      <div class="metric-big">${rems.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> due</span></div>
-      <div class="metric-sub">reminders for today</div>
+      <div class="metric-big">${openCount + remCount}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> to do</span></div>
+      <div class="metric-sub">${openCount} task${openCount === 1 ? '' : 's'} · ${remCount} reminder${remCount === 1 ? '' : 's'} today</div>
     </section>
-    <section class="glass insight-card"><div class="insight-head">Today's tasks</div>${tasksListHtml()}</section>`;
+    <section class="glass insight-card"><div class="insight-head">Your tasks</div>${appTasksHtml()}</section>
+    <section class="glass insight-card"><div class="insight-head">Imported reminders</div>${tasksListHtml()}</section>`;
+}
+
+// ---- Brief section: the full AI morning plan ----
+function briefDetailHtml() {
+  if (overview.briefConfigured === false) {
+    return `<section class="glass insight-card"><div class="placeholder-state">The AI brief needs <code>ANTHROPIC_API_KEY</code> set on the server. Once it's set you'll get a written, time-blocked plan here each morning.</div></section>`;
+  }
+  if (overview.briefFetching && !overview.brief) {
+    return `<section class="glass insight-card"><div class="loading-state">✨ Writing your morning brief…</div></section>`;
+  }
+  if (!overview.brief) {
+    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-brief-refresh>Generate brief</button></div></section>`;
+  }
+  return `<section class="glass insight-card brief-card">${mdToHtml(overview.brief)}</section><div class="brief-actions"><button class="brief-refresh" data-brief-refresh>↻ Regenerate</button></div>`;
+}
+
+// ---- Review section: end-of-day wrap + streak ----
+function reviewDetailHtml() {
+  const today = localDateStr(new Date());
+  const all = loadTasks();
+  const open = all.filter((t) => !t.done && (!t.due || t.due <= today));
+  const doneToday = all.filter((t) => t.done && t.doneAt && isToday(new Date(t.doneAt).toISOString()));
+  const reviewed = isReviewedToday();
+  const note = reviewed ? ((lsGet(REVIEW_KEY, {})[today] || {}).note || '') : '';
+  const list = (arr, done) => arr.length
+    ? arr.map((t) => `<div class="task-item${done ? ' task-done' : ''}"><span class="task-box${done ? ' checked' : ''}"></span><span class="task-title">${escapeHtml(t.title)}</span></div>`).join('')
+    : `<div class="empty-state">${done ? 'Nothing checked off yet.' : 'No open tasks left. 🎉'}</div>`;
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${doneToday.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> done</span></div>
+      <div class="metric-sub">${open.length} still open · 🔥 ${currentStreak()}-day streak</div>
+    </section>
+    <section class="glass insight-card"><div class="insight-head">Done today</div>${list(doneToday, true)}</section>
+    <section class="glass insight-card"><div class="insight-head">Still open</div>${list(open, false)}
+      ${open.length ? `<div class="brief-actions"><button class="brief-refresh" data-review-rollover>Move ${open.length} to tomorrow</button></div>` : ''}
+    </section>
+    <section class="glass insight-card"><div class="insight-head">One line about today (optional)</div>
+      <textarea id="reviewNote" class="review-note" placeholder="What went well? What's on your mind?">${escapeHtml(note)}</textarea>
+      <div class="brief-actions"><button class="brief-refresh review-finish" data-review-finish>${reviewed ? 'Update review' : 'Finish review · keep the streak 🔥'}</button></div>
+    </section>`;
 }
 
 // ---- Inbox section: triage + sender insights + the actual email lists ----
@@ -1471,10 +1749,12 @@ function inboxDetailHtml() {
 }
 
 const DETAILS = {
+  brief: { title: 'Your brief', build: briefDetailHtml },
   weather: { title: 'Weather', build: weatherDetailHtml },
   schedule: { title: 'Schedule', build: scheduleDetailHtml },
   tasks: { title: 'Tasks', build: tasksDetailHtml },
   inbox: { title: 'Inbox', build: inboxDetailHtml },
+  review: { title: 'Review your day', build: reviewDetailHtml },
 };
 
 function openDetail(type) {
@@ -1500,6 +1780,43 @@ function closeDetail() {
 // The back button and OS back both route through history so state stays balanced.
 window.addEventListener('popstate', () => { if (currentDetail !== null) closeDetail(); });
 
+// Re-renders whichever section is open (after a task/brief/review mutation).
+function refreshOpenSection() { if (currentDetail !== null) openDetail(currentDetail); }
+
+// Interactions inside the detail sections (tasks, brief, review).
+document.addEventListener('click', (e) => {
+  const taskBtn = e.target.closest('[data-task-action]');
+  if (taskBtn) {
+    const id = taskBtn.getAttribute('data-task-id');
+    const action = taskBtn.getAttribute('data-task-action');
+    if (action === 'toggle') toggleTask(id);
+    else if (action === 'snooze') snoozeTask(id);
+    else if (action === 'delete') deleteTask(id);
+    refreshOpenSection();
+    renderHome();
+    return;
+  }
+  if (e.target.closest('[data-task-add]')) {
+    const title = prompt('New task');
+    if (title && title.trim()) { addTask(title); refreshOpenSection(); renderHome(); }
+    return;
+  }
+  if (e.target.closest('[data-brief-refresh]')) { fetchBrief(true); return; }
+  if (e.target.closest('[data-review-rollover]')) {
+    const today = localDateStr(new Date());
+    loadTasks().filter((t) => !t.done && (!t.due || t.due <= today)).forEach((t) => snoozeTask(t.id));
+    refreshOpenSection(); renderHome();
+    return;
+  }
+  if (e.target.closest('[data-review-finish]')) {
+    const noteEl = document.getElementById('reviewNote');
+    finishReview(noteEl ? noteEl.value : '');
+    renderStreak();
+    refreshOpenSection();
+    return;
+  }
+});
+
 // ---------- Home launcher tiles ----------
 function setTileText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 
@@ -1522,17 +1839,28 @@ function renderHome() {
     else { setTileText('tileSchedValue', next.allDay ? 'All day' : fmtClock(next.start)); setTileText('tileSchedSub', next.summary); }
   }
 
-  // Tasks tile — count due today
-  if (overview.remindersReached === undefined) { setTileText('tileTasksValue', '—'); setTileText('tileTasksSub', 'Loading…'); }
-  else if (overview.remindersReached === false) { setTileText('tileTasksValue', '—'); setTileText('tileTasksSub', 'Tap to retry'); }
-  else if (overview.remindersConfigured === false) { setTileText('tileTasksValue', '—'); setTileText('tileTasksSub', 'Not set up'); }
-  else { const n = todaysReminders().length; setTileText('tileTasksValue', String(n)); setTileText('tileTasksSub', n ? 'due today' : 'all clear'); }
+  // Tasks tile — app tasks + imported reminders due today
+  const appOpen = appTasksForToday().length;
+  const remOpen = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders().length : 0;
+  const taskTotal = appOpen + remOpen;
+  setTileText('tileTasksValue', String(taskTotal));
+  setTileText('tileTasksSub', taskTotal ? `${appOpen} task${appOpen === 1 ? '' : 's'} · ${remOpen} reminder${remOpen === 1 ? '' : 's'}` : 'all clear ✨');
 
   // Inbox tile — unread + urgent
   if (overview.emailReached === undefined) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Loading…'); }
   else if (overview.emailReached === false) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Tap to retry'); }
   else if (overview.emailConfigured === false) { setTileText('tileInboxValue', '—'); setTileText('tileInboxSub', 'Not set up'); }
   else { const d = overview.emailData || { urgent: [], recent: [] }; setTileText('tileInboxValue', String(d.recent.length)); setTileText('tileInboxSub', `${d.urgent.length} urgent`); }
+
+  renderStreak();
+}
+
+function renderStreak() {
+  const el = document.getElementById('streakLabel');
+  if (!el) return;
+  const n = currentStreak();
+  el.textContent = n > 0 ? `🔥 ${n}-day streak` : '';
+  el.style.display = n > 0 ? '' : 'none';
 }
 
 // ---------- Refresh orchestration ----------
@@ -1667,6 +1995,11 @@ window.addEventListener('pageshow', maybeRefreshOnVisible);
 // ---------- Boot ----------
 renderGreeting();
 applyTheme(); // hour-based theme immediately; weather refines it with is_day
+// Seed a cached brief (if today's is stored) so the hero card is instant.
+const seededBrief = cachedBrief();
+if (seededBrief) overview.brief = seededBrief;
+renderStreak();
+renderOverview();
 refreshAll();
 setInterval(renderUpdated, 30000);
 
