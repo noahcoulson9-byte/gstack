@@ -16,6 +16,7 @@ const fs = require('fs');
 const { eventsInWindow } = require('./ics');
 const { fetchTriage } = require('./gmail');
 const outlook = require('./outlook');
+const anthropic = require('./anthropic');
 
 const PORT = process.env.PORT || 8787;
 // Frontend files live directly in the app root (GitHub Pages serves this repo
@@ -137,6 +138,21 @@ function handleCalendar() {
   return handleCalendarLike('ICLOUD_ICS_URL', 'Calendar', (token) => outlook.fetchCalendarEvents(token, now, windowEnd));
 }
 
+// AI Morning Brief — the client POSTs today's aggregated context (events, tasks,
+// weather, email counts); we ask Claude (server-side key) for a time-blocked plan.
+// Degrades to { configured:false } when no ANTHROPIC_API_KEY is set so the UI can
+// fall back to its computed glance.
+async function handleBrief(req) {
+  let context = {};
+  try { context = await req.json(); } catch { /* empty body is fine */ }
+  try {
+    const result = await withTimeout(anthropic.generateBrief(context), 26000, 'Brief');
+    return json(result);
+  } catch (err) {
+    return json({ configured: true, error: String(err.message || err) });
+  }
+}
+
 function handleReminders() {
   return handleCalendarLike('REMINDERS_ICS_URL', 'Reminders', (token) => outlook.fetchTasks(token));
 }
@@ -211,13 +227,29 @@ function serveStatic(pathname) {
   return new Response(body, { headers: { 'Content-Type': MIME[ext] || 'application/octet-stream' } });
 }
 
+// CORS preflight — the cross-origin POST /api/brief (JSON content-type) triggers
+// an OPTIONS preflight that the simple GETs don't.
+function preflight() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'content-type',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 Bun.serve({
   port: PORT,
   async fetch(req) {
     const { pathname } = new URL(req.url);
+    if (req.method === 'OPTIONS') return preflight();
     if (pathname === '/api/calendar') return handleCalendar();
     if (pathname === '/api/reminders') return handleReminders();
     if (pathname === '/api/email') return handleEmail();
+    if (pathname === '/api/brief' && req.method === 'POST') return handleBrief(req);
     return serveStatic(pathname);
   },
 });
