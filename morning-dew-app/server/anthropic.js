@@ -21,9 +21,25 @@ Format — markdown only (##, ###, **bold**, - bullets), in this order:
 1. "## " + ONE punchy headline (max ~12 words) capturing today's shape.
 2. A 2-3 sentence opener reading the day out loud: their energy (from recovery), the
    weather, and how full the calendar is.
-3. "### Energy" — what the recovery score means for today's intensity (push hard /
-   keep it steady / protect recovery), with one concrete suggestion. If there's no
-   recovery data, briefly say so and move on.
+3. "### Recovery" — the most detailed section of the brief. From their recovery score
+   (band it: high 67-100, moderate 34-66, low 0-33), give a genuinely useful read of
+   what their body can handle today and how to spend it. Cover, as a short paragraph
+   plus bullets:
+   - what the score signals about their body this morning;
+   - training/exertion: the workout intensity to aim for today (a hard build session,
+     an easy Zone-2 effort, or a rest day) and why;
+   - deep work: how much demanding cognitive load is in the tank and the best window
+     for it;
+   - day-alignment: weave in their REAL events, free blocks and weather (e.g. a walk
+     that doubles as active recovery, which free gap to slot a session into);
+   - if recovery is LOW, concrete ways to bounce back: hydration, a lighter load, last
+     caffeine by early afternoon, sunlight or a short walk, and an earlier wind-down to
+     lift tomorrow's score;
+   - close with one plain directive line (e.g. "Treat today as a build day." or
+     "Protect recovery, keep it easy.").
+   If there is NO recovery score, say so in one line and how to set it (tap the Recovery
+   card on the home screen, or run the Athlytic shortcut), then give general energy
+   guidance for the day and move on.
 4. "### Plan" — a time-blocked walkthrough as bullets, built from their REAL events
    and the gaps between them: when to leave for each event (factor in rain + travel),
    where to slot deep work, exercise, or rest, and what to do with each free block.
@@ -37,8 +53,8 @@ Format — markdown only (##, ###, **bold**, - bullets), in this order:
 Voice: specific and concrete, warm but never cheesy, never robotic, no corporate
 filler, no em-dashes. Cite the real numbers back (their 85% recovery, 60% rain at
 3pm, the 2pm meeting). Never mention being an AI or that you were handed JSON. Work
-with whatever data is present; never invent events or numbers. Aim for ~250-400
-words: detailed but skimmable.`;
+with whatever data is present; never invent events or numbers. Aim for ~300-450
+words: detailed but skimmable, with Recovery as the richest section.`;
 
 async function generateBrief(context) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
