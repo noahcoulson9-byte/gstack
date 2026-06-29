@@ -7,6 +7,10 @@ FROM oven/bun:1
 WORKDIR /app
 COPY . .
 
+# Install backend deps (web-push for the morning notification). Bun reads
+# package.json; this is a no-op for the frontend, which ships no dependencies.
+RUN bun install
+
 # Render (and most container hosts) inject PORT at runtime; server.js already
 # reads process.env.PORT, falling back to 8787 for local/non-Render use.
 EXPOSE 8787
