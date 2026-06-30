@@ -843,6 +843,10 @@
     <linearGradient id="gRecovery" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aee63b"/><stop offset="1" stop-color="#27b24a"/></linearGradient>
     <linearGradient id="gSleep" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd8ff"/><stop offset="1" stop-color="#2f8fd9"/></linearGradient>
     <linearGradient id="gStrain" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb22e"/><stop offset="1" stop-color="#ff5d3a"/></linearGradient>
+    <pattern id="targetHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="6" fill="#ffb22e" fill-opacity="0.18"/>
+      <rect width="3" height="6" fill="#ffb22e" fill-opacity="0.65"/>
+    </pattern>
   </defs></svg>
 
   <section class="nd-hero" id="overviewCard">
@@ -2359,23 +2363,37 @@ function targetStrainCompare(actual, t) {
   if (actual < t.lo) return `Today's strain is below target — there's room for more if you want it.`;
   return `Right in your target range — well matched to today's recovery.`;
 }
-// A thin marker band drawn just outside the Strain ring showing the target
-// lo–hi zone, using the same dasharray arc technique as ringSvg but offset
-// to start at lo instead of 12 o'clock. Overlaid (not stacked) via absolute
-// positioning so it rings the same center as the progress arc inside it.
+// Diagonal-hatched arc spanning the target lo–hi zone, drawn at the SAME
+// radius as the main ring and placed UNDER it (see detailRingHtml), so the
+// solid progress arc naturally paints over the hatch wherever strain has
+// already reached into the target band. Matches the Whoop/Athlytic Strain
+// Coach ring: solid = achieved, hatch = the zone still worth reaching for.
 function targetBandSvg(t) {
   if (!t) return '';
-  const r = RING_R + 12;
-  const c = 2 * Math.PI * r;
   const lo = Math.max(0, Math.min(100, t.lo));
   const hi = Math.max(0, Math.min(100, t.hi));
-  const arcLen = ((hi - lo) / 100) * c;
-  const offset = -(lo / 100) * c;
+  const arcLen = ((hi - lo) / 100) * RING_C;
+  const offset = -(lo / 100) * RING_C;
   return `<svg viewBox="0 0 200 200" style="position:absolute;inset:0;pointer-events:none">
-    <circle cx="100" cy="100" r="${r}" fill="none" stroke="#fff" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round"
-      stroke-dasharray="${arcLen.toFixed(1)} ${(c - arcLen).toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+    <circle cx="100" cy="100" r="${RING_R}" fill="none" stroke="url(#targetHatch)" stroke-width="16"
+      stroke-dasharray="${arcLen.toFixed(1)} ${(RING_C - arcLen).toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
       transform="rotate(-90 100 100)"/>
   </svg>`;
+}
+// Small white tick marks at the target zone's lo/hi boundaries, drawn on top
+// of everything so the zone's edges stay readable even where the solid arc
+// or hatch underneath it changes.
+function targetTicksSvg(t) {
+  if (!t) return '';
+  const tick = (pct) => {
+    const a = (pct / 100) * 2 * Math.PI;
+    const x1 = 100 + (RING_R - 10) * Math.sin(a);
+    const y1 = 100 - (RING_R - 10) * Math.cos(a);
+    const x2 = 100 + (RING_R + 10) * Math.sin(a);
+    const y2 = 100 - (RING_R + 10) * Math.cos(a);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`;
+  };
+  return `<svg viewBox="0 0 200 200" style="position:absolute;inset:0;pointer-events:none">${tick(t.lo)}${tick(t.hi)}</svg>`;
 }
 
 // One mini progress ring for the home card's 3-up row. val null -> empty muted
@@ -2387,12 +2405,13 @@ function miniRingHtml(val, grad, label) {
   return `<div class="mring"><div class="mring-wrap">${ring}</div><span class="mring-label">${label}</span></div>`;
 }
 // Same as miniRingHtml but sized for the detail screen's larger .health-detail-rings grid.
-// Optional overlay (e.g. targetBandSvg) renders absolutely-positioned on top of the ring.
-function detailRingHtml(val, grad, label, overlay = '') {
+// Optional underlay (e.g. targetBandSvg) renders absolutely-positioned BEHIND the ring so
+// the solid progress arc paints over it; overlay (e.g. targetTicksSvg) renders on top.
+function detailRingHtml(val, grad, label, underlay = '', overlay = '') {
   const ring = val == null
     ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="hring-val" style="color:var(--muted)">–</span>`
     : `${ringSvg(val, grad)}<span class="hring-val">${val}%</span>`;
-  return `<div class="hring"><div class="hring-wrap">${ring}${overlay}</div><span class="hring-label">${label}</span></div>`;
+  return `<div class="hring"><div class="hring-wrap">${underlay}${ring}${overlay}</div><span class="hring-label">${label}</span></div>`;
 }
 
 // On-device recovery history (date -> score) so the card and the brief can show a
@@ -2501,7 +2520,7 @@ function healthDetailHtml() {
   return `<div class="health-detail-rings">
       ${detailRingHtml(rec, 'gRecovery', 'Recovery')}
       ${detailRingHtml(sleep, 'gSleep', 'Sleep')}
-      ${detailRingHtml(strain, 'gStrain', 'Strain', targetBandSvg(target))}
+      ${detailRingHtml(strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target))}
     </div>
     ${chart}
     <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${targetLine}${metricsLine}${rawNamesLine}${setBtn}`;
