@@ -120,3 +120,63 @@ Pages can't run a persistent process, and no cloud account/credentials were
 available in this build environment to provision one autonomously. It's
 ready to run the moment you start it on any machine you control (laptop,
 home server, small VPS). See README.md "Deploying" for options.
+
+(Note: a later session upgraded the backend deploy target to Render — see
+DECISIONS.md item 13 — so this paragraph's "not deployed anywhere" may be
+stale; check DECISIONS.md for the current state.)
+
+## Update: full-screen AI debrief page (this batch)
+
+Tapping the AI overview card used to expand a wall of text inline. It now
+opens a dedicated full-screen page.
+
+### What works
+
+- **New full-screen debrief route** — tapping the AI overview card navigates
+  to `#/debrief`, a real client-side route (hash-based, see DECISIONS.md item
+  14 for why hash over a path route) with a slide-in transition, a back
+  button, swipe-back-from-left-edge gesture, Escape key, and Android/browser
+  back button all wired to the same `history.back()` → `popstate` →
+  `closeDebrief()` path. Deep-linking straight to `#/debrief` (e.g. a reload)
+  re-opens the page on boot.
+- **Restructured AI overview** — the brief is no longer one long paragraph.
+  `server/anthropic.js` now prompts Claude for structured JSON
+  (`headline`, `opener`, `sections[]` with `summary`/`detail` pairs,
+  optional `tomorrow`) instead of free-form markdown. The page renders each
+  section as its own card showing a 1-2 sentence summary; tapping a card
+  expands it in place (smooth CSS grid-row animation, no JS height
+  measurement) to reveal the full reasoning. `inbox` and `headsup` sections
+  only appear when the model has something to flag.
+- **Plan for Tomorrow** — a new section below the main brief, built from
+  tomorrow's calendar events, tomorrow's reminders, and any urgent email the
+  model judges relevant to tomorrow (no per-item date on email, so the model
+  reasons from subject/sender same as it already does for "today"). No new
+  backend endpoint was needed — `/api/calendar` and `/api/reminders` already
+  return a 48-hour window (`fetchIcsEvents()` in `server/server.js`), so this
+  is a pure client-side filter (`isTomorrow()`) feeding into the same
+  `/api/brief` call. It regenerates on the same refresh cycle as the rest of
+  the brief (cache invalidated by date rollover or a health-data update),
+  not a one-off.
+- **Graceful fallback preserved** — if the model ever returns malformed JSON
+  (or a cached brief from before this change is still in localStorage), the
+  page falls back to rendering the old flat-markdown layout in a single
+  card instead of breaking. Nothing about this change can hard-fail the
+  brief feature.
+
+### What's stubbed / not independently verified
+
+- The model's actual JSON output was **not** tested against a live
+  `ANTHROPIC_API_KEY` call in this sandbox (no key available here). Only the
+  parsing and fallback code path (`extractJson()` in `server/anthropic.js`)
+  was unit-verified with hand-written sample fenced/unfenced JSON text, and
+  `node --check` passed on the file. First real brief generation after
+  deploy will confirm the model reliably follows the new schema; if it
+  drifts, the existing fallback means the user still sees a working (if
+  unstructured) brief rather than an error.
+
+### Manual steps required
+
+None beyond what was already documented above (env vars for calendar/email/
+reminders providers, running the backend somewhere persistent). This change
+is purely additive to the existing setup — no new credentials, no new env
+vars, no new endpoints.

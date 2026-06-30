@@ -26,14 +26,21 @@ async function listMessages(accessToken, query, maxResults) {
 }
 
 async function getMessageSummary(accessToken, id) {
-  const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From`;
+  const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!res.ok) throw new Error(`messages.get failed: ${res.status}`);
   const data = await res.json();
   const headers = (data.payload && data.payload.headers) || [];
   const subject = headers.find((h) => h.name === 'Subject')?.value || '(no subject)';
   const from = headers.find((h) => h.name === 'From')?.value || 'Unknown sender';
-  return { id, subject, from, snippet: data.snippet || '' };
+  const dateHeader = headers.find((h) => h.name === 'Date')?.value;
+  // Prefer the RFC822 Date header; fall back to Gmail's internalDate (epoch ms).
+  const date = dateHeader
+    ? new Date(dateHeader).toISOString()
+    : data.internalDate
+      ? new Date(Number(data.internalDate)).toISOString()
+      : null;
+  return { id, subject, from, snippet: data.snippet || '', date };
 }
 
 // Returns { urgent: [...], recent: [...] }. Caller wraps in try/catch + timeout.

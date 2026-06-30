@@ -6,7 +6,7 @@
 <title>Morning Dew</title>
 
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#3a8dff" />
+<meta name="theme-color" content="#0A0C10" />
 
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -16,11 +16,16 @@
 <style>
   :root {
     --text: #f5f7fb;
-    --muted: rgba(245, 247, 251, 0.62);
-    --glass-bg: rgba(255, 255, 255, 0.10);
+    --muted: rgba(245, 247, 251, 0.56);
+    --glass-bg: rgba(255, 255, 255, 0.045);
     --glass-bg-soft: rgba(255, 255, 255, 0.07);
-    --glass-border: rgba(255, 255, 255, 0.28);
-    --glass-highlight: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --glass-highlight: rgba(255, 255, 255, 0.14);
+    --accent: #ffb22e;
+    --home-accent: #3D7BFF;
+    --bar-pink: #FF4D8D;
+    --bar-orange: #FF9F43;
+    --bar-blue: #3D7BFF;
     --danger: #ff6b6b;
     --ok: #34e0c4;
   }
@@ -34,40 +39,47 @@
   }
   body {
     position: relative;
-    background: #060912;
-    min-height: 100vh;
+    background: linear-gradient(168deg, #0D1117 0%, #0A0C10 55%, #07080B 100%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: calc(env(safe-area-inset-top) + 1.5rem) 1.1rem calc(env(safe-area-inset-bottom) + 1.5rem);
-    gap: 1.1rem;
+    padding: calc(env(safe-area-inset-top) + 1.2rem) 1.1rem calc(env(safe-area-inset-bottom) + 1rem);
+    gap: 0;
   }
+  main.home { width: 100%; max-width: 460px; }
 
   .blob {
     position: fixed;
     border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.55;
+    filter: blur(64px);
+    opacity: 0.5;
     z-index: 0;
     will-change: transform;
   }
   .blob-a {
-    width: 60vw; height: 60vw;
-    top: -15vw; left: -20vw;
-    background: radial-gradient(circle, #3a8dff, transparent 70%);
+    width: 65vw; height: 65vw;
+    top: -18vw; left: -15vw;
+    background: radial-gradient(circle, #6a8dff, transparent 70%);
+    opacity: 0.3;
     animation: drift1 22s ease-in-out infinite alternate;
   }
   .blob-b {
     width: 70vw; height: 70vw;
-    bottom: -25vw; right: -25vw;
-    background: radial-gradient(circle, #7c5cff, transparent 70%);
+    bottom: -28vw; right: -25vw;
+    background: radial-gradient(circle, #d24dd6, transparent 70%);
+    opacity: 0.22;
     animation: drift2 26s ease-in-out infinite alternate;
   }
   .blob-c {
-    width: 50vw; height: 50vw;
-    top: 30vh; right: -15vw;
-    background: radial-gradient(circle, #34e0c4, transparent 70%);
-    opacity: 0.35;
+    width: 48vw; height: 48vw;
+    top: 32vh; right: -18vw;
+    background: radial-gradient(circle, #ffb22e, transparent 70%);
+    opacity: 0.16;
     animation: drift3 30s ease-in-out infinite alternate;
   }
   @keyframes drift1 { from { transform: translate(0,0); } to { transform: translate(6vw, 8vh); } }
@@ -108,6 +120,10 @@
     background-clip: text;
     color: transparent;
   }
+  .updated-label {
+    color: var(--muted); font-size: 0.74rem; font-weight: 600;
+    margin-top: 0.45rem; opacity: 0.75;
+  }
 
   .glass {
     position: relative;
@@ -128,6 +144,139 @@
     pointer-events: none;
   }
 
+  /* ---- Card colour variants (locally re-scope text vars so children adapt) ---- */
+  .card-cream {
+    background: #efe5d4;
+    --text: #33241a; --muted: rgba(51,36,26,0.62); --glass-border: rgba(0,0,0,0.08);
+    color: var(--text);
+  }
+  .card-amber {
+    background: linear-gradient(150deg, #ffc24d 0%, #f5a623 100%);
+    --text: #3a2710; --muted: rgba(58,39,16,0.66); --glass-border: rgba(0,0,0,0.10);
+    color: var(--text);
+  }
+  .card-tan {
+    background: #d9bfa6;
+    --text: #3a2a1c; --muted: rgba(58,42,28,0.62); --glass-border: rgba(0,0,0,0.08);
+    color: var(--text);
+  }
+  .card-dark { background: rgba(28,20,14,0.62); }
+  .card-cream::before, .card-amber::before, .card-tan::before { opacity: 0; }
+
+  /* ---- Welcome header ---- */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0.25rem; }
+  .brand { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent); }
+  .brand small { display: block; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); margin-top: -0.1rem; }
+  .welcome { padding: 0 0.25rem; }
+  .welcome-hi { font-size: 1.15rem; font-weight: 600; color: var(--muted); }
+  .welcome-name {
+    margin: 0.1rem 0 0; font-size: 2.7rem; font-weight: 800; line-height: 1.02; letter-spacing: -0.02em;
+    background: linear-gradient(110deg, #fff5e6, var(--accent)); -webkit-background-clip: text;
+    background-clip: text; color: transparent;
+  }
+  .welcome-date { color: var(--muted); font-size: 0.86rem; font-weight: 600; margin-top: 0.5rem; }
+
+  /* ---- Bento grid ---- */
+  .bento {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.7rem; align-items: start;
+  }
+  .bento > * { min-width: 0; }
+  .span2 { grid-column: span 2; }
+  .bento-card { padding: 1rem 1.05rem; }
+  .bento-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.6rem; letter-spacing: -0.01em; }
+  .bento-head { display: flex; align-items: center; gap: 0.5rem; }
+  .bento-head .bento-title { margin-bottom: 0; margin-right: auto; }
+
+  /* Stat tiles */
+  .stat-tile { padding: 0.8rem 0.9rem; }
+
+  /* ---- Single-screen launcher home ---- */
+  main.home {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .home-tiles {
+    min-height: 46vh;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.7rem;
+  }
+  .home-tile {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
+    gap: 0.15rem; padding: 1rem; min-height: 0; overflow: hidden;
+    text-align: left; cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .home-tile:active { transform: scale(0.97); }
+
+  /* ---- Readiness (Apple Watch / Bevel) ---- */
+  .health-card { padding: 1rem 1.1rem 1.1rem; text-align: left; cursor: pointer; transition: transform 0.12s ease; }
+  .health-card:active { transform: scale(0.99); }
+  .health-card-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.7rem; }
+  .health-card-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; }
+  .health-card-meta { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-left: auto; }
+  .health-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+  .hring { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; }
+  .hring-wrap { position: relative; width: 5.4rem; height: 5.4rem; }
+  .hring-wrap svg { width: 100%; height: 100%; display: block; }
+  .hring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+  .hring-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .rtrack { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 16; }
+  .health-empty { color: var(--muted); font-size: 0.86rem; line-height: 1.4; padding: 0.3rem 0.1rem; }
+  .health-empty b { color: var(--text); font-weight: 700; }
+  /* Detail-section rings (larger) */
+  .health-detail-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; margin: 0.4rem 0 1.2rem; }
+  .health-detail-rings .hring-wrap { width: 6.6rem; height: 6.6rem; }
+  .health-detail-rings .hring-val { font-size: 1.55rem; }
+  .health-foot-note { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+  .tile-icon { font-size: 1.7rem; line-height: 1; }
+  .tile-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .tile-value { font-size: 1.55rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
+  .tile-sub { font-size: 0.78rem; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Schedule pills (cream card) */
+  .sched-item {
+    display: flex; flex-direction: column; gap: 0.1rem;
+    background: #2a1c12; color: #f3ead9;
+    border-radius: 16px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
+    text-decoration: none;
+  }
+  .sched-item:last-child { margin-bottom: 0; }
+  .sched-item:nth-child(even) { background: #d9b08a; color: #33241a; }
+  .sched-item:active { filter: brightness(1.08); }
+  .sched-time { font-size: 0.72rem; font-weight: 700; opacity: 0.85; }
+  .sched-title { font-size: 0.95rem; font-weight: 700; }
+
+  /* Apple-Calendar-style day timeline (Schedule detail) */
+  .day-tl-allday { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+  .day-tl-allday-chip { background: var(--home-accent); color: #fff; font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.6rem; border-radius: 10px; }
+  .day-timeline { position: relative; margin-top: 0.4rem; }
+  .day-tl-hour { position: absolute; left: 0; right: 0; height: 0; }
+  .day-tl-hour-label { position: absolute; left: 0; top: -0.5em; width: 44px; font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+  .day-tl-hour-line { position: absolute; left: 52px; right: 0; top: 0; border-top: 1px solid var(--glass-border); }
+  .day-tl-event {
+    position: absolute; border-radius: 8px; padding: 0.25rem 0.45rem; overflow: hidden;
+    background: linear-gradient(160deg, rgba(61,123,255,0.85), rgba(61,123,255,0.55));
+    color: #fff; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column; gap: 0.05rem;
+  }
+  .day-tl-event:nth-of-type(3n+2) { background: linear-gradient(160deg, rgba(255,77,141,0.85), rgba(255,77,141,0.55)); }
+  .day-tl-event:nth-of-type(3n) { background: linear-gradient(160deg, rgba(255,159,67,0.85), rgba(255,159,67,0.55)); }
+  .day-tl-event-title { font-size: 0.76rem; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-tl-event-time { font-size: 0.66rem; opacity: 0.85; }
+  .day-tl-now { position: absolute; left: 52px; right: 0; height: 0; border-top: 2px solid #ff453a; z-index: 2; }
+  .day-tl-now-dot { position: absolute; left: -5px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #ff453a; }
+
+  /* Task checklist (cream card) */
+  .task-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; }
+  .task-box {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 6px;
+    border: 2px solid rgba(51,36,26,0.4);
+  }
+  .task-title { font-size: 0.95rem; font-weight: 600; }
+  .task-title .task-time { color: var(--muted); font-weight: 600; font-size: 0.82rem; margin-left: 0.3rem; }
+
   .section-title {
     position: relative;
     z-index: 1;
@@ -139,6 +288,30 @@
     padding: 0 0.25rem;
     margin-top: 0.2rem;
   }
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+  }
+  .section-title-row .section-title { margin-top: 0; margin-right: auto; }
+  .icon-link {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 8px;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    font-size: 1rem;
+    line-height: 1;
+    text-decoration: none;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .icon-link:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.16); }
 
   /* ---- weather ---- */
   .weather-card { padding: 1.5rem 1.4rem; text-align: center; }
@@ -150,6 +323,34 @@
   .stat-card { padding: 0.85rem 1rem; text-align: left; }
   .stat-label { color: var(--muted); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
   .stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.15rem; }
+
+  /* ---- 7-day forecast ---- */
+  .forecast-card { padding: 0.5rem 1.1rem; }
+  .forecast-row {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .forecast-row:last-child { border-bottom: none; }
+  .fc-day { width: 2.6rem; font-weight: 600; font-size: 0.92rem; }
+  .fc-icon { width: 1.9rem; text-align: center; font-size: 1.3rem; }
+  .fc-rain {
+    width: 3.1rem; font-size: 0.8rem; font-weight: 600;
+    color: #5fb0ff; text-align: right; white-space: nowrap;
+  }
+  .fc-rain.dry { color: var(--muted); opacity: 0.5; }
+  .fc-temps { flex: 1; display: flex; align-items: center; gap: 0.5rem; }
+  .fc-lo { color: var(--muted); font-size: 0.9rem; width: 1.9rem; text-align: right; }
+  .fc-hi { font-weight: 700; font-size: 0.95rem; width: 1.9rem; }
+  .fc-track {
+    flex: 1; height: 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.12); overflow: hidden; position: relative;
+  }
+  .fc-fill {
+    position: absolute; top: 0; height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #4aa3ff, #ff8a3a);
+  }
 
   /* ---- generic list cards (calendar / reminders / email) ---- */
   .list-card { padding: 1rem 1.1rem; }
@@ -181,9 +382,56 @@
   .tag-urgent { background: rgba(255, 107, 107, 0.18); color: var(--danger); }
   .tag-new { background: rgba(52, 224, 196, 0.18); color: var(--ok); }
 
+  /* ---- Outlook-style email list ---- */
+  .mail-card { padding: 0.4rem 0.6rem; }
+  .mail-scroll {
+    position: relative; z-index: 1;
+    max-height: 320px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mail-row {
+    display: flex; align-items: flex-start; gap: 0.7rem;
+    padding: 0.7rem 0.45rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none; color: var(--text);
+    transition: background 0.12s ease;
+  }
+  .mail-row:last-child { border-bottom: none; }
+  .mail-row:active { background: rgba(255,255,255,0.08); }
+  .mail-avatar {
+    flex-shrink: 0;
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; font-weight: 700; color: #fff;
+    margin-top: 0.1rem;
+  }
+  .mail-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .mail-top {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+  }
+  .mail-sender {
+    font-weight: 700; font-size: 0.95rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mail-date { flex-shrink: 0; color: var(--muted); font-size: 0.78rem; }
+  .mail-subject {
+    font-size: 0.9rem; margin-top: 0.05rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mail-snippet {
+    color: var(--muted); font-size: 0.82rem; line-height: 1.3; margin-top: 0.1rem;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .mail-unread-dot {
+    flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%;
+    background: #3a8dff; margin: 0.5rem 0 0 -0.2rem;
+  }
+
   button {
     font-family: inherit;
     border: none;
+    background: none;
     cursor: pointer;
   }
   .refresh-btn {
@@ -203,6 +451,450 @@
   }
   .refresh-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.16); }
 
+  @keyframes spin360 { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+  /* Floating pill bottom nav, replaces the old top-right gear/refresh buttons */
+  .nd-bottom-nav {
+    position: fixed; z-index: 5;
+    left: 50%; transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom) + 1rem);
+    display: flex; align-items: center; justify-content: space-around;
+    gap: 0.2rem;
+    width: min(92vw, 360px);
+    padding: 0.45rem 0.6rem;
+    border-radius: 28px;
+    background: rgba(16, 18, 26, 0.72);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  .nd-nav-btn {
+    width: 44px; height: 44px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    color: var(--muted);
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .nd-nav-btn svg { width: 22px; height: 22px; }
+  .nd-nav-btn.active { color: var(--home-accent); background: rgba(61, 123, 255, 0.14); }
+  .nd-nav-btn:active { background: rgba(255, 255, 255, 0.1); }
+  .nd-nav-fab {
+    width: 56px; height: 56px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(150deg, #5b9dff, #3D7BFF 60%, #2a5fd9);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(61, 123, 255, 0.45);
+    transform: translateY(-12px);
+    transition: filter 0.15s ease;
+  }
+  .nd-nav-fab svg { width: 24px; height: 24px; }
+  .nd-nav-fab:active { filter: brightness(1.08); }
+  .nd-nav-fab.spinning { animation: spin360 0.6s ease; }
+
+  /* Pull-to-refresh spinner */
+  .ptr-spinner {
+    position: fixed; z-index: 4;
+    top: calc(env(safe-area-inset-top) + 0.4rem);
+    left: 50%;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: var(--text);
+    border-radius: 50%;
+    background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    opacity: 0; transform: translate(-50%, -10px);
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+  .ptr-spinner.active { animation: spin360 0.8s linear infinite; }
+
+  /* ---- Hourly strip ---- */
+  .hourly-card { padding: 0.6rem 0.4rem; }
+  .hourly-strip {
+    position: relative; z-index: 1;
+    display: flex; gap: 0.2rem;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hourly-strip::-webkit-scrollbar { display: none; }
+  .hour-cell {
+    flex: 0 0 auto; width: 3.5rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    padding: 0.4rem 0;
+  }
+  .hc-time { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+  .hc-icon { font-size: 1.25rem; }
+  .hc-temp { font-size: 0.95rem; font-weight: 700; }
+  .hc-rain { font-size: 0.68rem; color: #5fb0ff; font-weight: 600; min-height: 0.9rem; }
+
+  /* ---- Weather card extras ---- */
+  .weather-hilo { font-size: 0.95rem; font-weight: 600; margin-top: 0.35rem; }
+  .weather-hilo .hi { color: var(--text); }
+  .weather-hilo .lo { color: var(--muted); }
+  .weather-sun { color: var(--muted); font-size: 0.82rem; margin-top: 0.25rem; }
+
+  /* ---- Today timeline ---- */
+  .timeline-row {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-start; gap: 0.65rem;
+    padding: 0.6rem 0.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-decoration: none; color: var(--text);
+  }
+  .timeline-row:last-child { border-bottom: none; }
+  a.timeline-row:active { background: rgba(255,255,255,0.08); }
+  .tl-icon { flex-shrink: 0; font-size: 1.1rem; width: 1.5rem; text-align: center; }
+  .tl-body { flex: 1; min-width: 0; }
+  .tl-title { font-weight: 600; font-size: 0.95rem; }
+  .tl-meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.1rem; }
+  .tl-time { flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: var(--muted); white-space: nowrap; margin-top: 0.1rem; }
+
+  /* ---- Time-of-day theming: subtle cool shifts on the same near-black base ---- */
+  body.theme-dawn  { background: linear-gradient(168deg, #161c2899 0%, #0A0C10 60%, #07080B 100%), linear-gradient(168deg, #0D1117, #07080B); }
+  body.theme-day   { background: linear-gradient(168deg, #0D1117 0%, #0A0C10 55%, #07080B 100%); }
+  body.theme-dusk  { background: linear-gradient(168deg, #1a142699 0%, #0A0C10 60%, #07080B 100%), linear-gradient(168deg, #0D1117, #07080B); }
+  body.theme-night { background: linear-gradient(168deg, #0A0D14 0%, #060709 60%, #050608 100%); }
+  body.theme-night .blob { opacity: 0.32; }
+
+  /* ---- Drill-in affordance + detail screens ---- */
+  .card-drill {
+    position: absolute; top: 0.7rem; right: 0.7rem; z-index: 2;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; color: var(--text);
+    border-radius: 50%;
+    background: rgba(0,0,0,0.16);
+    border: 1px solid rgba(0,0,0,0.12);
+  }
+  .card-drill:active { background: rgba(0,0,0,0.28); }
+  .header-drill {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.74rem; font-weight: 700; color: var(--accent);
+    background: rgba(255,178,46,0.18);
+    border: 1px solid rgba(255,178,46,0.38);
+    border-radius: 999px; padding: 0.2rem 0.6rem;
+  }
+  .header-drill:active { background: rgba(255,178,46,0.32); }
+
+  .detail-overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(6,9,18,0.86);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(env(safe-area-inset-top) + 0.8rem) 1.1rem calc(env(safe-area-inset-bottom) + 2rem);
+    display: flex; flex-direction: column; gap: 1rem;
+    animation: detailIn 0.22s ease;
+  }
+  .detail-overlay[hidden] { display: none; }
+  @keyframes detailIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .detail-header { display: flex; align-items: center; gap: 0.8rem; }
+  .detail-back {
+    width: 40px; height: 40px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: var(--text);
+    border-radius: 50%; background: var(--glass-bg-soft);
+    border: 1px solid var(--glass-border);
+  }
+  .detail-back:active { background: rgba(255,255,255,0.16); }
+  .detail-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; }
+
+  /* ---- Full-screen debrief page: solid background (no blur-through to home),
+     horizontal push transition — reads as a new page, not an overlay sheet. ---- */
+  .debrief-page {
+    position: fixed; inset: 0; z-index: 60;
+    background: linear-gradient(168deg, #2a1d13 0%, #1c130c 55%, #130d08 100%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(env(safe-area-inset-top) + 0.8rem) 1.1rem calc(env(safe-area-inset-bottom) + 2rem);
+    display: flex; flex-direction: column; gap: 1rem;
+    animation: debriefIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .debrief-page[hidden] { display: none; }
+  .debrief-page.closing { animation: debriefOut 0.22s ease forwards; }
+  @keyframes debriefIn { from { opacity: 0.5; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+  @keyframes debriefOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(32px); } }
+  .debrief-refresh-btn { margin-left: auto; }
+
+  .debrief-section { padding: 1rem 1.1rem; cursor: pointer; }
+  .debrief-section-head { display: flex; align-items: center; gap: 0.6rem; }
+  .debrief-section-title { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); flex: 1; }
+  .debrief-section-chev { color: var(--muted); font-size: 1.1rem; transition: transform 0.2s ease; flex-shrink: 0; }
+  .debrief-section.expanded .debrief-section-chev { transform: rotate(90deg); }
+  .debrief-section-summary { font-size: 1.02rem; font-weight: 600; line-height: 1.45; margin-top: 0.45rem; }
+  /* Grid-rows 0fr->1fr trick: animates height without measuring it in JS. */
+  .debrief-section-detail {
+    font-size: 0.92rem; color: var(--muted); line-height: 1.55;
+    display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: 0;
+    transition: grid-template-rows 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+  }
+  .debrief-section-detail > div { overflow: hidden; min-height: 0; }
+  .debrief-section-detail .brief-h3 { color: var(--accent); opacity: 0.85; }
+  .debrief-section.expanded .debrief-section-detail { grid-template-rows: 1fr; opacity: 1; margin-top: 0.75rem; }
+  .debrief-tomorrow .debrief-section-title { color: #7dd8ff; }
+
+  .detail-hero { padding: 1.2rem 1.2rem; }
+  .metric-big { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+  .metric-sub { color: var(--muted); font-size: 0.92rem; margin-top: 0.35rem; }
+  .metric-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+  .metric-chip {
+    background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
+    border-radius: 14px; padding: 0.5rem 0.7rem; flex: 1; min-width: 5.5rem;
+  }
+  .metric-chip .k { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+  .metric-chip .v { font-size: 1.15rem; font-weight: 700; margin-top: 0.15rem; }
+
+  .insight-card { padding: 1rem 1.1rem; }
+  .insight-head {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); margin-bottom: 0.6rem;
+  }
+  .insight-line {
+    position: relative; z-index: 1;
+    display: flex; gap: 0.55rem; align-items: flex-start;
+    font-size: 0.95rem; line-height: 1.4; padding: 0.32rem 0;
+  }
+  .insight-line .ico { flex-shrink: 0; }
+
+  /* Horizontal labelled bar chart (free-time blocks, top senders, etc.) */
+  .bars { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.2rem; }
+  .bar-row { display: grid; grid-template-columns: 4.5rem 1fr auto; align-items: center; gap: 0.5rem; }
+  .bar-row .bl { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.10); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #ff9d4d, #ffc24d); }
+  .bar-row .bv { font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
+
+  /* ---- Brief / review CTA on the home hero card ---- */
+  .brief-cta {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 0.7rem; width: 100%;
+    background: transparent; border: none; padding: 0.15rem 0; text-align: left; color: var(--text);
+  }
+  .brief-emoji { font-size: 1.5rem; flex-shrink: 0; }
+  .brief-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .brief-text b { font-size: 1rem; font-weight: 700; line-height: 1.25; }
+  .brief-sub { color: var(--muted); font-size: 0.8rem; margin-top: 0.1rem; }
+  .brief-arrow { flex-shrink: 0; color: var(--accent); font-size: 1.2rem; font-weight: 700; }
+
+  /* ---- Brief section (rendered markdown) ---- */
+  .brief-card { line-height: 1.5; }
+  .brief-h { font-size: 1.25rem; font-weight: 800; margin: 0 0 0.6rem; letter-spacing: -0.01em; }
+  .brief-h3 { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); margin: 1.1rem 0 0.35rem; }
+  .brief-h3:first-of-type { margin-top: 0.7rem; }
+  .brief-p { margin: 0.5rem 0; font-size: 0.95rem; line-height: 1.5; }
+  .brief-ul { margin: 0.4rem 0; padding-left: 1.1rem; }
+  .brief-ul li { margin: 0.3rem 0; font-size: 0.95rem; }
+  .brief-actions { text-align: center; padding: 0.2rem 0; }
+  .push-status { text-align: center; color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 0.3rem 0; }
+  .brief-refresh {
+    font-size: 0.85rem; font-weight: 700; color: var(--accent);
+    background: rgba(255,178,46,0.16); border: 1px solid rgba(255,178,46,0.36);
+    border-radius: 999px; padding: 0.5rem 1.1rem;
+  }
+  .brief-refresh:active { background: rgba(255,178,46,0.3); }
+
+  /* ---- Two-way task controls ---- */
+  .task-add {
+    display: block; width: 100%; text-align: left;
+    font-size: 0.9rem; font-weight: 700; color: var(--accent);
+    background: rgba(255,178,46,0.12); border: 1px dashed rgba(255,178,46,0.45);
+    border-radius: 14px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem;
+  }
+  .task-add:active { background: rgba(255,178,46,0.24); }
+  .task-input-row { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
+  .task-text-input {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 0.95rem;
+    color: var(--text); background: rgba(0,0,0,0.06);
+    border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.6rem 0.7rem;
+  }
+  .task-text-input::placeholder { color: var(--muted); }
+  .task-add-btn {
+    flex-shrink: 0; font-size: 0.9rem; font-weight: 800; color: #3a2710;
+    background: var(--accent); border-radius: 12px; padding: 0.6rem 1rem;
+  }
+  .task-add-btn:active { filter: brightness(0.95); }
+  .app-task .task-box { cursor: pointer; transition: background 0.12s ease; }
+  .task-box.checked { background: var(--ok); border-color: var(--ok); position: relative; }
+  .task-box.checked::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; color: #06231d; }
+  .task-done .task-title { text-decoration: line-through; opacity: 0.55; }
+  .task-mini { margin-left: 0.2rem; width: 24px; height: 24px; flex-shrink: 0; border-radius: 8px; background: rgba(0,0,0,0.08); color: var(--muted); font-size: 0.95rem; font-weight: 700; }
+  .task-done-head { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0.7rem 0 0.2rem; }
+  .review-note {
+    width: 100%; min-height: 64px; resize: vertical; box-sizing: border-box;
+    border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.10);
+    color: var(--text); font-family: inherit; font-size: 0.92rem; padding: 0.6rem 0.7rem; margin-top: 0.2rem;
+  }
+
+  /* ---- Streak chip in header ---- */
+  .welcome-meta { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; margin-top: 0.45rem; }
+  .welcome-meta .updated-label { margin-top: 0; }
+  .streak-chip {
+    font-size: 0.74rem; font-weight: 800; color: #ffcaa0;
+    background: rgba(255,126,60,0.18); border: 1px solid rgba(255,126,60,0.4);
+    border-radius: 999px; padding: 0.1rem 0.55rem;
+  }
+
+  /* ---- AI overview ---- */
+  .overview-card { padding: 1rem 1.1rem; }
+  .overview-label {
+    position: relative; z-index: 1;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.5rem;
+  }
+  .overview-line {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    font-size: 0.92rem; line-height: 1.35; padding: 0.3rem 0;
+  }
+  .overview-line .icon { flex-shrink: 0; }
+
+  /* ===================== New homepage (native-app tiles) ===================== */
+  main.home {
+    gap: 0.6rem;
+    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2.2rem);
+    display: flex; flex-direction: column; padding-bottom: 6.5rem;
+  }
+  .nd-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0.3rem; }
+  .nd-wordmark { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+
+  .nd-greet { padding: 0 0.3rem; }
+  .nd-greet-row { display: flex; align-items: center; gap: 0.7rem; }
+  .nd-avatar {
+    width: 2.6rem; height: 2.6rem; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; font-weight: 800; color: #fff;
+    background: linear-gradient(150deg, #5b9dff, #3D7BFF 60%, #2a5fd9);
+    box-shadow: 0 4px 14px rgba(61,123,255,0.35);
+  }
+  .nd-greet-line { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.06; margin: 0; }
+  .nd-greet-line .accent { color: var(--home-accent); }
+  .nd-greet-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
+  .nd-greet-date { color: var(--muted); font-size: 0.84rem; font-weight: 600; }
+
+  .nd-day-strip { display: flex; justify-content: space-between; gap: 0.35rem; padding: 0 0.1rem; }
+  .nd-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.4rem 0; border-radius: 14px; }
+  .nd-day-dow { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.7; }
+  .nd-day-num { font-size: 0.92rem; font-weight: 800; }
+  .nd-day.inert { opacity: 0.5; }
+  .nd-day.active { background: var(--home-accent); color: #fff; box-shadow: 0 4px 14px rgba(61,123,255,0.35); }
+
+  .nd-hero-wrap { position: relative; }
+  .nd-hero-glow {
+    position: absolute; inset: -14px; pointer-events: none; filter: blur(30px); opacity: 0.55;
+    background:
+      radial-gradient(50% 60% at 12% 0%, rgba(61,123,255,0.55), transparent 70%),
+      radial-gradient(45% 60% at 85% 10%, rgba(216,77,214,0.4), transparent 70%),
+      radial-gradient(55% 70% at 70% 100%, rgba(255,178,46,0.3), transparent 70%);
+  }
+  .nd-hero { background: rgba(255,255,255,0.055); border: 1px solid var(--glass-border); border-radius: 22px; padding: 0.85rem 1.05rem; position: relative; z-index: 1; overflow: hidden; }
+  .nd-hero::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(var(--home-accent), rgba(61,123,255,0.25)); }
+  .nd-hero-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--home-accent); }
+  .nd-hero-headline { font-size: 1.2rem; font-weight: 800; line-height: 1.16; letter-spacing: -0.01em; margin-top: 0.35rem; }
+  .nd-hero-preview { font-size: 0.88rem; color: var(--muted); line-height: 1.35; margin-top: 0.35rem; }
+  .nd-hero-cta { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.55rem; font-size: 0.88rem; font-weight: 700; color: var(--home-accent); cursor: pointer; }
+
+  .nd-readiness { display: flex; align-items: center; gap: 0.85rem; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; padding: 0.7rem 0.9rem; cursor: pointer; }
+  .nd-recov-wrap { position: relative; width: 4.8rem; height: 4.8rem; flex-shrink: 0; }
+  .nd-recov-wrap svg { width: 100%; height: 100%; display: block; }
+  .nd-recov-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .nd-recov-body { flex: 1; min-width: 0; }
+  .nd-recov-title { display: flex; align-items: center; gap: 0.5rem; }
+  .nd-recov-title b { font-size: 1rem; font-weight: 800; }
+  .nd-tag { font-size: 0.64rem; font-weight: 600; color: var(--muted); background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border); border-radius: 999px; padding: 0.1rem 0.5rem; }
+  .nd-trend { font-size: 0.66rem; font-weight: 800; border-radius: 999px; padding: 0.08rem 0.42rem; letter-spacing: 0.01em; }
+  .nd-trend.up { color: #5fd39b; background: rgba(70,201,139,0.16); }
+  .nd-trend.down { color: #ff9a9a; background: rgba(255,107,107,0.16); }
+  .recov-chart { display: flex; gap: 0.4rem; align-items: flex-end; margin: 0.3rem 0 1.1rem; padding: 0 0.1rem; }
+  .recov-chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .recov-chart .bar { width: 100%; height: 70px; background: rgba(255,255,255,0.07); border-radius: 5px; display: flex; align-items: flex-end; overflow: hidden; }
+  .recov-chart .fill { width: 100%; background: linear-gradient(#aee63b, #27b24a); }
+  .recov-chart .d { font-size: 0.6rem; color: var(--muted); }
+  .recov-chart .v { font-size: 0.64rem; font-weight: 700; }
+  .nd-recov-sub { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+  .nd-rtrack { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 16; }
+  .nd-chev { margin-left: auto; color: var(--muted); opacity: 0.55; flex-shrink: 0; align-self: center; }
+
+  .nd-readiness-triad { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
+  .nd-readiness-triad-head { display: flex; align-items: center; gap: 0.5rem; }
+  .nd-readiness-triad-head b { font-size: 0.92rem; font-weight: 800; }
+  .nd-mini-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.3rem; }
+  .mring { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .mring-wrap { position: relative; width: 2.7rem; height: 2.7rem; }
+  .mring-wrap svg { width: 100%; height: 100%; display: block; }
+  .mring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .mring-val.empty { color: var(--muted); font-weight: 700; }
+  .mring-label { font-size: 0.6rem; font-weight: 700; color: var(--muted); }
+
+  .nd-wx { border-radius: 20px; padding: 0.7rem 0.9rem; color: #fff; background: linear-gradient(165deg, #2f3b52, #232b3d 55%, #1a2030); box-shadow: 0 10px 26px rgba(0,0,0,0.3); cursor: pointer; }
+  .nd-wx-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .nd-wx-loc { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem; }
+  .nd-wx-temp { font-size: 2.1rem; font-weight: 300; line-height: 1; margin-top: 0.1rem; letter-spacing: -0.02em; }
+  .nd-wx-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+  .nd-wx-right > svg { width: 1.9rem; height: 1.5rem; display: block; margin-bottom: 0.1rem; }
+  .nd-wx-cond { font-size: 0.85rem; font-weight: 700; }
+  .nd-wx-hl { font-size: 0.74rem; font-weight: 700; color: #e7ebef; }
+  .nd-wx-hours { display: none; }
+  .nd-wx-hour { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; flex: 1; }
+  .nd-wx-hour .t { font-size: 0.72rem; color: #cfd6dd; font-weight: 600; }
+  .nd-wx-hour .v { font-size: 0.9rem; font-weight: 700; }
+  .nd-wx-hour svg { width: 1.7rem; height: 1.45rem; display: block; }
+  .nd-wx-msg { font-size: 0.85rem; color: #cfd6dd; margin-top: 0.2rem; }
+
+  /* Lower split: weather+calendar on the left, readiness+inbox on the right,
+     both columns spanning from below the AI brief down to the bottom nav. */
+  .nd-split { display: flex; gap: 0.6rem; flex: 1 1 auto; min-height: 0; }
+  .nd-split-col { display: flex; flex-direction: column; gap: 0.6rem; flex: 1 1 50%; min-width: 0; min-height: 0; }
+  .nd-split-col .nd-wx, .nd-split-col .nd-readiness { flex-shrink: 0; }
+
+  .nd-cal {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px;
+    padding: 0.65rem 0.75rem; cursor: pointer;
+    display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+  }
+  .nd-cal-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; flex-shrink: 0; }
+  .nd-cal-top b { font-size: 0.84rem; font-weight: 700; }
+  .nd-cal-top span { font-size: 0.7rem; color: var(--muted); }
+  .nd-cal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; margin-top: 0.3rem; }
+  .nd-cal-empty { font-size: 0.78rem; color: var(--muted); margin-top: 0.55rem; }
+
+  .nd-ol { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+  .nd-ol-head { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.7rem; background: linear-gradient(180deg, rgba(43,111,214,0.18), transparent); flex-shrink: 0; }
+  .nd-ol-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .nd-ol-logo { width: 1.4rem; height: 1.4rem; border-radius: 0.36rem; background: #2b6fd6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .nd-ol-title { font-size: 0.84rem; font-weight: 700; }
+  .nd-ol-count { margin-left: auto; font-size: 0.64rem; font-weight: 700; color: #fff; background: #2b6fd6; border-radius: 999px; padding: 0.08rem 0.45rem; display: flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+  .nd-ol-count.urgent { background: #ff3b30; }
+  .nd-ol-row { display: flex; gap: 0.45rem; align-items: center; padding: 0.4rem 0.7rem; border-top: 1px solid var(--glass-border); }
+  .nd-ol-row:nth-child(2) { border-left: 3px solid var(--bar-pink); }
+  .nd-ol-row:nth-child(3) { border-left: 3px solid var(--bar-blue); }
+  .nd-ol-row:nth-child(4) { border-left: 3px solid var(--bar-orange); }
+  .nd-ol-dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #2b6fd6; flex-shrink: 0; }
+  .nd-ol-dot.urgent { background: #ff3b30; }
+  .nd-ol-av { width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .nd-ol-body { min-width: 0; flex: 1; }
+  .nd-ol-sender { font-size: 0.74rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd-ol-subj { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd-ol-empty { padding: 0.5rem 0.7rem; font-size: 0.76rem; color: var(--muted); }
+
+  .nd-glass-wrap { position: relative; }
+  .nd-glass-glow { position: absolute; inset: -6px; border-radius: 28px; background: radial-gradient(60% 120% at 20% 0%, rgba(255,178,46,0.4), transparent 60%), radial-gradient(60% 120% at 90% 100%, rgba(91,157,249,0.4), transparent 60%); filter: blur(26px); opacity: 0.5; pointer-events: none; }
+  .nd-glass { position: relative; border-radius: 22px; padding: 0.7rem 0.9rem; background: linear-gradient(150deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05) 60%); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border: 1.5px solid rgba(255,255,255,0.26); box-shadow: 0 16px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5); cursor: pointer; }
+  .nd-glass-head { display: flex; align-items: center; gap: 0.55rem; }
+  .nd-glass-icon { width: 1.9rem; height: 1.9rem; border-radius: 0.55rem; background: linear-gradient(150deg, rgba(255,255,255,0.4), rgba(255,255,255,0.12)); border: 1px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  .nd-glass-title b { font-size: 0.84rem; font-weight: 700; display: block; color: #fff; }
+  .nd-glass-title span { font-size: 0.7rem; color: rgba(255,255,255,0.7); }
+  .nd-glass-chev { margin-left: auto; color: rgba(255,255,255,0.55); }
+  .nd-gtasks { margin-top: 0.45rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .nd-gtask { display: flex; align-items: center; gap: 0.55rem; }
+  .nd-gcheck { width: 1.05rem; height: 1.05rem; border-radius: 0.34rem; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.08); }
+  .nd-gcheck.done { background: #fff; border-color: #fff; }
+  .nd-gname { font-size: 0.8rem; font-weight: 500; color: #fff; }
+  .nd-gtask.done .nd-gname { color: rgba(255,255,255,0.5); text-decoration: line-through; }
+  .nd-gadd { margin-top: 0.4rem; padding-top: 0.35rem; border-top: 1px solid rgba(255,255,255,0.18); font-size: 0.76rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 0.3rem; }
+
   footer {
     position: relative;
     z-index: 1;
@@ -216,59 +908,572 @@
 </head>
 <body>
 
+<nav class="nd-bottom-nav" id="bottomNav">
+  <button class="nd-nav-btn active" id="navHome" aria-label="Home" title="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+  </button>
+  <button class="nd-nav-btn" id="navHealth" aria-label="Health" title="Health">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
+  </button>
+  <button class="nd-nav-fab" id="pageRefreshBtn" aria-label="Refresh now" title="Refresh">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="nd-nav-btn" id="navInbox" aria-label="Outlook inbox" title="Inbox">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+  </button>
+  <button class="nd-nav-btn" id="settingsBtn" aria-label="Server settings" title="Server settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.97 7.97 0 0 0 0-2l2.04-1.58a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.39.96a8 8 0 0 0-1.73-1l-.36-2.54a.5.5 0 0 0-.5-.42h-4a.5.5 0 0 0-.5.42l-.36 2.54a8 8 0 0 0-1.73 1l-2.39-.96a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64L4.6 11a7.97 7.97 0 0 0 0 2l-2.04 1.58a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .6.22l2.39-.96a8 8 0 0 0 1.73 1l.36 2.54a.5.5 0 0 0 .5.42h4a.5.5 0 0 0 .5-.42l.36-2.54a8 8 0 0 0 1.73-1l2.39.96a.5.5 0 0 0 .6-.22l2-3.46a.5.5 0 0 0-.12-.64Z"/></svg>
+  </button>
+</nav>
+
+<div class="ptr-spinner" id="ptrSpinner" aria-hidden="true">↻</div>
+
 <div class="blob blob-a"></div>
 <div class="blob blob-b"></div>
 <div class="blob blob-c"></div>
 
-<main>
-  <div class="greeting-block">
-    <div class="greeting-date" id="dateLabel"></div>
-    <div class="greeting-phrase" id="greetingPhrase">Good day</div>
-    <div class="greeting-name">Noah</div>
+<main class="home">
+  <header class="nd-topbar">
+    <div class="nd-wordmark">Morning Dew</div>
+  </header>
+
+  <section class="nd-greet">
+    <div class="nd-greet-row">
+      <div class="nd-avatar">N</div>
+      <div>
+        <h1 class="nd-greet-line" id="greetLine">Good morning, <span class="accent">Noah</span></h1>
+        <div class="nd-greet-meta">
+          <span class="nd-greet-date" id="dateLabel"></span>
+          <span class="streak-chip" id="streakLabel" style="display:none"></span>
+          <span class="updated-label" id="updatedLabel">Updating…</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nd-day-strip" id="dayStrip"></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="gRecovery" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aee63b"/><stop offset="1" stop-color="#27b24a"/></linearGradient>
+    <linearGradient id="gSleep" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd8ff"/><stop offset="1" stop-color="#2f8fd9"/></linearGradient>
+    <linearGradient id="gStrain" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb22e"/><stop offset="1" stop-color="#ff5d3a"/></linearGradient>
+    <pattern id="targetHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="6" fill="#ffb22e" fill-opacity="0.18"/>
+      <rect width="3" height="6" fill="#ffb22e" fill-opacity="0.65"/>
+    </pattern>
+  </defs></svg>
+
+  <div class="nd-hero-wrap">
+    <div class="nd-hero-glow"></div>
+    <section class="nd-hero" id="overviewCard">
+      <div class="nd-hero-label">Your brief</div>
+      <div class="nd-hero-preview">Building your overview…</div>
+    </section>
   </div>
 
-  <section class="glass weather-card" id="weatherCard">
-    <div class="weather-icon" id="weatherIcon">⏳</div>
-    <div class="temp" id="temp">--°</div>
-    <div class="desc" id="desc">Loading weather...</div>
-    <div class="location" id="location">Brisbane, QLD</div>
-  </section>
-
-  <section class="stats-grid">
-    <div class="glass stat-card"><div class="stat-label">Feels like</div><div class="stat-value" id="feelsLike">--°</div></div>
-    <div class="glass stat-card"><div class="stat-label">Humidity</div><div class="stat-value" id="humidity">--%</div></div>
-    <div class="glass stat-card"><div class="stat-label">Wind</div><div class="stat-value" id="wind">-- km/h</div></div>
-    <div class="glass stat-card"><div class="stat-label">Precipitation</div><div class="stat-value" id="precip">--%</div></div>
-  </section>
-
-  <button class="refresh-btn" id="refreshBtn">Refresh weather</button>
-
-  <div class="section-title">Next 48 hours</div>
-  <section class="glass list-card" id="calendarCard">
-    <div class="loading-state">Loading calendar...</div>
-  </section>
-
-  <div class="section-title">Reminders</div>
-  <section class="glass list-card" id="remindersCard">
-    <div class="loading-state">Loading reminders...</div>
-  </section>
-
-  <div class="section-title">Urgent emails</div>
-  <section class="glass list-card" id="urgentEmailCard">
-    <div class="loading-state">Loading email...</div>
-  </section>
-
-  <div class="section-title">New emails</div>
-  <section class="glass list-card" id="newEmailCard">
-    <div class="loading-state">Loading email...</div>
-  </section>
+  <div class="nd-split">
+    <div class="nd-split-col">
+      <section class="nd-wx" data-detail="weather" id="weatherCard">
+        <div class="nd-wx-loc">Weather</div>
+        <div class="nd-wx-msg">Loading…</div>
+      </section>
+      <section class="nd-cal" data-detail="schedule" id="scheduleCard">
+        <div class="nd-cal-top"><b>Schedule</b><span id="scheduleCardCount"></span></div>
+        <div class="nd-cal-body" id="scheduleCardBody"><div class="nd-cal-empty">Loading…</div></div>
+      </section>
+    </div>
+    <div class="nd-split-col">
+      <section class="nd-readiness" data-detail="health" id="healthCard">
+        <div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
+          <div class="nd-recov-sub">Connecting your Apple Watch…</div></div>
+      </section>
+      <section class="nd-ol" data-detail="inbox" id="inboxCard">
+        <div class="nd-ol-empty">Loading…</div>
+      </section>
+    </div>
+  </div>
 </main>
 
-<footer>Morning Dew · weather from Open-Meteo · calendar, reminders &amp; email refresh automatically</footer>
+<div class="detail-overlay" id="detailOverlay" hidden>
+  <div class="detail-header">
+    <button class="detail-back" id="detailBack" aria-label="Back">‹</button>
+    <div class="detail-title" id="detailTitle"></div>
+  </div>
+  <div id="detailContent"></div>
+</div>
+
+<div class="debrief-page" id="debriefPage" hidden>
+  <div class="detail-header">
+    <button class="detail-back" id="debriefBack" data-debrief-back aria-label="Back">‹</button>
+    <div class="detail-title">Your brief</div>
+    <button class="detail-back debrief-refresh-btn" data-debrief-refresh aria-label="Refresh">⟳</button>
+  </div>
+  <div id="debriefContent"></div>
+</div>
 
 <script>
 const BRISBANE = { latitude: -27.4698, longitude: 153.0251 };
 const FETCH_TIMEOUT_MS = 8000;
+
+// Calendar/reminders/email need the Bun backend, which can't run on GitHub
+// Pages — when this frontend is hosted there, the backend lives on a
+// different origin (e.g. Render), so /api/* calls need an absolute URL
+// instead of a same-origin relative one. Persisted in localStorage so it
+// survives reloads and re-installs of the PWA; empty string means
+// "same origin as this page" (true when self-hosting the whole app via
+// `bun run server`, where index.html and /api/* are served from one place).
+const API_BASE_KEY = 'morningDewApiBase';
+function getApiBase() {
+  return (localStorage.getItem(API_BASE_KEY) || '').replace(/\/$/, '');
+}
+function apiUrl(path) {
+  return getApiBase() + path;
+}
+// The backend URL now lives behind the ⚙ gear (see openServerSetting); this
+// reflects the current value into the gear's tooltip/aria-label for at-a-glance
+// confirmation of which server the app is pointed at.
+function updateServerBtnLabel() {
+  const base = getApiBase();
+  const btn = document.getElementById('settingsBtn');
+  if (!btn) return;
+  const label = base ? `Server: ${base.replace(/^https?:\/\//, '')}` : 'Server: not set';
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+}
+updateServerBtnLabel();
+
+// ---------- AI overview ----------
+// Pure client-side aggregation over data the other cards already fetched —
+// no extra network calls, just a different view onto the same weather/
+// calendar/reminders/email state. Each load*() function below updates its
+// slice and calls renderOverview(); whichever finishes last produces the
+// freshest combined summary, and any slice that's still loading or failed
+// is simply omitted rather than blocking the others.
+const overview = { weather: null, calendar: null, reminders: null, email: null };
+
+function isToday(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function isTomorrow(iso) {
+  const d = new Date(iso);
+  const t = new Date();
+  t.setDate(t.getDate() + 1);
+  return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
+}
+
+// ---------- Local stores (single-user, on-device): tasks, review, streak ----------
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function lsGet(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch { /* quota */ } }
+
+const TASKS_KEY = 'morningDewTasks';
+function loadTasks() { return lsGet(TASKS_KEY, []); }
+function saveTasks(t) { lsSet(TASKS_KEY, t); }
+function addTask(title) {
+  const t = loadTasks();
+  t.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: title.trim(), done: false, due: localDateStr(new Date()), createdAt: Date.now() });
+  saveTasks(t);
+}
+function mutateTask(id, fn) { const t = loadTasks(); const x = t.find((i) => i.id === id); if (x) fn(x, t); saveTasks(t); }
+function toggleTask(id) { mutateTask(id, (x) => { x.done = !x.done; x.doneAt = x.done ? Date.now() : null; }); }
+function snoozeTask(id) {
+  mutateTask(id, (x) => { const d = new Date(); d.setDate(d.getDate() + 1); x.due = localDateStr(d); });
+}
+function deleteTask(id) { saveTasks(loadTasks().filter((t) => t.id !== id)); }
+// App tasks that belong on today's list: not done, due today or overdue.
+function appTasksForToday() {
+  const today = localDateStr(new Date());
+  return loadTasks().filter((t) => !t.done && (!t.due || t.due <= today));
+}
+
+const REVIEW_KEY = 'morningDewReview';
+const STREAK_KEY = 'morningDewStreak';
+function isReviewedToday() { const r = lsGet(REVIEW_KEY, {}); return !!r[localDateStr(new Date())]; }
+function finishReview(note) {
+  const today = localDateStr(new Date());
+  const r = lsGet(REVIEW_KEY, {}); r[today] = { reviewed: true, note: note || '', at: Date.now() }; lsSet(REVIEW_KEY, r);
+  // Streak: +1 if last review was yesterday, reset to 1 on a gap, no-op if already today.
+  const s = lsGet(STREAK_KEY, { count: 0, lastDate: null });
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (s.lastDate === today) { /* already counted */ }
+  else if (s.lastDate === localDateStr(y)) { s.count += 1; s.lastDate = today; }
+  else { s.count = 1; s.lastDate = today; }
+  lsSet(STREAK_KEY, s);
+}
+function currentStreak() {
+  const s = lsGet(STREAK_KEY, { count: 0, lastDate: null });
+  if (!s.lastDate || !s.count) return 0;
+  const today = localDateStr(new Date());
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  // Streak only "counts" if kept up to yesterday/today; otherwise it's lapsed.
+  return (s.lastDate === today || s.lastDate === localDateStr(y)) ? s.count : 0;
+}
+
+function fmtClock(iso) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function fmtDuration(ms) {
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+// Finds the largest open gap between now and the end of the day, given
+// today's (sorted, non-all-day) events — used to answer "when am I free?"
+// rather than just listing what's busy.
+function findFreeBlock(todaysEvents) {
+  const now = new Date();
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 0, 0);
+  const busy = todaysEvents
+    .filter((ev) => !ev.allDay)
+    .map((ev) => ({ start: new Date(ev.start), end: ev.end ? new Date(ev.end) : new Date(new Date(ev.start).getTime() + 30 * 60000) }))
+    .filter((ev) => ev.end > now)
+    .sort((a, b) => a.start - b.start);
+
+  let cursor = now;
+  let best = null;
+  for (const ev of busy) {
+    const gapStart = cursor;
+    const gapEnd = ev.start > cursor ? ev.start : cursor;
+    if (gapEnd > gapStart) {
+      const gapMs = gapEnd - gapStart;
+      if (!best || gapMs > best.ms) best = { start: gapStart, end: gapEnd, ms: gapMs };
+    }
+    if (ev.end > cursor) cursor = ev.end;
+  }
+  if (cursor < dayEnd) {
+    const gapMs = dayEnd - cursor;
+    if (!best || gapMs > best.ms) best = { start: cursor, end: dayEnd, ms: gapMs };
+  }
+  return best;
+}
+
+function renderGlance() {
+  const card = document.getElementById('overviewCard');
+  const lines = [];
+
+  if (overview.weather) {
+    const { label, temp, precip, fallback, nudges } = overview.weather;
+    lines.push(`<div class="overview-line"><span class="icon">🌡️</span><span>${temp}° and ${label.toLowerCase()}, ${precip}% chance of rain${fallback ? ' (showing Brisbane — location unavailable)' : ''}.</span></div>`);
+    (nudges || []).forEach((n) => {
+      lines.push(`<div class="overview-line"><span class="icon">${n.icon}</span><span>${escapeHtml(n.text)}</span></div>`);
+    });
+  }
+
+  if (overview.calendar) {
+    const todays = overview.calendar.filter((ev) => isToday(ev.start)).sort((a, b) => new Date(a.start) - new Date(b.start));
+    const now = new Date();
+    const upcoming = todays.filter((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
+    if (!todays.length) {
+      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>Nothing on the calendar today.</span></div>`);
+    } else if (!upcoming.length) {
+      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>${todays.length} event${todays.length > 1 ? 's' : ''} today, all done.</span></div>`);
+    } else {
+      const next = upcoming[0];
+      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>${todays.length} event${todays.length > 1 ? 's' : ''} today — next: ${next.summary}${next.allDay ? ' (all day)' : ' at ' + fmtClock(next.start)}.</span></div>`);
+    }
+    const free = findFreeBlock(todays);
+    if (free && free.ms >= 15 * 60000) {
+      lines.push(`<div class="overview-line"><span class="icon">🕒</span><span>Free for ${fmtDuration(free.ms)}, until ${fmtClock(free.end)}.</span></div>`);
+    }
+  }
+
+  if (overview.reminders) {
+    const dueToday = overview.reminders.filter((ev) => isToday(ev.start)).length;
+    if (dueToday) {
+      lines.push(`<div class="overview-line"><span class="icon">✅</span><span>${dueToday} reminder${dueToday > 1 ? 's' : ''} due today.</span></div>`);
+    }
+  }
+
+  if (overview.email) {
+    const { urgent } = overview.email;
+    if (urgent > 0) {
+      lines.push(`<div class="overview-line"><span class="icon">✉️</span><span>${urgent} urgent email${urgent > 1 ? 's' : ''} waiting.</span></div>`);
+    }
+  }
+
+  if (!lines.length) {
+    card.innerHTML = `<div class="overview-label">Today at a glance</div><div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>`;
+    return;
+  }
+  // Home is one screen — keep the glance compact (top 3 lines).
+  card.innerHTML = `<div class="overview-label">Today at a glance</div>${lines.slice(0, 3).join('')}`;
+}
+
+// ---------- AI Morning Brief ----------
+const BRIEF_KEY = 'morningDewBrief';
+// 3 hours: long enough to skip needless regeneration cost on every app open,
+// short enough that the brief still reflects the day as it evolves.
+const BRIEF_STALE_MS = 3 * 60 * 60 * 1000;
+function cachedBrief() {
+  const b = lsGet(BRIEF_KEY, null);
+  if (!b || b.date !== localDateStr(new Date())) return null;
+  if (b.generatedAt && Date.now() - b.generatedAt > BRIEF_STALE_MS) return null;
+  const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+  const currentHealthUpdatedAt = (health && health.updatedAt) || null;
+  if (b.healthUpdatedAt !== undefined && b.healthUpdatedAt !== currentHealthUpdatedAt) return null;
+  return { brief: b.brief, structured: !!b.structured };
+}
+// brief is either a structured object ({headline, opener, sections, tomorrow})
+// from the redesigned AI prompt, or a legacy flat markdown string.
+function briefHeadline(brief) {
+  if (!brief) return '';
+  if (typeof brief === 'object') return (brief.headline || '').replace(/\*\*/g, '').trim();
+  const h = brief.split('\n').find((l) => l.startsWith('## '));
+  return (h ? h.slice(3) : brief.split('\n').find((l) => l.trim())).replace(/\*\*/g, '').trim();
+}
+// Tiny markdown → HTML for the brief (## heading, **bold**, - bullets).
+function mdToHtml(md) {
+  const lines = escapeHtml(md).split('\n');
+  let html = '';
+  let inList = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    const bold = (s) => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    if (line.startsWith('### ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h3 class="brief-h3">${bold(line.slice(4))}</h3>`; }
+    else if (line.startsWith('## ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h2 class="brief-h">${bold(line.slice(3))}</h2>`; }
+    else if (line.startsWith('- ')) { if (!inList) { html += '<ul class="brief-ul">'; inList = true; } html += `<li>${bold(line.slice(2))}</li>`; }
+    else if (!line) { if (inList) { html += '</ul>'; inList = false; } }
+    else { if (inList) { html += '</ul>'; inList = false; } html += `<p class="brief-p">${bold(line)}</p>`; }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+function briefContext() {
+  const now = new Date();
+  const evs = todaysEvents().map((e) => ({
+    title: e.summary,
+    start: e.allDay ? 'all day' : fmtClock(e.start),
+    end: e.end && !e.allDay ? fmtClock(e.end) : null,
+    location: e.location || null,
+    source: e.source || null,
+  }));
+  const freeBlocks = allFreeBlocks(overview.calendar || [])
+    .map((b) => ({ from: fmtClock(b.start.toISOString()), to: fmtClock(b.end.toISOString()), minutes: Math.round(b.ms / 60000) }))
+    .filter((b) => b.minutes >= 20);
+  const tasks = [
+    ...appTasksForToday().map((t) => ({ title: t.title, kind: 'task' })),
+    ...todaysReminders().map((r) => ({ title: r.summary, due: r.start ? fmtClock(r.start) : null, kind: 'reminder' })),
+  ];
+
+  // Rich weather from the raw Open-Meteo payload when available.
+  let weather = null;
+  const raw = overview.weatherRaw;
+  if (raw && raw.current) {
+    const cur = raw.current, daily = raw.daily || {}, hourly = raw.hourly;
+    let rainPeak = null;
+    if (hourly && hourly.time) {
+      let peak = { p: -1, t: null };
+      for (let i = 0; i < hourly.time.length; i++) {
+        const tt = new Date(hourly.time[i]).getTime();
+        if (tt < now.getTime() - 3600000 || tt > now.getTime() + 12 * 3600000) continue;
+        const p = hourly.precipitation_probability ? (hourly.precipitation_probability[i] ?? 0) : 0;
+        if (p > peak.p) peak = { p, t: hourly.time[i] };
+      }
+      if (peak.p >= 30) rainPeak = { chance: peak.p, time: fmtClock(peak.t) };
+    }
+    weather = {
+      now: `${Math.round(cur.temperature_2m)}° ${describeWeather(cur.weather_code)[0]}`,
+      feelsLike: cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : null,
+      high: daily.temperature_2m_max ? Math.round(daily.temperature_2m_max[0]) : null,
+      low: daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : null,
+      rainChanceNow: Math.round(cur.precipitation_probability ?? 0),
+      rainPeak,
+      uvMax: daily.uv_index_max ? Math.round(daily.uv_index_max[0]) : null,
+      sunrise: daily.sunrise ? fmtClock(daily.sunrise[0]) : null,
+      sunset: daily.sunset ? fmtClock(daily.sunset[0]) : null,
+      isDaytime: cur.is_day !== 0,
+    };
+  } else if (overview.weather) {
+    weather = { now: `${overview.weather.temp}° ${overview.weather.label}`, rainChanceNow: overview.weather.precip };
+  }
+
+  const email = overview.emailData ? {
+    urgent: overview.emailData.urgent.length,
+    unread: overview.emailData.recent.length,
+    urgentItems: overview.emailData.urgent.slice(0, 5).map((m) => ({ from: senderName(m.from), subject: m.subject })),
+  } : null;
+
+  const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+  const trend = recoveryTrend();
+  const recovery = (health && health.recovery != null)
+    ? {
+        score: health.recovery,
+        band: health.recovery >= 67 ? 'high' : health.recovery >= 34 ? 'moderate' : 'low',
+        read: recoveryWord(health.recovery),
+        source: health.source || null,
+        hrv: health.hrv != null ? Math.round(health.hrv) : null,
+        restingHeartRate: health.restingHeartRate != null ? Math.round(health.restingHeartRate) : null,
+        sleepHours: health.sleepHours != null ? health.sleepHours : null,
+        vsPrevious: trend ? { delta: trend.delta, previousScore: trend.previousScore, previousDate: trend.previousDate } : null,
+        recent: recoveryHistory().slice(0, 7),
+      }
+    : null;
+  const sleep = (health && health.sleep != null) ? { score: health.sleep, read: sleepWord(health.sleep) } : null;
+  const strain = (health && health.strain != null) ? { score: health.strain, read: strainWord(health.strain) } : null;
+  const targetStrain = targetStrainRange(health && health.recovery != null ? health.recovery : null);
+
+  // Tomorrow's plan input: /api/calendar and /api/reminders already return a
+  // 48h window (see fetchIcsEvents in server.js), so this is a pure client-side
+  // filter — no extra fetch needed. Email has no per-item date, so we hand the
+  // model the same urgent list and let it judge tomorrow-relevance contextually.
+  const tomorrowEvents = (overview.calendar || [])
+    .filter((e) => e.start && isTomorrow(e.start))
+    .map((e) => ({ title: e.summary, start: e.allDay ? 'all day' : fmtClock(e.start), location: e.location || null }));
+  const tomorrowReminders = (overview.reminders || [])
+    .filter((r) => !r.start || isTomorrow(r.start))
+    .map((r) => ({ title: r.summary, due: r.start ? fmtClock(r.start) : null }));
+  const tomorrow = (tomorrowEvents.length || tomorrowReminders.length || (email && email.urgentItems.length))
+    ? { events: tomorrowEvents, reminders: tomorrowReminders, possiblyRelevantEmail: email ? email.urgentItems : [] }
+    : null;
+
+  const hour = now.getHours();
+  return {
+    localTime: fmtClock(now.toISOString()),
+    date: now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+    partOfDay: hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening',
+    location: overview.locationLabel || null,
+    recovery,
+    sleep,
+    strain,
+    targetStrain,
+    streakDays: currentStreak(),
+    weather,
+    events: evs,
+    freeBlocks,
+    tasks,
+    email,
+    tomorrow,
+  };
+}
+async function fetchBrief(force) {
+  if (!force) {
+    const c = cachedBrief();
+    if (c) { overview.brief = c.brief; overview.briefStructured = c.structured; renderOverview(); return; }
+  }
+  if (overview.briefFetching) return;
+  // Wait until the core data is in so the brief is built from a full picture.
+  if (overview.weatherReached === undefined || overview.calendarReached === undefined || overview.healthConfigured === undefined) return;
+  overview.briefFetching = true;
+  if (debriefOpen) renderDebriefPage();
+  try {
+    const res = await fetchWithTimeout(apiUrl('/api/brief'), {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(briefContext()),
+    }, 45000);
+    const data = await res.json();
+    if (data.configured === false) { overview.briefConfigured = false; }
+    else if (data.brief) {
+      overview.brief = data.brief;
+      overview.briefStructured = !!data.structured;
+      overview.briefConfigured = true;
+      const healthNow = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+      lsSet(BRIEF_KEY, {
+        date: localDateStr(new Date()),
+        brief: data.brief,
+        structured: !!data.structured,
+        generatedAt: Date.now(),
+        healthUpdatedAt: (healthNow && healthNow.updatedAt) || null,
+      });
+    } else if (data.error) {
+      overview.briefError = data.error;
+    }
+  } catch (err) {
+    overview.briefError = 'timed out';
+  } finally {
+    overview.briefFetching = false;
+    renderOverview();
+    if (debriefOpen) renderDebriefPage();
+  }
+}
+
+// ---------- Push notifications (morning brief at ~7am) ----------
+const PUSH_KEY = 'morningDewPush';
+function pushSupported() { return 'serviceWorker' in navigator && 'PushManager' in window; }
+function pushEnabled() { return localStorage.getItem(PUSH_KEY) === 'on'; }
+function pushButtonHtml() {
+  if (!pushSupported()) return `<div class="push-status">🔔 Add to your Home Screen to enable morning alerts</div>`;
+  return pushEnabled()
+    ? `<div class="push-status">🔔 Morning notifications on</div>`
+    : `<button class="brief-refresh" data-enable-push>🔔 Get this brief at 7am</button>`;
+}
+function urlBase64ToUint8Array(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const base = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+async function enablePush() {
+  if (!pushSupported()) { alert('Notifications need the installed app. Add Morning Dew to your Home Screen first, then try again.'); return; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { alert('Notifications were not allowed. You can enable them in Settings.'); return; }
+    const cfg = await (await fetchWithTimeout(apiUrl('/api/push/config'))).json();
+    if (!cfg.configured || !cfg.publicKey) { alert('Push is not set up on the server yet (VAPID keys + Upstash).'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(cfg.publicKey) });
+    const res = await fetchWithTimeout(apiUrl('/api/push/subscribe'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) });
+    if (!res.ok) throw new Error('server rejected the subscription');
+    localStorage.setItem(PUSH_KEY, 'on');
+    refreshOpenSection();
+    alert('Morning brief notifications enabled. You will get a nudge around 7am.');
+  } catch (err) {
+    alert('Could not enable notifications: ' + (err.message || err));
+  }
+}
+
+// Orchestrates the home hero card: evening → review prompt; else AI brief;
+// else the computed glance fallback.
+const ND_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+const ND_CHEV_MUTED = '<span class="nd-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
+
+// Short "what's today" line for the brief-card fallback before the AI brief lands.
+function glancePreviewHtml() {
+  const parts = [];
+  if (overview.weather) parts.push(`${overview.weather.temp}° ${overview.weather.label.toLowerCase()}`);
+  if (overview.calendar) {
+    const evs = todaysEvents();
+    const now = new Date();
+    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
+    if (next) parts.push(`next: ${next.summary}${next.allDay ? '' : ' at ' + fmtClock(next.start)}`);
+    else parts.push('calendar clear');
+  }
+  const urgent = overview.emailData ? overview.emailData.urgent.length : 0;
+  if (urgent) parts.push(`${urgent} urgent email${urgent > 1 ? 's' : ''}`);
+  return `<div class="nd-hero-preview">${parts.length ? escapeHtml(parts.join('  ·  ')) : 'Building your overview…'}</div>`;
+}
+
+function renderOverview() {
+  const card = document.getElementById('overviewCard');
+  if (!card) return;
+  const hour = new Date().getHours();
+
+  if (hour >= 17 && !isReviewedToday()) {
+    card.innerHTML = `<div class="nd-hero-label">Wrap up</div>
+      <div class="nd-hero-headline">Review your day</div>
+      <div class="nd-hero-preview">2 minutes to close out today and keep your streak alive.</div>
+      <div class="nd-hero-cta" data-detail="review">Start review ${ND_CHEV}</div>`;
+    return;
+  }
+  if (overview.brief) {
+    card.innerHTML = `<div class="nd-hero-label">Your brief</div>
+      <div class="nd-hero-headline">${escapeHtml(briefHeadline(overview.brief))}</div>
+      <div class="nd-hero-cta" data-detail="brief">Read full plan ${ND_CHEV}</div>`;
+    return;
+  }
+  if (overview.briefFetching) {
+    card.innerHTML = `<div class="nd-hero-label">Your brief</div><div class="nd-hero-preview">Writing your morning brief…</div>`;
+    return;
+  }
+  card.innerHTML = `<div class="nd-hero-label">Today at a glance</div>${glancePreviewHtml()}`;
+}
 
 const WEATHER_CODES = {
   0: ['Clear sky', '☀️'], 1: ['Mainly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'],
@@ -282,9 +1487,9 @@ const WEATHER_CODES = {
 };
 function describeWeather(code) { return WEATHER_CODES[code] || ['Unknown', '❔']; }
 
-async function fetchWithTimeout(url, opts = {}) {
+async function fetchWithTimeout(url, opts = {}, ms = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
     return await fetch(url, { ...opts, signal: controller.signal });
   } finally {
@@ -294,48 +1499,252 @@ async function fetchWithTimeout(url, opts = {}) {
 
 function renderGreeting() {
   const now = new Date();
-  const hour = now.getHours();
-  const phrase = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('greetingPhrase').textContent = phrase;
+  setGreeting();
   document.getElementById('dateLabel').textContent = now.toLocaleDateString(undefined, {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 }
 
 // ---------- Weather ----------
-// Brisbane coords are hardcoded per spec (no geolocation prompt) — this also
-// fixes the old "Fetching weather..." hang, which was the browser waiting
-// indefinitely on a geolocation permission prompt that the user never saw/granted.
-async function loadWeather() {
-  const descEl = document.getElementById('desc');
-  const iconEl = document.getElementById('weatherIcon');
-  descEl.textContent = 'Fetching weather...';
-  iconEl.textContent = '⏳';
+// Live location, with a hard-capped wait. The original "Fetching weather..."
+// hang was navigator.geolocation.getCurrentPosition never resolving when the
+// permission prompt was dismissed/ignored/previously-denied — no timeout was
+// ever set on it. Fixed by racing it against a manual timer in addition to
+// the API's own (unreliable on iOS) `timeout` option, and falling back to
+// Brisbane (the original fixed location) if geolocation fails or times out,
+// so the weather card never hangs no matter what the user does with the
+// permission prompt.
+const GEO_TIMEOUT_MS = 8000;
 
+function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('geolocation unsupported'));
+      return;
+    }
+    const timer = setTimeout(() => reject(new Error('geolocation timed out')), GEO_TIMEOUT_MS);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { clearTimeout(timer); resolve(pos); },
+      (err) => { clearTimeout(timer); reject(err); },
+      { enableHighAccuracy: false, timeout: GEO_TIMEOUT_MS, maximumAge: 5 * 60 * 1000 }
+    );
+  });
+}
+
+// Best-effort, no API key — BigDataCloud's free reverse-geocode endpoint is
+// CORS-enabled and keyless. Never blocks weather: failure just leaves the
+// generic "Current location" label in place.
+async function updateLocationLabel(latitude, longitude) {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${BRISBANE.latitude}&longitude=${BRISBANE.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code`;
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
     const res = await fetchWithTimeout(url);
-    if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
+    if (!res.ok) return;
     const data = await res.json();
-    const cur = data.current;
-    const [label, icon] = describeWeather(cur.weather_code);
-
-    document.getElementById('temp').textContent = `${Math.round(cur.temperature_2m)}°`;
-    document.getElementById('feelsLike').textContent = `${Math.round(cur.apparent_temperature)}°`;
-    document.getElementById('humidity').textContent = `${Math.round(cur.relative_humidity_2m)}%`;
-    document.getElementById('wind').textContent = `${Math.round(cur.wind_speed_10m)} km/h`;
-    document.getElementById('precip').textContent = `${Math.round(cur.precipitation_probability ?? 0)}%`;
-    descEl.textContent = label;
-    iconEl.textContent = icon;
-  } catch (err) {
-    descEl.textContent = err.name === 'AbortError'
-      ? 'Weather timed out. Tap Refresh to retry.'
-      : 'Could not load weather. Tap Refresh to retry.';
-    iconEl.textContent = '⚠️';
+    const place = data.locality || data.city || data.principalSubdivision;
+    if (place) {
+      overview.locationLabel = data.principalSubdivision && place !== data.principalSubdivision
+        ? `${place}, ${data.principalSubdivision}`
+        : place;
+      renderHome();
+      if (currentDetail === 'weather') openDetail('weather');
+    }
+  } catch {
+    // Best-effort only — coordinates-based weather already loaded fine.
   }
 }
 
-// ---------- Calendar ----------
+// Open-Meteo (with timezone=auto) returns hourly/daily timestamps as naive
+// local time for the QUERIED location, with no UTC offset in the string
+// (e.g. "2026-06-30T07:00"). `new Date(...)` on an offset-less string is
+// parsed as local time in the DEVICE's own timezone, not the location's —
+// so whenever the two differ (the Brisbane geolocation fallback while the
+// device is elsewhere, travel, etc.) every derived time (sunrise/sunset,
+// the hourly "Now" marker, rain-peak time) silently drifts by the gap
+// between the two zones. Re-anchor each naive string to its real UTC
+// instant using the response's own utc_offset_seconds before anything else
+// reads it, so all the comparisons/labels downstream are correct regardless
+// of what timezone the device itself is set to.
+function reanchorWeatherTimes(data) {
+  const offsetSec = data.utc_offset_seconds || 0;
+  const fix = (s) => new Date(Date.parse(s + 'Z') - offsetSec * 1000).toISOString();
+  if (data.hourly && data.hourly.time) data.hourly.time = data.hourly.time.map(fix);
+  if (data.daily) {
+    if (data.daily.sunrise) data.daily.sunrise = data.daily.sunrise.map(fix);
+    if (data.daily.sunset) data.daily.sunset = data.daily.sunset.map(fix);
+  }
+}
+
+async function loadWeather() {
+  let { latitude, longitude } = BRISBANE;
+  overview.locationLabel = 'Current location';
+  let usedFallback = false;
+  try {
+    const pos = await getCurrentPosition();
+    latitude = pos.coords.latitude;
+    longitude = pos.coords.longitude;
+    updateLocationLabel(latitude, longitude);
+  } catch {
+    overview.locationLabel = 'Brisbane, QLD (location unavailable)';
+    usedFallback = true;
+  }
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}`
+      + `&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code,uv_index,is_day`
+      + `&hourly=temperature_2m,precipitation_probability,weather_code`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset`
+      + `&timezone=auto&forecast_days=7`;
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
+    const data = await res.json();
+    reanchorWeatherTimes(data);
+    const cur = data.current;
+    const daily = data.daily;
+    const [label, icon] = describeWeather(cur.weather_code);
+
+    applyTheme(cur.is_day);
+
+    overview.weather = {
+      label,
+      icon,
+      temp: Math.round(cur.temperature_2m),
+      precip: Math.round(cur.precipitation_probability ?? 0),
+      fallback: usedFallback,
+      nudges: weatherNudges(cur, data.hourly, daily),
+    };
+    overview.weatherRaw = { current: cur, hourly: data.hourly, daily };
+    overview.weatherReached = true;
+    renderOverview();
+    renderHome();
+    fetchBrief();
+    if (currentDetail === 'weather') openDetail('weather');
+  } catch (err) {
+    overview.weatherReached = false;
+    renderHome();
+    if (currentDetail === 'weather') openDetail('weather');
+  }
+}
+
+// Recolors the ambient background by time of day. Uses the API's is_day when
+// available, otherwise the device clock.
+function applyTheme(isDay) {
+  const hour = new Date().getHours();
+  let period;
+  if (isDay === 0) period = hour < 5 || hour >= 20 ? 'night' : 'dusk';
+  else if (hour >= 5 && hour < 8) period = 'dawn';
+  else if (hour >= 8 && hour < 17) period = 'day';
+  else if (hour >= 17 && hour < 20) period = 'dusk';
+  else period = 'night';
+  document.body.classList.remove('theme-dawn', 'theme-day', 'theme-dusk', 'theme-night');
+  document.body.classList.add('theme-' + period);
+}
+
+// Builds actionable {icon,text} weather lines from current/hourly/daily data.
+function weatherNudges(cur, hourly, daily) {
+  const out = [];
+  // Umbrella — scan the next 12 hours for a rain-probability peak.
+  if (hourly && hourly.time) {
+    const now = Date.now();
+    let peak = { p: -1, time: null };
+    let count = 0;
+    for (let i = 0; i < hourly.time.length && count < 12; i++) {
+      const t = new Date(hourly.time[i]).getTime();
+      if (t < now - 3600000) continue;
+      count++;
+      const p = hourly.precipitation_probability[i] ?? 0;
+      if (p > peak.p) peak = { p, time: hourly.time[i] };
+    }
+    if (peak.p >= 50) {
+      out.push({ icon: '☔', text: `Umbrella — ${Math.round(peak.p)}% rain around ${fmtClock(peak.time)}.` });
+    }
+  }
+  // UV — high index today.
+  if (daily && daily.uv_index_max) {
+    const uv = Math.round(daily.uv_index_max[0] ?? 0);
+    if (uv >= 6) out.push({ icon: '🧴', text: `High UV (${uv}) today — wear sunscreen.` });
+  }
+  // Temperature extremes today.
+  if (daily && daily.temperature_2m_min) {
+    const lo = Math.round(daily.temperature_2m_min[0]);
+    const hi = Math.round(daily.temperature_2m_max[0]);
+    if (lo <= 10) out.push({ icon: '🧥', text: `Chilly start at ${lo}° — take a layer.` });
+    if (hi >= 32) out.push({ icon: '🥵', text: `Hot day, up to ${hi}° — stay hydrated.` });
+  }
+  return out;
+}
+
+// Next ~18 hours, horizontally scrollable. Returns HTML for the weather section.
+function hourlyHtml(hourly) {
+  if (!hourly || !hourly.time || !hourly.time.length) {
+    return `<div class="empty-state">Hourly forecast unavailable.</div>`;
+  }
+  const now = Date.now();
+  let start = hourly.time.findIndex((t) => new Date(t).getTime() >= now - 3600000);
+  if (start < 0) start = 0;
+  const cells = [];
+  for (let i = start; i < hourly.time.length && cells.length < 18; i++) {
+    const d = new Date(hourly.time[i]);
+    const isNow = cells.length === 0;
+    const label = isNow ? 'Now' : d.toLocaleTimeString(undefined, { hour: 'numeric' });
+    const [, icon] = describeWeather(hourly.weather_code[i]);
+    const temp = Math.round(hourly.temperature_2m[i]);
+    const rain = Math.round(hourly.precipitation_probability[i] ?? 0);
+    cells.push(`
+      <div class="hour-cell">
+        <span class="hc-time">${escapeHtml(label)}</span>
+        <span class="hc-icon">${icon}</span>
+        <span class="hc-temp">${temp}°</span>
+        <span class="hc-rain">${rain >= 10 ? '💧' + rain + '%' : ''}</span>
+      </div>`);
+  }
+  return `<div class="hourly-strip">${cells.join('')}</div>`;
+}
+
+// Map a temperature to a color on a cold→hot scale (blue → red).
+function tempColor(t) {
+  const hue = Math.max(0, Math.min(210, 210 - (t / 40) * 210));
+  return `hsl(${hue}, 80%, 58%)`;
+}
+
+function forecastHtml(daily) {
+  if (!daily || !daily.time || !daily.time.length) {
+    return `<div class="empty-state">Forecast unavailable.</div>`;
+  }
+  const highs = daily.temperature_2m_max;
+  const lows = daily.temperature_2m_min;
+  const weekMax = Math.max(...highs);
+  const weekMin = Math.min(...lows);
+  const span = weekMax - weekMin || 1;
+
+  const rows = daily.time.map((iso, i) => {
+    const d = new Date(iso + 'T00:00');
+    const dayLabel = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
+    const [, icon] = describeWeather(daily.weather_code[i]);
+    const rain = Math.round(daily.precipitation_probability_max[i] ?? 0);
+    const lo = Math.round(lows[i]);
+    const hi = Math.round(highs[i]);
+
+    const left = ((lows[i] - weekMin) / span) * 100;
+    const width = Math.max(6, ((highs[i] - lows[i]) / span) * 100);
+    const fill = `left:${left}%;width:${width}%;background:linear-gradient(90deg, ${tempColor(lows[i])}, ${tempColor(highs[i])});`;
+
+    return `
+      <div class="forecast-row">
+        <span class="fc-day">${dayLabel}</span>
+        <span class="fc-icon">${icon}</span>
+        <span class="fc-rain ${rain > 0 ? '' : 'dry'}">${rain > 0 ? '💧' + rain + '%' : '—'}</span>
+        <span class="fc-temps">
+          <span class="fc-lo">${lo}°</span>
+          <span class="fc-track"><span class="fc-fill" style="${fill}"></span></span>
+          <span class="fc-hi">${hi}°</span>
+        </span>
+      </div>`;
+  });
+
+  return rows.join('');
+}
+
+// ---------- Calendar / Reminders → unified Today timeline ----------
 function fmtEventTime(iso, allDay) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -343,100 +1752,1264 @@ function fmtEventTime(iso, allDay) {
   return d.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
+// Refreshes the home tiles + (if open) the Schedule/Tasks sections from the
+// already-fetched overview.calendar / overview.reminders — no extra network.
+function renderToday() {
+  renderHome();
+  if (currentDetail === 'schedule') openDetail('schedule');
+  // Tasks intentionally NOT re-opened on background refresh — it would wipe the
+  // checklist input mid-type. Its app-task list re-renders on your edits instead.
+}
+
+function todaysEvents() {
+  return (overview.calendar || [])
+    .filter((ev) => ev.start && isToday(ev.start))
+    .sort((a, b) => (a.allDay ? 0 : new Date(a.start)) - (b.allDay ? 0 : new Date(b.start)));
+}
+function todaysReminders() {
+  return (overview.reminders || []).filter((r) => !r.start || isToday(r.start));
+}
+
+// Schedule section body: today's events as an Apple-Calendar-style day timeline.
+function scheduleListHtml() {
+  if (overview.calendarReached === false) return `<div class="error-state">Couldn't reach the calendar. Pull down to retry.</div>`;
+  if (overview.calendarReached === undefined) return `<div class="loading-state">Loading…</div>`;
+  const events = todaysEvents();
+  const errNote = overview.calendarError ? `<div class="error-state">Some calendars didn't load: ${escapeHtml(overview.calendarError)}</div>` : '';
+  if (!events.length) return errNote || `<div class="empty-state">No events today. 🌤️</div>`;
+  return errNote + dayTimelineHtml(events);
+}
+
+// Lays out today's events on a 24-hour vertical grid (Apple Calendar style):
+// hour rule lines on the left, time-positioned blocks on the right, a red
+// "now" line, simple greedy column-packing for overlapping events.
+function dayTimelineHtml(events) {
+  const HOUR_PX = 56;
+  const allDay = events.filter((ev) => ev.allDay);
+  const timed = events.filter((ev) => !ev.allDay);
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const minsFrom = (iso) => (new Date(iso) - dayStart) / 60000;
+
+  const allDayHtml = allDay.length
+    ? `<div class="day-tl-allday">${allDay.map((ev) => `<div class="day-tl-allday-chip">${escapeHtml(ev.summary)}</div>`).join('')}</div>`
+    : '';
+
+  const hoursHtml = Array.from({ length: 24 }, (_, h) => {
+    const label = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
+    return `<div class="day-tl-hour" style="top:${h * HOUR_PX}px"><span class="day-tl-hour-label">${label}</span><span class="day-tl-hour-line"></span></div>`;
+  }).join('');
+
+  // Greedy column packing so overlapping events sit side-by-side instead of stacking.
+  const sorted = [...timed].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const colEnds = [];
+  const placed = sorted.map((ev) => {
+    const start = Math.max(0, minsFrom(ev.start));
+    const end = Math.max(start + 20, minsFrom(ev.end || ev.start));
+    let col = colEnds.findIndex((endMins) => endMins <= start);
+    if (col === -1) { col = colEnds.length; colEnds.push(end); } else { colEnds[col] = end; }
+    return { ev, start, end, col };
+  });
+  const maxCol = Math.max(1, ...placed.map((p) => p.col + 1));
+
+  const eventsHtml = placed.map(({ ev, start, end, col }) => {
+    const top = (start / 60) * HOUR_PX;
+    const height = Math.max(22, ((end - start) / 60) * HOUR_PX - 2);
+    const width = 100 / maxCol;
+    const left = col * width;
+    return `<a class="day-tl-event" href="calshow://" style="top:${top}px;height:${height}px;left:calc(${left}% + 52px);width:calc(${width}% - 56px - 0.4rem);">
+      <span class="day-tl-event-title">${escapeHtml(ev.summary)}</span>
+      <span class="day-tl-event-time">${escapeHtml(fmtClock(ev.start))}</span>
+    </a>`;
+  }).join('');
+
+  const nowMins = (new Date() - dayStart) / 60000;
+  const nowHtml = `<div class="day-tl-now" style="top:${(nowMins / 60) * HOUR_PX}px"><span class="day-tl-now-dot"></span></div>`;
+
+  return `${allDayHtml}<div class="day-timeline" style="height:${24 * HOUR_PX}px">${hoursHtml}${eventsHtml}${nowHtml}</div>`;
+}
+
+// Tasks section body: today/undated reminders as a checklist.
+function tasksListHtml() {
+  if (overview.remindersReached === false) return `<div class="error-state">Couldn't reach reminders. Pull down to retry.</div>`;
+  if (overview.remindersReached === undefined) return `<div class="loading-state">Loading…</div>`;
+  if (overview.remindersConfigured === false) return `<div class="placeholder-state">No reminders feed connected. Set <code>REMINDERS_ICS_URL</code> on the server.</div>`;
+  const rems = todaysReminders();
+  const errNote = overview.remindersError ? `<div class="error-state">Some reminders didn't load: ${escapeHtml(overview.remindersError)}</div>` : '';
+  if (!rems.length) return errNote || `<div class="empty-state">No tasks due today. ✅</div>`;
+  return errNote + rems.map((r) => `
+    <div class="task-item">
+      <span class="task-box"></span>
+      <span class="task-title">${escapeHtml(r.summary)}${r.start && !r.allDay ? `<span class="task-time">${escapeHtml(fmtClock(r.start))}</span>` : ''}</span>
+    </div>`).join('');
+}
+
 async function loadCalendar() {
-  const card = document.getElementById('calendarCard');
   try {
-    const res = await fetchWithTimeout('/api/calendar');
+    const res = await fetchWithTimeout(apiUrl('/api/calendar'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    if (!data.configured) {
-      card.innerHTML = `<div class="placeholder-state">No calendar connected yet. Set <code>ICLOUD_ICS_URL</code> and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment to see upcoming events here.</div>`;
-      return;
-    }
-    const errorNote = data.error ? `<div class="error-state">Some calendars didn't load: ${data.error}</div>` : '';
-    if (!data.events.length) {
-      card.innerHTML = errorNote || `<div class="empty-state">Nothing on the calendar in the next 48 hours.</div>`;
-      return;
-    }
-    card.innerHTML = errorNote + data.events.map((ev) => `
-      <div class="list-row">
-        <div class="list-row-title">${ev.summary}</div>
-        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.location ? ' · ' + ev.location : ''}${ev.source ? ' · ' + ev.source : ''}</div>
-      </div>`).join('');
+    overview.calendarConfigured = !!data.configured;
+    overview.calendar = data.configured ? data.events : [];
+    overview.calendarError = data.error || null;
+    overview.calendarReached = true;
+    renderOverview();
+    renderToday();
+    fetchBrief();
+    return true;
   } catch (err) {
-    card.innerHTML = `<div class="error-state">Couldn't reach the calendar service. Is the Morning Dew server running?</div>`;
+    overview.calendarReached = false;
+    renderToday();
+    return false;
   }
 }
 
 // ---------- Reminders ----------
 async function loadReminders() {
-  const card = document.getElementById('remindersCard');
   try {
-    const res = await fetchWithTimeout('/api/reminders');
+    const res = await fetchWithTimeout(apiUrl('/api/reminders'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    if (!data.configured) {
-      card.innerHTML = `<div class="placeholder-state">No reminders feed connected yet. Set <code>REMINDERS_ICS_URL</code> (an iCloud Reminders list shared as a calendar/.ics subscription) and/or the Outlook <code>MS_*</code> vars (Microsoft To Do is used as the Outlook reminders equivalent) in the server environment.</div>`;
-      return;
-    }
-    const errorNote = data.error ? `<div class="error-state">Some reminders didn't load: ${data.error}</div>` : '';
-    if (!data.events.length) {
-      card.innerHTML = errorNote || `<div class="empty-state">No open reminders due soon.</div>`;
-      return;
-    }
-    card.innerHTML = errorNote + data.events.map((ev) => `
-      <div class="list-row">
-        <div class="list-row-title">${ev.summary}</div>
-        <div class="list-row-meta">${fmtEventTime(ev.start, ev.allDay)}${ev.source ? ' · ' + ev.source : ''}</div>
-      </div>`).join('');
+    overview.remindersConfigured = !!data.configured;
+    overview.reminders = data.configured ? data.events : [];
+    overview.remindersError = data.error || null;
+    overview.remindersReached = true;
+    renderOverview();
+    renderToday();
+    return true;
   } catch (err) {
-    card.innerHTML = `<div class="error-state">Couldn't reach the reminders service. Is the Morning Dew server running?</div>`;
+    overview.remindersReached = false;
+    renderToday();
+    return false;
   }
 }
 
-// ---------- Email ----------
-function renderEmailList(card, items, emptyMsg, tagClass, tagLabel, errorNote) {
-  if (!items.length) {
-    card.innerHTML = errorNote || `<div class="empty-state">${emptyMsg}</div>`;
-    return;
+// ---------- Email (Outlook-style) ----------
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// "TikTok" <no-reply@tiktok.com>  ->  TikTok   |   bob@x.com -> bob
+function senderName(from) {
+  if (!from) return 'Unknown';
+  const m = from.match(/^\s*"?([^"<]*?)"?\s*<.*>\s*$/);
+  let name = m && m[1] ? m[1].trim() : '';
+  if (!name) {
+    const emailMatch = from.match(/[\w.+-]+@[\w.-]+/);
+    name = emailMatch ? emailMatch[0].split('@')[0] : from.trim();
   }
-  card.innerHTML = (errorNote || '') + items.map((m) => `
-    <div class="list-row">
-      <span class="tag ${tagClass}">${tagLabel}${m.source ? ' · ' + m.source : ''}</span>
-      <div class="list-row-title">${m.subject}</div>
-      <div class="list-row-meta">${m.from}</div>
-    </div>`).join('');
+  return name || 'Unknown';
+}
+
+const AVATAR_COLORS = ['#3a8dff', '#7c5cff', '#e0457b', '#1aa179', '#d98300', '#0a8fa6', '#b5468a', '#5a7d2a'];
+function avatarColor(key) {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+// Outlook-style relative date: today -> time, this week -> weekday, else -> date.
+function fmtMailDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const days = Math.floor((now - d) / 86400000);
+  if (days >= 0 && days < 7) return d.toLocaleDateString(undefined, { weekday: 'long' });
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// Deep link straight to the exact message, by its source. Outlook messages use
+// the real Graph webLink — iOS registers outlook.office.com/office365.com as
+// Universal Link domains, so tapping that exact URL opens the Outlook app
+// directly when installed and falls back to Safari automatically when it's
+// not, with no custom URL scheme needed. Gmail messages open in Gmail (app or
+// web) by their API id. The Outlook iOS app can't be pointed at a specific
+// Gmail message, so opening the precise email means opening it via its own
+// provider.
+function mailUrl(m) {
+  if (m.source === 'Outlook') {
+    if (m.webLink) return m.webLink;
+    if (m.id) return `https://outlook.office.com/mail/inbox/id/${encodeURIComponent(m.id)}`;
+  }
+  if (m.id) {
+    return `https://mail.google.com/mail/u/0/#all/${encodeURIComponent(m.id)}`;
+  }
+  return 'ms-outlook://';
+}
+
+function mailRow(m) {
+  const name = senderName(m.from);
+  const initial = escapeHtml(name.charAt(0).toUpperCase() || '?');
+  const color = avatarColor(name + (m.source || ''));
+  return `
+    <a class="mail-row" href="${escapeHtml(mailUrl(m))}">
+      <span class="mail-unread-dot"></span>
+      <span class="mail-avatar" style="background:${color}">${initial}</span>
+      <span class="mail-body">
+        <span class="mail-top">
+          <span class="mail-sender">${escapeHtml(name)}</span>
+          <span class="mail-date">${escapeHtml(fmtMailDate(m.date))}</span>
+        </span>
+        <span class="mail-subject">${escapeHtml(m.subject)}</span>
+        <span class="mail-snippet">${escapeHtml(m.snippet)}</span>
+      </span>
+    </a>`;
+}
+
+// Mail list HTML for a section (returns a string, no DOM write).
+function mailListHtml(items, emptyMsg) {
+  if (!items.length) return `<div class="empty-state">${emptyMsg}</div>`;
+  return `<div class="mail-scroll">${items.map(mailRow).join('')}</div>`;
 }
 
 async function loadEmail() {
-  const urgentCard = document.getElementById('urgentEmailCard');
-  const newCard = document.getElementById('newEmailCard');
   try {
-    const res = await fetchWithTimeout('/api/email');
+    const res = await fetchWithTimeout(apiUrl('/api/email'));
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    if (!data.configured) {
-      const msg = `<div class="placeholder-state">No email source connected yet. Set <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code>/<code>GOOGLE_REFRESH_TOKEN</code> (Gmail) and/or <code>MS_CLIENT_ID</code>/<code>MS_CLIENT_SECRET</code>/<code>MS_REFRESH_TOKEN</code> (Outlook) in the server environment.</div>`;
-      urgentCard.innerHTML = msg;
-      newCard.innerHTML = msg;
-      return;
-    }
-    const errorNote = data.error ? `<div class="error-state">Some email sources didn't load: ${data.error}</div>` : '';
-    renderEmailList(urgentCard, data.urgent, 'No urgent email right now.', 'tag-urgent', 'Urgent', errorNote);
-    renderEmailList(newCard, data.recent, 'No new email right now.', 'tag-new', 'New', errorNote);
+    overview.emailReached = true;
+    overview.emailConfigured = !!data.configured;
+    overview.emailError = data.error || null;
+    overview.email = { urgent: data.configured ? data.urgent.length : 0 };
+    overview.emailData = data.configured ? { urgent: data.urgent, recent: data.recent } : { urgent: [], recent: [] };
+    renderOverview();
+    renderHome();
+    if (currentDetail === 'inbox') openDetail('inbox');
+    return true;
   } catch (err) {
-    const msg = `<div class="error-state">Couldn't reach the email service. Is the Morning Dew server running?</div>`;
-    urgentCard.innerHTML = msg;
-    newCard.innerHTML = msg;
+    overview.emailReached = false;
+    renderHome();
+    if (currentDetail === 'inbox') openDetail('inbox');
+    return false;
   }
 }
 
+// ---------- Detail screens (drill-in + smart insights, no AI key) ----------
+let currentDetail = null;
+
+function pct(v, max) { return max > 0 ? Math.max(2, Math.round((v / max) * 100)) : 0; }
+function barRow(label, value, max, valueText, color) {
+  const style = color ? ` style="background:${color}"` : '';
+  return `
+    <div class="bar-row">
+      <span class="bl">${escapeHtml(label)}</span>
+      <span class="bar-track"><span class="bar-fill"${style ? ` style="width:${pct(value, max)}%;background:${color}"` : ` style="width:${pct(value, max)}%"`}></span></span>
+      <span class="bv">${escapeHtml(valueText)}</span>
+    </div>`;
+}
+function insightLines(items) {
+  return items.map((i) => `<div class="insight-line"><span class="ico">${i.ico}</span><span>${i.text}</span></div>`).join('');
+}
+
+// ---- Weather detail ----
+function weatherDetailHtml() {
+  const raw = overview.weatherRaw;
+  if (!raw) return `<section class="glass insight-card"><div class="empty-state">Weather is still loading…</div></section>`;
+  const { current: cur, daily } = raw;
+  const [label] = describeWeather(cur.weather_code);
+  const days = daily.time.map((iso, i) => ({
+    iso, i,
+    hi: Math.round(daily.temperature_2m_max[i]),
+    lo: Math.round(daily.temperature_2m_min[i]),
+    rain: Math.round(daily.precipitation_probability_max[i] ?? 0),
+    code: daily.weather_code[i],
+    name: i === 0 ? 'Today' : new Date(iso + 'T00:00').toLocaleDateString(undefined, { weekday: 'short' }),
+  }));
+  const driest = days.reduce((a, b) => (b.rain < a.rain ? b : a));
+  const warmest = days.reduce((a, b) => (b.hi > a.hi ? b : a));
+  const rainiest = days.reduce((a, b) => (b.rain > a.rain ? b : a));
+  const maxRain = Math.max(...days.map((d) => d.rain), 100);
+
+  const tips = [];
+  tips.push({ ico: '🌤️', text: `Driest day this week is <b>${driest.name}</b> (${driest.rain}% rain) — best for anything outdoors.` });
+  if (rainiest.rain >= 50) tips.push({ ico: '☔', text: `Wettest is <b>${rainiest.name}</b> at ${rainiest.rain}% — plan indoor things or carry an umbrella.` });
+  tips.push({ ico: '🌡️', text: `Warmest is <b>${warmest.name}</b> at ${warmest.hi}°.` });
+  (overview.weather && overview.weather.nudges || []).forEach((n) => tips.push({ ico: n.icon, text: n.text }));
+
+  const rainBars = days.map((d) => barRow(d.name, d.rain, maxRain, d.rain + '%', '#5fb0ff')).join('');
+
+  const sun = daily.sunrise ? `🌅 ${fmtClock(daily.sunrise[0])}  ·  🌇 ${fmtClock(daily.sunset[0])}` : '';
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${Math.round(cur.temperature_2m)}°</div>
+      <div class="metric-sub">${escapeHtml(label)} · feels ${Math.round(cur.apparent_temperature)}° · ${escapeHtml(overview.locationLabel || '')}</div>
+      <div class="metric-row">
+        <div class="metric-chip"><div class="k">Rain now</div><div class="v">${Math.round(cur.precipitation_probability ?? 0)}%</div></div>
+        <div class="metric-chip"><div class="k">UV</div><div class="v">${Math.round(cur.uv_index ?? 0)}</div></div>
+        <div class="metric-chip"><div class="k">Wind</div><div class="v">${Math.round(cur.wind_speed_10m)}</div></div>
+        <div class="metric-chip"><div class="k">Humidity</div><div class="v">${Math.round(cur.relative_humidity_2m)}%</div></div>
+      </div>
+      ${sun ? `<div class="weather-sun" style="margin-top:0.6rem">${sun}</div>` : ''}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">What to plan around</div>
+      ${insightLines(tips)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Next hours</div>
+      ${hourlyHtml(raw.hourly)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">7-day forecast</div>
+      ${forecastHtml(daily)}
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Rain chance, next 7 days</div>
+      <div class="bars">${rainBars}</div>
+    </section>`;
+}
+
+// ---- Today detail: in-depth day plan ----
+function allFreeBlocks(events) {
+  const now = new Date();
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22, 0, 0);
+  const busy = events
+    .filter((ev) => ev.start && !ev.allDay && isToday(ev.start))
+    .map((ev) => ({ start: new Date(ev.start), end: ev.end ? new Date(ev.end) : new Date(new Date(ev.start).getTime() + 30 * 60000) }))
+    .filter((ev) => ev.end > now)
+    .sort((a, b) => a.start - b.start);
+  const blocks = [];
+  let cursor = now;
+  for (const ev of busy) {
+    if (ev.start > cursor) blocks.push({ start: cursor, end: ev.start, ms: ev.start - cursor });
+    if (ev.end > cursor) cursor = ev.end;
+  }
+  if (cursor < dayEnd) blocks.push({ start: cursor, end: dayEnd, ms: dayEnd - cursor });
+  return blocks.filter((b) => b.ms >= 15 * 60000);
+}
+
+function todayDetailHtml() {
+  if (overview.calendarReached === false && overview.remindersReached === false) {
+    return `<section class="glass insight-card"><div class="error-state">Couldn't reach the service. Pull down to retry.</div></section>`;
+  }
+  const events = (overview.calendar || []).filter((ev) => ev.start && isToday(ev.start)).sort((a, b) => new Date(a.start) - new Date(b.start));
+  const reminders = (overview.reminders || []).filter((r) => !r.start || isToday(r.start));
+  const timed = events.filter((ev) => !ev.allDay);
+  const free = allFreeBlocks(overview.calendar || []);
+  const biggest = free.reduce((a, b) => (!a || b.ms > a.ms ? b : a), null);
+  const now = new Date();
+
+  // Recommended plan
+  const plan = [];
+  if (!events.length && !reminders.length) {
+    plan.push({ ico: '🌤️', text: 'Clear day — nothing scheduled. A good chance to get ahead or genuinely rest.' });
+  }
+  if (timed.length) {
+    const next = timed.find((ev) => new Date(ev.end || ev.start) > now);
+    if (next) {
+      const mins = Math.round((new Date(next.start) - now) / 60000);
+      plan.push({ ico: '⏭️', text: `Next up: <b>${escapeHtml(next.summary)}</b> at ${fmtClock(next.start)}${mins > 0 && mins < 180 ? ` (in ${fmtDuration(mins * 60000)})` : ''}.` });
+    }
+  }
+  if (biggest) {
+    plan.push({ ico: '🎯', text: `Your best free block is <b>${fmtClock(biggest.start)}–${fmtClock(biggest.end)}</b> (${fmtDuration(biggest.ms)}). ${reminders.length ? 'Good window to clear your reminders or do focused work.' : 'Good window for focused work.'}` });
+  }
+  if (reminders.length) {
+    const dueTimed = reminders.filter((r) => r.start && !r.allDay).sort((a, b) => new Date(a.start) - new Date(b.start));
+    if (dueTimed.length) plan.push({ ico: '✅', text: `Earliest reminder due: <b>${escapeHtml(dueTimed[0].summary)}</b> at ${fmtClock(dueTimed[0].start)} — do it before then.` });
+    else plan.push({ ico: '✅', text: `${reminders.length} reminder${reminders.length > 1 ? 's' : ''} with no set time — slot ${reminders.length > 1 ? 'them' : 'it'} into a free block.` });
+  }
+  // Tight turnarounds
+  for (let i = 1; i < timed.length; i++) {
+    const gap = (new Date(timed[i].start) - new Date(timed[i - 1].end || timed[i - 1].start)) / 60000;
+    if (gap >= 0 && gap < 15) {
+      plan.push({ ico: '⚠️', text: `Tight gap (${Math.round(gap)} min) between <b>${escapeHtml(timed[i - 1].summary)}</b> and <b>${escapeHtml(timed[i].summary)}</b>.` });
+      break;
+    }
+  }
+
+  const freeBars = free.length
+    ? `<section class="glass insight-card"><div class="insight-head">Free blocks today</div><div class="bars">${
+        free.map((b) => barRow(`${fmtClock(b.start)}`, b.ms, Math.max(...free.map((x) => x.ms)), fmtDuration(b.ms), '#46d39a')).join('')
+      }</div></section>`
+    : '';
+
+  const totalFree = free.reduce((s, b) => s + b.ms, 0);
+
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${events.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> event${events.length === 1 ? '' : 's'}</span></div>
+      <div class="metric-sub">${reminders.length} reminder${reminders.length === 1 ? '' : 's'} · ${fmtDuration(totalFree)} free time left today</div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">How to plan your day</div>
+      ${insightLines(plan)}
+    </section>
+    ${freeBars}`;
+}
+
+// ---- Schedule section: today's events + plan-my-day insights + upcoming ----
+function scheduleDetailHtml() {
+  const upcoming = (overview.calendar || [])
+    .filter((ev) => ev.start && !isToday(ev.start))
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+  const upcomingHtml = upcoming.length
+    ? `<section class="glass insight-card"><div class="insight-head">Tomorrow &amp; later</div>${
+        upcoming.map((ev) => `
+          <a class="sched-item" href="calshow://">
+            <span class="sched-time">${escapeHtml(fmtEventTime(ev.start, ev.allDay))}${ev.source ? ' · ' + escapeHtml(ev.source) : ''}</span>
+            <span class="sched-title">${escapeHtml(ev.summary)}</span>
+          </a>`).join('')
+      }</section>`
+    : '';
+  return `
+    ${todayDetailHtml()}
+    <section class="glass insight-card"><div class="insight-head">Today's schedule</div>${scheduleListHtml()}</section>
+    ${upcomingHtml}`;
+}
+
+// ---- Tasks section: two-way app tasks + read-only imported reminders ----
+function appTaskRows(list, done) {
+  return list.map((t) => `
+    <div class="task-item app-task${done ? ' task-done' : ''}">
+      <button class="task-box${done ? ' checked' : ''}" data-task-action="toggle" data-task-id="${t.id}" aria-label="Toggle done"></button>
+      <span class="task-title">${escapeHtml(t.title)}</span>
+      ${done ? '' : `<button class="task-mini" data-task-action="snooze" data-task-id="${t.id}" title="Move to tomorrow">→</button>`}
+      <button class="task-mini" data-task-action="delete" data-task-id="${t.id}" title="Delete">×</button>
+    </div>`).join('');
+}
+// Just the checklist rows (open + done-today), re-rendered on its own so the
+// type-ahead input above it keeps focus while you add items.
+function appTaskListInnerHtml() {
+  const today = localDateStr(new Date());
+  const all = loadTasks();
+  const open = all.filter((t) => !t.done && (!t.due || t.due <= today)).sort((a, b) => a.createdAt - b.createdAt);
+  const doneToday = all.filter((t) => t.done && t.doneAt && isToday(new Date(t.doneAt).toISOString()));
+  let html = open.length ? appTaskRows(open, false) : `<div class="empty-state">Nothing yet — write a reminder above.</div>`;
+  if (doneToday.length) html += `<div class="task-done-head">Done today</div>` + appTaskRows(doneToday, true);
+  return html;
+}
+function appTasksHtml() {
+  return `
+    <div class="task-input-row">
+      <input id="taskInput" class="task-text-input" placeholder="Write a reminder…" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" />
+      <button class="task-add-btn" data-task-add-inline>Add</button>
+    </div>
+    <div id="appTaskList">${appTaskListInnerHtml()}</div>`;
+}
+// Adds whatever is in the input, then re-renders just the list and refocuses
+// the box so you can keep writing the next item.
+function commitTaskInput() {
+  const input = document.getElementById('taskInput');
+  if (!input) return;
+  const title = input.value.trim();
+  if (!title) { input.focus(); return; }
+  addTask(title);
+  input.value = '';
+  const listEl = document.getElementById('appTaskList');
+  if (listEl) listEl.innerHTML = appTaskListInnerHtml();
+  renderHome();
+  input.focus();
+}
+function tasksDetailHtml() {
+  const openCount = appTasksForToday().length;
+  const remCount = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders().length : 0;
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${openCount + remCount}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> to do</span></div>
+      <div class="metric-sub">${openCount} task${openCount === 1 ? '' : 's'} · ${remCount} reminder${remCount === 1 ? '' : 's'} today</div>
+    </section>
+    <section class="glass insight-card"><div class="insight-head">Your tasks</div>${appTasksHtml()}</section>
+    <section class="glass insight-card"><div class="insight-head">Imported reminders</div>${tasksListHtml()}</section>`;
+}
+
+// ---- Debrief page: the full-screen AI morning plan, progressive-disclosure ----
+// Each section: a short summary always visible, full AI reasoning behind a tap.
+function debriefSectionHtml(s, idx) {
+  return `<section class="glass insight-card debrief-section" data-debrief-section="${idx}">
+    <div class="debrief-section-head"><span class="debrief-section-title">${escapeHtml(s.title || '')}</span><span class="debrief-section-chev">${ND_CHEV}</span></div>
+    <div class="debrief-section-summary">${escapeHtml(s.summary || '')}</div>
+    <div class="debrief-section-detail"><div>${mdToHtml(s.detail || '')}</div></div>
+  </section>`;
+}
+function debriefTomorrowHtml(t) {
+  if (t === undefined) return '';
+  if (t === null) {
+    return `<section class="glass insight-card debrief-section debrief-tomorrow">
+      <div class="debrief-section-title">Plan for Tomorrow</div>
+      <div class="debrief-section-summary" style="margin-top:0.45rem">Nothing notable lined up yet — check back once more of tomorrow takes shape.</div>
+    </section>`;
+  }
+  return `<section class="glass insight-card debrief-section debrief-tomorrow" data-debrief-section="tomorrow">
+    <div class="debrief-section-head"><span class="debrief-section-title">Plan for Tomorrow</span><span class="debrief-section-chev">${ND_CHEV}</span></div>
+    <div class="debrief-section-summary">${escapeHtml(t.summary || '')}</div>
+    <div class="debrief-section-detail"><div>${mdToHtml(t.detail || '')}</div></div>
+  </section>`;
+}
+function debriefBodyHtml() {
+  if (overview.briefConfigured === false) {
+    return `<section class="glass insight-card"><div class="placeholder-state">The AI brief needs <code>ANTHROPIC_API_KEY</code> set on the server. Once it's set you'll get a written, time-blocked plan here each morning.</div></section>`;
+  }
+  if (overview.briefFetching && !overview.brief) {
+    return `<section class="glass insight-card"><div class="loading-state">✨ Writing your morning brief…</div></section>`;
+  }
+  if (!overview.brief) {
+    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>Generate brief</button></div></section>
+      <div class="brief-actions">${pushButtonHtml()}</div>`;
+  }
+  const b = overview.brief;
+  let body;
+  if (overview.briefStructured && typeof b === 'object' && Array.isArray(b.sections)) {
+    body = `<section class="glass insight-card brief-card">
+        <div class="brief-h" style="margin-top:0">${escapeHtml(b.headline || '')}</div>
+        <p class="brief-p">${escapeHtml(b.opener || '')}</p>
+      </section>
+      ${b.sections.map((s, i) => debriefSectionHtml(s, i)).join('')}
+      ${debriefTomorrowHtml(b.tomorrow)}`;
+  } else {
+    // Legacy flat-markdown brief, or a server-side JSON-parse fallback — no
+    // progressive disclosure available, render it as one scrollable card.
+    body = `<section class="glass insight-card brief-card">${mdToHtml(typeof b === 'string' ? b : JSON.stringify(b))}</section>`;
+  }
+  return `${body}
+    <div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>↻ Regenerate</button></div>
+    <div class="brief-actions">${pushButtonHtml()}</div>`;
+}
+function renderDebriefPage() {
+  const el = document.getElementById('debriefContent');
+  if (el) el.innerHTML = debriefBodyHtml();
+}
+
+// ---- Review section: end-of-day wrap + streak ----
+function reviewDetailHtml() {
+  const today = localDateStr(new Date());
+  const all = loadTasks();
+  const open = all.filter((t) => !t.done && (!t.due || t.due <= today));
+  const doneToday = all.filter((t) => t.done && t.doneAt && isToday(new Date(t.doneAt).toISOString()));
+  const reviewed = isReviewedToday();
+  const note = reviewed ? ((lsGet(REVIEW_KEY, {})[today] || {}).note || '') : '';
+  const list = (arr, done) => arr.length
+    ? arr.map((t) => `<div class="task-item${done ? ' task-done' : ''}"><span class="task-box${done ? ' checked' : ''}"></span><span class="task-title">${escapeHtml(t.title)}</span></div>`).join('')
+    : `<div class="empty-state">${done ? 'Nothing checked off yet.' : 'No open tasks left. 🎉'}</div>`;
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${doneToday.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> done</span></div>
+      <div class="metric-sub">${open.length} still open · 🔥 ${currentStreak()}-day streak</div>
+    </section>
+    <section class="glass insight-card"><div class="insight-head">Done today</div>${list(doneToday, true)}</section>
+    <section class="glass insight-card"><div class="insight-head">Still open</div>${list(open, false)}
+      ${open.length ? `<div class="brief-actions"><button class="brief-refresh" data-review-rollover>Move ${open.length} to tomorrow</button></div>` : ''}
+    </section>
+    <section class="glass insight-card"><div class="insight-head">One line about today (optional)</div>
+      <textarea id="reviewNote" class="review-note" placeholder="What went well? What's on your mind?">${escapeHtml(note)}</textarea>
+      <div class="brief-actions"><button class="brief-refresh review-finish" data-review-finish>${reviewed ? 'Update review' : 'Finish review · keep the streak 🔥'}</button></div>
+    </section>`;
+}
+
+// ---- Inbox section: triage + sender insights + the actual email lists ----
+function inboxDetailHtml() {
+  if (overview.emailReached === false) return `<section class="glass insight-card"><div class="error-state">Couldn't reach the email service. Pull down to retry.</div></section>`;
+  if (overview.emailConfigured === false) return `<section class="glass insight-card"><div class="placeholder-state">No email source connected yet. Set the <code>GOOGLE_*</code> (Gmail) and/or <code>MS_*</code> (Outlook) vars on the server.</div></section>`;
+  const d = overview.emailData;
+  if (!d) return `<section class="glass insight-card"><div class="empty-state">Email is still loading…</div></section>`;
+  const all = [...d.urgent, ...d.recent];
+
+  const counts = {};
+  all.forEach((m) => { const s = senderName(m.from); counts[s] = (counts[s] || 0) + 1; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const maxCount = Math.max(...top.map((t) => t[1]), 1);
+  const senderBars = top.map(([name, n]) => barRow(name, n, maxCount, String(n))).join('');
+
+  const tips = [];
+  if (d.urgent.length) tips.push({ ico: '🚩', text: `<b>${d.urgent.length}</b> urgent email${d.urgent.length > 1 ? 's' : ''} flagged important — clear ${d.urgent.length > 1 ? 'these' : 'this'} first.` });
+  tips.push({ ico: '📥', text: `<b>${d.recent.length}</b> new unread in the last day.` });
+  if (top.length) tips.push({ ico: '👤', text: `Most is from <b>${escapeHtml(top[0][0])}</b> (${top[0][1]}).` });
+
+  const insights = all.length ? `
+    <section class="glass insight-card"><div class="insight-head">Triage</div>${insightLines(tips)}</section>
+    <section class="glass insight-card"><div class="insight-head">Who's emailing you</div><div class="bars">${senderBars}</div></section>` : '';
+
+  return `
+    <section class="glass detail-hero">
+      <div class="metric-big">${d.recent.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> new</span></div>
+      <div class="metric-sub">${d.urgent.length} urgent · tap any email to open it</div>
+    </section>
+    ${insights}
+    <section class="glass insight-card"><div class="insight-head">Urgent</div>${mailListHtml(d.urgent, 'No urgent email right now.')}</section>
+    <section class="glass insight-card"><div class="insight-head">New</div>${mailListHtml(d.recent, 'No new email right now.')}</section>`;
+}
+
+const DETAILS = {
+  weather: { title: 'Weather', build: weatherDetailHtml },
+  schedule: { title: 'Schedule', build: scheduleDetailHtml },
+  tasks: { title: 'Tasks', build: tasksDetailHtml },
+  inbox: { title: 'Inbox', build: inboxDetailHtml },
+  review: { title: 'Review your day', build: reviewDetailHtml },
+  health: { title: 'Readiness', build: healthDetailHtml },
+};
+
+function openDetail(type) {
+  const d = DETAILS[type];
+  if (!d) return;
+  const wasOpen = currentDetail !== null;
+  currentDetail = type;
+  document.getElementById('detailTitle').textContent = d.title;
+  document.getElementById('detailContent').innerHTML = d.build();
+  const ov = document.getElementById('detailOverlay');
+  ov.hidden = false;
+  ov.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  if (type === 'schedule') {
+    const nowLine = document.getElementById('detailContent').querySelector('.day-tl-now');
+    if (nowLine) nowLine.scrollIntoView({ block: 'center' });
+  }
+  // Push a history entry the first time we open, so the OS back gesture closes it.
+  if (!wasOpen) history.pushState({ detail: type }, '');
+}
+function closeDetail() {
+  if (currentDetail === null) return;
+  currentDetail = null;
+  document.getElementById('detailOverlay').hidden = true;
+  document.body.style.overflow = '';
+}
+
+// ---- Debrief page: full-screen route (hash-based — works regardless of the
+// app's actual hosting base path, no server rewrite needed), distinct from the
+// translucent detail-overlay sheets above (own state, own page-push transition).
+let debriefOpen = false;
+function openDebrief() {
+  renderDebriefPage();
+  const page = document.getElementById('debriefPage');
+  page.classList.remove('closing');
+  page.hidden = false;
+  page.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  const wasOpen = debriefOpen;
+  debriefOpen = true;
+  if (!wasOpen && location.hash !== '#/debrief') history.pushState({ debrief: true }, '', '#/debrief');
+}
+function closeDebrief() {
+  if (!debriefOpen) return;
+  debriefOpen = false;
+  const page = document.getElementById('debriefPage');
+  page.classList.add('closing');
+  document.body.style.overflow = '';
+  setTimeout(() => { page.hidden = true; page.classList.remove('closing'); }, 220);
+}
+// The back button and OS back both route through history so state stays balanced.
+window.addEventListener('popstate', () => {
+  if (currentDetail !== null) closeDetail();
+  if (debriefOpen) closeDebrief();
+});
+
+// Re-renders whichever section is open (after a task/brief/review mutation).
+function refreshOpenSection() { if (currentDetail !== null) openDetail(currentDetail); }
+
+// Interactions inside the detail sections (tasks, brief, review).
+document.addEventListener('click', (e) => {
+  const taskBtn = e.target.closest('[data-task-action]');
+  if (taskBtn) {
+    const id = taskBtn.getAttribute('data-task-id');
+    const action = taskBtn.getAttribute('data-task-action');
+    if (action === 'toggle') toggleTask(id);
+    else if (action === 'snooze') snoozeTask(id);
+    else if (action === 'delete') deleteTask(id);
+    // Re-render just the checklist (keeps the type-ahead input intact) when in
+    // the Tasks section; full re-render elsewhere.
+    const listEl = document.getElementById('appTaskList');
+    if (listEl) listEl.innerHTML = appTaskListInnerHtml();
+    else refreshOpenSection();
+    renderHome();
+    return;
+  }
+  if (e.target.closest('[data-task-add-inline]')) { commitTaskInput(); return; }
+  if (e.target.closest('[data-debrief-refresh]')) { fetchBrief(true); return; }
+  if (e.target.closest('[data-debrief-back]')) { if (debriefOpen) history.back(); return; }
+  const sectionEl = e.target.closest('[data-debrief-section]');
+  if (sectionEl) { sectionEl.classList.toggle('expanded'); return; }
+  if (e.target.closest('[data-set-recovery]')) { setRecoveryManual(); return; }
+  if (e.target.closest('[data-enable-push]')) { enablePush(); return; }
+  if (e.target.closest('[data-review-rollover]')) {
+    const today = localDateStr(new Date());
+    loadTasks().filter((t) => !t.done && (!t.due || t.due <= today)).forEach((t) => snoozeTask(t.id));
+    refreshOpenSection(); renderHome();
+    return;
+  }
+  if (e.target.closest('[data-review-finish]')) {
+    const noteEl = document.getElementById('reviewNote');
+    finishReview(noteEl ? noteEl.value : '');
+    renderStreak();
+    refreshOpenSection();
+    return;
+  }
+});
+
+// ---------- Home cards (native-app tiles) ----------
+function setGreeting() {
+  const el = document.getElementById('greetLine');
+  if (!el) return;
+  const h = new Date().getHours();
+  const word = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  el.innerHTML = `${word}, <span class="accent">Noah</span>`;
+}
+
+function renderHome() {
+  setGreeting();
+  renderDayStrip();
+  renderWeatherCard();
+  renderScheduleCard();
+  renderInboxCard();
+  renderStreak();
+}
+
+function renderDayStrip() {
+  const el = document.getElementById('dayStrip');
+  if (!el) return;
+  const now = new Date();
+  const days = [];
+  for (let i = -2; i <= 2; i++) { const d = new Date(now); d.setDate(now.getDate() + i); days.push(d); }
+  el.innerHTML = days.map((d) => {
+    const isToday = d.toDateString() === now.toDateString();
+    const dow = d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3).toUpperCase();
+    return `<div class="nd-day${isToday ? ' active' : ' inert'}"><span class="nd-day-dow">${dow}</span><span class="nd-day-num">${d.getDate()}</span></div>`;
+  }).join('');
+}
+
+// Apple-Weather-style multicolour glyph for an Open-Meteo weather code.
+function wxGlyph(code, isDay) {
+  const cloud = '<g fill="#eef2f6"><circle cx="18" cy="20" r="7"/><circle cx="27" cy="17" r="9"/><circle cx="35" cy="20" r="6.5"/><rect x="17" y="19" width="19" height="8" rx="4"/></g>';
+  const rain = '<g stroke="#5fb0ff" stroke-width="2.6" stroke-linecap="round"><line x1="20" y1="29" x2="18" y2="34"/><line x1="27" y1="29" x2="25" y2="34"/><line x1="34" y1="29" x2="32" y2="34"/></g>';
+  const drizzle = '<g stroke="#5fb0ff" stroke-width="2.6" stroke-linecap="round"><line x1="23" y1="29" x2="22" y2="33"/><line x1="31" y1="29" x2="30" y2="33"/></g>';
+  const sun = '<g><circle cx="24" cy="17" r="8" fill="#f7c044"/><g stroke="#f7c044" stroke-width="2.4" stroke-linecap="round"><line x1="24" y1="2" x2="24" y2="6"/><line x1="24" y1="28" x2="24" y2="32"/><line x1="9" y1="17" x2="5" y2="17"/><line x1="43" y1="17" x2="39" y2="17"/><line x1="13.5" y1="6.5" x2="10.5" y2="3.5"/><line x1="34.5" y1="6.5" x2="37.5" y2="3.5"/><line x1="13.5" y1="27.5" x2="10.5" y2="30.5"/><line x1="34.5" y1="27.5" x2="37.5" y2="30.5"/></g></g>';
+  const moon = '<path d="M31 19a11 11 0 1 1-12-11 8.5 8.5 0 0 0 12 11z" fill="#f3e2a0"/>';
+  const moonSm = '<circle cx="34" cy="11" r="6" fill="#f3e2a0"/>';
+  const sunSm = '<circle cx="16" cy="13" r="6.5" fill="#f7c044"/>';
+  const snow = '<g fill="#dbe6f0"><circle cx="20" cy="31" r="1.9"/><circle cx="27" cy="32" r="1.9"/><circle cx="34" cy="31" r="1.9"/></g>';
+  const bolt = '<path d="M27 27l-5 8 5.5-1-2 6 7.5-10-5.5 1 3-4z" fill="#f7c044"/>';
+  const w = (inner) => `<svg viewBox="0 0 48 36">${inner}</svg>`;
+  if (code === 0) return w(isDay ? sun : moon);
+  if (code === 1 || code === 2) return w((isDay ? sunSm : moonSm) + cloud);
+  if (code === 3 || code === 45 || code === 48) return w(cloud);
+  if (code >= 51 && code <= 57) return w((isDay ? '' : moonSm) + cloud + drizzle);
+  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return w((isDay ? '' : moonSm) + cloud + rain);
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return w(cloud + snow);
+  if (code >= 95) return w(cloud + bolt);
+  return w(cloud);
+}
+
+function renderWeatherCard() {
+  const el = document.getElementById('weatherCard');
+  if (!el) return;
+  if (overview.weatherReached === false) { el.innerHTML = `<div class="nd-wx-loc">Weather</div><div class="nd-wx-msg">Tap to retry</div>`; return; }
+  const raw = overview.weatherRaw;
+  if (!raw) { el.innerHTML = `<div class="nd-wx-loc">Weather</div><div class="nd-wx-msg">Loading…</div>`; return; }
+  const cur = raw.current, daily = raw.daily, hourly = raw.hourly;
+  const [label] = describeWeather(cur.weather_code);
+  const loc = (overview.locationLabel || 'Weather').replace(/\s*\(location unavailable\)/, '').split(',')[0];
+  const hi = Math.round(daily.temperature_2m_max[0]);
+  const lo = Math.round(daily.temperature_2m_min[0]);
+  let hours = '';
+  if (hourly && hourly.time) {
+    let start = hourly.time.findIndex((t) => new Date(t).getTime() >= Date.now() - 3600000);
+    if (start < 0) start = 0;
+    const cells = [];
+    for (let i = start; i < hourly.time.length && cells.length < 6; i++) {
+      const d = new Date(hourly.time[i]);
+      const hr = cells.length === 0 ? 'Now' : ((d.getHours() % 12) || 12) + (d.getHours() < 12 ? 'am' : 'pm');
+      const t = Math.round(hourly.temperature_2m[i]);
+      const day = d.getHours() >= 6 && d.getHours() < 19;
+      cells.push(`<div class="nd-wx-hour"><span class="t">${hr}</span>${wxGlyph(hourly.weather_code[i], day)}<span class="v">${t}°</span></div>`);
+    }
+    hours = cells.join('');
+  }
+  const arrow = '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>';
+  el.innerHTML = `<div class="nd-wx-top">
+      <div><div class="nd-wx-loc">${escapeHtml(loc)} ${arrow}</div><div class="nd-wx-temp">${Math.round(cur.temperature_2m)}°</div></div>
+      <div class="nd-wx-right">${wxGlyph(cur.weather_code, cur.is_day !== 0)}<div class="nd-wx-cond">${escapeHtml(label)}</div><div class="nd-wx-hl">L:${lo}° H:${hi}°</div></div>
+    </div>
+    <div class="nd-wx-hours">${hours}</div>`;
+}
+
+// Scrolls the home schedule panel to the current-time line once per page
+// load, so background re-renders (periodic refresh) don't keep yanking the
+// user's manual scroll position back to "now".
+let homeCalAutoScrolled = false;
+function renderScheduleCard() {
+  const bodyEl = document.getElementById('scheduleCardBody');
+  if (!bodyEl) return;
+  const countEl = document.getElementById('scheduleCardCount');
+  if (countEl) {
+    countEl.textContent = (overview.calendarReached !== undefined && overview.calendarReached !== false)
+      ? (() => { const n = todaysEvents().length; return n ? `${n} event${n > 1 ? 's' : ''}` : 'Free'; })()
+      : '';
+  }
+  bodyEl.innerHTML = scheduleListHtml();
+  if (!homeCalAutoScrolled && overview.calendarReached !== undefined) {
+    const nowLine = bodyEl.querySelector('.day-tl-now');
+    if (nowLine) { homeCalAutoScrolled = true; nowLine.scrollIntoView({ block: 'center' }); }
+  }
+}
+
+function renderInboxCard() {
+  const el = document.getElementById('inboxCard');
+  if (!el) return;
+  const logo = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M13 4h7a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-7z" opacity="0.55"/><rect x="2" y="6" width="12" height="12" rx="2.5"/></svg>';
+  const head = (countHtml) => `<div class="nd-ol-head"><div class="nd-ol-logo">${logo}</div><span class="nd-ol-title">Inbox</span>${countHtml}</div>`;
+  if (overview.emailReached === false) { el.innerHTML = head('') + `<div class="nd-ol-rows"><div class="nd-ol-empty">Tap to retry</div></div>`; return; }
+  if (overview.emailReached === undefined) { el.innerHTML = head('') + `<div class="nd-ol-rows"><div class="nd-ol-empty">Loading…</div></div>`; return; }
+  if (overview.emailConfigured === false) { el.innerHTML = head('') + `<div class="nd-ol-rows"><div class="nd-ol-empty">Not set up</div></div>`; return; }
+  const d = overview.emailData || { urgent: [], recent: [] };
+  const urgent = d.urgent || [];
+  if (urgent.length) {
+    const warn = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 17H2.5z"/><line x1="12" y1="9.5" x2="12" y2="14"/></svg>';
+    const rows = urgent.slice(0, 4).map((m) => {
+      const name = senderName(m.from);
+      const color = avatarColor(name + (m.source || ''));
+      return `<div class="nd-ol-row"><span class="nd-ol-dot urgent"></span><div class="nd-ol-av" style="background:${color}">${escapeHtml((name.charAt(0) || '?').toUpperCase())}</div><div class="nd-ol-body"><div class="nd-ol-sender">${escapeHtml(name)}</div><div class="nd-ol-subj">${escapeHtml(m.subject || '')}</div></div></div>`;
+    }).join('');
+    el.innerHTML = head(`<span class="nd-ol-count urgent">${warn}${urgent.length} urgent</span>`) + `<div class="nd-ol-rows">${rows}</div>`;
+  } else {
+    const n = (d.recent || []).length;
+    el.innerHTML = head(`<span class="nd-ol-count">${n}</span>`) + `<div class="nd-ol-rows"><div class="nd-ol-empty">No urgent mail ✨</div></div>`;
+  }
+}
+
+function renderTasksCard() {
+  const el = document.getElementById('tasksCard');
+  if (!el) return;
+  const icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="8.5 12.5 11 15 16 9.5"/></svg>';
+  const chev = '<span class="nd-glass-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
+  const app = appTasksForToday();
+  const rems = (overview.remindersReached && overview.remindersConfigured !== false) ? todaysReminders() : [];
+  const open = app.length + rems.length;
+  const rows = [];
+  app.slice(0, 3).forEach((t) => rows.push(`<div class="nd-gtask"><span class="nd-gcheck"></span><span class="nd-gname">${escapeHtml(t.title)}</span></div>`));
+  rems.slice(0, Math.max(0, 3 - rows.length)).forEach((r) => rows.push(`<div class="nd-gtask"><span class="nd-gcheck"></span><span class="nd-gname">${escapeHtml(r.summary)}</span></div>`));
+  const sub = open ? `${open} open today` : 'All clear';
+  const bodyRows = rows.length ? `<div class="nd-gtasks">${rows.join('')}</div>` : '';
+  el.innerHTML = `<div class="nd-glass-head"><div class="nd-glass-icon">${icon}</div><div class="nd-glass-title"><b>Tasks</b><span>${sub}</span></div>${chev}</div>
+    ${bodyRows}
+    <div class="nd-gadd"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add a reminder…</div>`;
+}
+
+function renderStreak() {
+  const el = document.getElementById('streakLabel');
+  if (!el) return;
+  const n = currentStreak();
+  el.textContent = n > 0 ? `🔥 ${n}-day streak` : '';
+  el.style.display = n > 0 ? '' : 'none';
+}
+
+// ---------- Readiness (Recovery, from Athlytic via the iOS Shortcut) ----------
+const HEALTH_CACHE_KEY = 'morningDewHealth';
+const RING_R = 82;
+const RING_C = 2 * Math.PI * RING_R; // ~515.2
+
+// One progress ring. pct 0–100; grad is a <linearGradient> id. Starts at 12
+// o'clock and sweeps clockwise.
+function ringSvg(pct, grad) {
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  const arc = (p / 100) * RING_C;
+  return `<svg viewBox="0 0 200 200">
+    <circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/>
+    <circle cx="100" cy="100" r="${RING_R}" fill="none" stroke="url(#${grad})" stroke-width="16" stroke-linecap="round"
+      stroke-dasharray="${arc.toFixed(1)} ${RING_C.toFixed(1)}" transform="rotate(-90 100 100)"/>
+  </svg>`;
+}
+
+function recoveryWord(r) {
+  if (r >= 67) return 'Primed — a good day to push';
+  if (r >= 34) return 'Moderate — pace yourself';
+  return 'Low — take it easy today';
+}
+function sleepWord(s) {
+  if (s >= 75) return 'Well rested';
+  if (s >= 40) return 'Adequate sleep';
+  return 'Short on sleep';
+}
+function strainWord(s) {
+  if (s >= 67) return 'High exertion';
+  if (s >= 34) return 'Moderate activity';
+  return 'Light day';
+}
+// Today's recommended exertion ceiling/floor based on current recovery — same
+// idea as Whoop's Strain Coach: a well-recovered body can absorb a harder day,
+// a depleted one should stay light. A function of recovery alone (not today's
+// strain itself) so it always answers "what should I do today", independent
+// of what's already accumulated.
+function targetStrainRange(rec) {
+  if (rec == null) return null;
+  const mid = 20 + (rec / 100) * 55; // 20 at recovery 0 .. 75 at recovery 100
+  return { lo: Math.max(1, Math.round(mid - 12)), hi: Math.min(99, Math.round(mid + 12)) };
+}
+function targetStrainCompare(actual, t) {
+  if (actual == null || !t) return 'Aim to land in this range today.';
+  if (actual > t.hi) return `Today's strain is above target — you pushed harder than your recovery suggested.`;
+  if (actual < t.lo) return `Today's strain is below target — there's room for more if you want it.`;
+  return `Right in your target range — well matched to today's recovery.`;
+}
+// Diagonal-hatched arc spanning the target lo–hi zone, drawn at the SAME
+// radius as the main ring and placed UNDER it (see detailRingHtml), so the
+// solid progress arc naturally paints over the hatch wherever strain has
+// already reached into the target band. Matches the Whoop/Athlytic Strain
+// Coach ring: solid = achieved, hatch = the zone still worth reaching for.
+function targetBandSvg(t) {
+  if (!t) return '';
+  const lo = Math.max(0, Math.min(100, t.lo));
+  const hi = Math.max(0, Math.min(100, t.hi));
+  const arcLen = ((hi - lo) / 100) * RING_C;
+  const offset = -(lo / 100) * RING_C;
+  return `<svg viewBox="0 0 200 200" style="position:absolute;inset:0;pointer-events:none">
+    <circle cx="100" cy="100" r="${RING_R}" fill="none" stroke="url(#targetHatch)" stroke-width="16"
+      stroke-dasharray="${arcLen.toFixed(1)} ${(RING_C - arcLen).toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+      transform="rotate(-90 100 100)"/>
+  </svg>`;
+}
+// Small white tick marks at the target zone's lo/hi boundaries, drawn on top
+// of everything so the zone's edges stay readable even where the solid arc
+// or hatch underneath it changes.
+function targetTicksSvg(t) {
+  if (!t) return '';
+  const tick = (pct) => {
+    const a = (pct / 100) * 2 * Math.PI;
+    const x1 = 100 + (RING_R - 10) * Math.sin(a);
+    const y1 = 100 - (RING_R - 10) * Math.cos(a);
+    const x2 = 100 + (RING_R + 10) * Math.sin(a);
+    const y2 = 100 - (RING_R + 10) * Math.cos(a);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`;
+  };
+  return `<svg viewBox="0 0 200 200" style="position:absolute;inset:0;pointer-events:none">${tick(t.lo)}${tick(t.hi)}</svg>`;
+}
+
+// One mini progress ring for the home card's 3-up row. val null -> empty muted
+// track with "–" so one missing/uncalibrated metric never blocks the others.
+// Optional underlay/overlay mirror detailRingHtml's so the home Strain ring can
+// show the same target-zone hatch/ticks as the detail screen, just smaller.
+function miniRingHtml(val, grad, label, underlay = '', overlay = '') {
+  const ring = val == null
+    ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="mring-val empty">–</span>`
+    : `${ringSvg(val, grad)}<span class="mring-val">${val}%</span>`;
+  return `<div class="mring"><div class="mring-wrap">${underlay}${ring}${overlay}</div><span class="mring-label">${label}</span></div>`;
+}
+// Same as miniRingHtml but sized for the detail screen's larger .health-detail-rings grid.
+// Optional underlay (e.g. targetBandSvg) renders absolutely-positioned BEHIND the ring so
+// the solid progress arc paints over it; overlay (e.g. targetTicksSvg) renders on top.
+function detailRingHtml(val, grad, label, underlay = '', overlay = '') {
+  const ring = val == null
+    ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="hring-val" style="color:var(--muted)">–</span>`
+    : `${ringSvg(val, grad)}<span class="hring-val">${val}%</span>`;
+  return `<div class="hring"><div class="hring-wrap">${underlay}${ring}${overlay}</div><span class="hring-label">${label}</span></div>`;
+}
+
+// On-device recovery history (date -> score) so the card and the brief can show a
+// trend, even though the server only keeps the latest snapshot. Keyed by local
+// date; today's value is overwritten with the latest, capped at 30 days.
+const HEALTH_HIST_KEY = 'morningDewHealthHist';
+function recordRecoveryHistory(rec) {
+  if (rec == null || !Number.isFinite(Number(rec))) return;
+  const hist = lsGet(HEALTH_HIST_KEY, {});
+  hist[localDateStr(new Date())] = Math.round(Number(rec));
+  for (const d of Object.keys(hist).sort().slice(0, -30)) delete hist[d];
+  lsSet(HEALTH_HIST_KEY, hist);
+}
+function recoveryHistory() {
+  const hist = lsGet(HEALTH_HIST_KEY, {});
+  return Object.keys(hist).sort().reverse().map((d) => ({ date: d, score: hist[d] }));
+}
+function recoveryTrend() {
+  const h = recoveryHistory();
+  if (h.length < 2) return null;
+  return { delta: h[0].score - h[1].score, previousScore: h[1].score, previousDate: h[1].date };
+}
+function trendChip(t) {
+  if (!t || t.delta === 0) return '';
+  return t.delta > 0 ? `▲${t.delta}` : `▼${Math.abs(t.delta)}`;
+}
+
+async function fetchHealth() {
+  try {
+    const res = await fetchWithTimeout(apiUrl('/api/health'));
+    const data = await res.json();
+    overview.healthConfigured = data.configured;
+    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); recordRecoveryHistory(data.data.recovery); }
+    else if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
+  } catch {
+    if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
+    if (overview.healthConfigured === undefined) overview.healthConfigured = false;
+  }
+  renderHealth();
+  if (currentDetail === 'health') openDetail('health');
+  fetchBrief();
+}
+
+function renderHealth() {
+  const card = document.getElementById('healthCard');
+  if (!card) return;
+  const h = overview.health;
+  const rec = h ? h.recovery : null;
+  if (rec == null) {
+    card.innerHTML = `<div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
+      <div class="nd-recov-sub">Tap to enter today's recovery →</div></div>${ND_CHEV_MUTED}`;
+    return;
+  }
+  const src = (h && h.source) ? h.source : 'Athlytic';
+  const t = recoveryTrend();
+  const chip = trendChip(t);
+  const chipHtml = chip ? `<span class="nd-trend ${t.delta > 0 ? 'up' : 'down'}">${chip}</span>` : '';
+  const target = targetStrainRange(rec);
+  const strainRing = miniRingHtml(h.strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target));
+  card.innerHTML = `<div class="nd-readiness-triad">
+    <div class="nd-readiness-triad-head"><b>Readiness</b><span style="margin-left:auto;display:flex;align-items:center;gap:0.4rem"><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</span></div>
+    <div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${strainRing}</div>
+  </div>`;
+}
+
+function healthDetailHtml() {
+  const h = overview.health;
+  const rec = h ? h.recovery : null;
+  const setBtn = `<button class="brief-refresh" data-set-recovery style="margin-top:1rem">${rec == null ? "Enter today's recovery" : 'Update recovery'}</button>`;
+  if (rec == null) {
+    return `<div class="health-foot-note">No recovery yet. Tap below and type today's number from Athlytic — it saves on this device, no setup needed.<br><br>
+      <span style="opacity:0.75">Optional: a one-time iOS Shortcut can push it automatically each morning instead.</span></div>${setBtn}`;
+  }
+  const sleep = h.sleep;
+  const strain = h.strain;
+  const bits = [];
+  if (h.source) bits.push(`${escapeHtml(h.source)}`);
+  if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
+  const m = [];
+  if (h.hrv != null) m.push(`HRV ${Math.round(h.hrv)}ms`);
+  if (h.restingHeartRate != null) m.push(`resting HR ${Math.round(h.restingHeartRate)}`);
+  if (h.sleepHours != null) m.push(`${h.sleepHours}h sleep`);
+  if (h.activeEnergy != null) m.push(`${Math.round(h.activeEnergy)} kcal active`);
+  if (h.exerciseMinutes != null) m.push(`${Math.round(h.exerciseMinutes)} active min`);
+  const metricsLine = (h.computed && m.length)
+    ? `<div class="health-foot-note" style="margin-top:0.5rem;opacity:0.8">Computed from ${m.join(' · ')}${h.calibrating ? ' · calibrating, sharpens as your baseline builds' : ''}.</div>`
+    : '';
+  // Raw Health Auto Export metric names from the last sync, so a blank Sleep/
+  // Strain ring is diagnosable at a glance instead of guessing what the
+  // automation actually sent.
+  const rawNames = Array.isArray(h.rawMetricNames) ? h.rawMetricNames : null;
+  const rawNamesLine = rawNames && rawNames.length
+    ? `<div class="health-foot-note" style="margin-top:0.35rem;opacity:0.55;font-size:0.8em">Last sync sent: ${rawNames.map(escapeHtml).join(', ')}.</div>`
+    : '';
+  const target = targetStrainRange(rec);
+  const targetLine = target
+    ? `<div class="health-foot-note" style="margin-top:0.35rem">Target Strain: ${target.lo}–${target.hi}. ${targetStrainCompare(strain, target)}</div>`
+    : '';
+  const t = recoveryTrend();
+  const momentum = t && t.delta !== 0 ? ` ${t.delta > 0 ? 'Up' : 'Down'} ${Math.abs(t.delta)} from ${t.previousScore} last reading.` : '';
+  const sleepBit = sleep != null ? ` ${sleepWord(sleep)}.` : '';
+  const strainBit = strain != null ? ` ${strainWord(strain)}.` : '';
+  const hist = recoveryHistory().slice(0, 7).reverse();
+  const chart = hist.length >= 2 ? `<div class="recov-chart">${hist.map((d) => {
+    const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
+    return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
+  }).join('')}</div>` : '';
+  return `<div class="health-detail-rings">
+      ${detailRingHtml(rec, 'gRecovery', 'Recovery')}
+      ${detailRingHtml(sleep, 'gSleep', 'Sleep')}
+      ${detailRingHtml(strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target))}
+    </div>
+    ${chart}
+    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${targetLine}${metricsLine}${rawNamesLine}${setBtn}`;
+}
+
+// Manual entry — type today's recovery from Athlytic; saved on-device (no
+// Shortcut / backend / token needed). The Shortcut path still overrides this
+// automatically if it's ever set up.
+function setRecoveryManual() {
+  const cur = (overview.health && overview.health.recovery != null) ? String(overview.health.recovery) : '';
+  const v = prompt("Today's Recovery % from Athlytic (0–100):", cur);
+  if (v === null) return;
+  const m = String(v).match(/-?\d+(?:\.\d+)?/);
+  if (!m) { alert('Please enter a number from 0 to 100.'); return; }
+  const rec = Math.max(0, Math.min(100, Math.round(Number(m[0]))));
+  const data = Object.assign({}, overview.health, { recovery: rec, source: 'Manual', updatedAt: new Date().toISOString() });
+  overview.health = data;
+  lsSet(HEALTH_CACHE_KEY, data);
+  recordRecoveryHistory(rec);
+  if (overview.healthConfigured === undefined) overview.healthConfigured = true;
+  renderHealth();
+  if (currentDetail === 'health') openDetail('health');
+  fetchBrief(true);
+}
+
+// ---------- Refresh orchestration ----------
+let lastUpdated = 0;
+
+// Runs an /api loader and, if it failed (couldn't reach the backend — likely a
+// Render cold start), retries once after a delay long enough to cover the wake.
+function withColdStartRetry(loadFn, delayMs = 10000) {
+  Promise.resolve(loadFn()).then((ok) => {
+    if (ok === false) setTimeout(loadFn, delayMs);
+  });
+}
+
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 45) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
+function renderUpdated() {
+  const el = document.getElementById('updatedLabel');
+  if (!el) return;
+  el.textContent = lastUpdated ? `Updated ${fmtAgo(lastUpdated)}` : 'Updating…';
+}
+
+function refreshAll() {
+  lastUpdated = Date.now();
+  renderUpdated();
+  // Wake the backend a beat early so the /api calls land on a warm container.
+  fetchWithTimeout(apiUrl('/')).catch(() => {});
+  loadWeather();
+  withColdStartRetry(loadCalendar);
+  withColdStartRetry(loadReminders);
+  withColdStartRetry(loadEmail);
+  fetchHealth();
+}
+
+// ---------- Controls ----------
+function openServerSetting() {
+  const current = getApiBase();
+  const next = prompt('Backend URL (e.g. https://morning-dew-backend.onrender.com)\nLeave blank to use this same site.', current);
+  if (next === null) return;
+  const trimmed = next.trim();
+  if (trimmed) localStorage.setItem(API_BASE_KEY, trimmed);
+  else localStorage.removeItem(API_BASE_KEY);
+  updateServerBtnLabel();
+  refreshAll();
+}
+
+document.getElementById('settingsBtn').addEventListener('click', openServerSetting);
+
+// ---------- Detail-screen wiring ----------
+document.addEventListener('click', (e) => {
+  const trigger = e.target.closest('[data-detail]');
+  if (trigger) {
+    e.preventDefault();
+    const type = trigger.getAttribute('data-detail');
+    // The brief gets its own full-screen page (not a translucent sheet) — see Task 1.
+    if (type === 'brief') openDebrief();
+    else openDetail(type);
+  }
+});
+// Route the back button and Escape through history so the pushed state is
+// consumed (keeps the OS back gesture in sync via the popstate listener).
+document.getElementById('detailBack').addEventListener('click', () => { if (currentDetail !== null) history.back(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (currentDetail !== null || debriefOpen)) history.back(); });
+// Pressing Return in the checklist input adds the reminder and keeps you typing.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target && e.target.id === 'taskInput') { e.preventDefault(); commitTaskInput(); }
+});
+
+document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
+  e.currentTarget.classList.remove('spinning');
+  // reflow so the animation restarts on every tap
+  void e.currentTarget.offsetWidth;
+  e.currentTarget.classList.add('spinning');
+  refreshAll();
+});
+
+document.getElementById('navHome').addEventListener('click', () => {
+  if (currentDetail !== null || debriefOpen) history.back();
+});
+document.getElementById('navHealth').addEventListener('click', () => openDetail('health'));
+document.getElementById('navInbox').addEventListener('click', () => openDetail('inbox'));
+
+// ---------- Pull to refresh ----------
+(function setupPullToRefresh() {
+  const spinner = document.getElementById('ptrSpinner');
+  const THRESHOLD = 70;
+  let startY = 0;
+  let pulling = false;
+  window.addEventListener('touchstart', (e) => {
+    if (!currentDetail && !debriefOpen && window.scrollY <= 0 && e.touches.length === 1) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+    } else {
+      pulling = false;
+    }
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0 && window.scrollY <= 0) {
+      const pct = Math.min(1, dy / THRESHOLD);
+      spinner.style.opacity = String(pct);
+      spinner.style.transform = `translate(-50%, ${Math.min(dy / 2, 40) - 10}px)`;
+    }
+  }, { passive: true });
+  window.addEventListener('touchend', (e) => {
+    if (!pulling) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > THRESHOLD && window.scrollY <= 0) {
+      spinner.classList.add('active');
+      spinner.style.opacity = '1';
+      refreshAll();
+      setTimeout(() => {
+        spinner.classList.remove('active');
+        spinner.style.opacity = '0';
+        spinner.style.transform = 'translate(-50%, -10px)';
+      }, 1200);
+    } else {
+      spinner.style.opacity = '0';
+      spinner.style.transform = 'translate(-50%, -10px)';
+    }
+    pulling = false;
+  }, { passive: true });
+})();
+
+// ---------- Debrief page: edge swipe-back gesture ----------
+// Isolated from pull-to-refresh above (which gates on !debriefOpen and
+// vertical scroll) so the two gestures never compete on the same touch.
+(function setupDebriefSwipeBack() {
+  const EDGE = 24, THRESHOLD = 80, MAX_DRIFT = 60;
+  let startX = 0, startY = 0, tracking = false;
+  window.addEventListener('touchstart', (e) => {
+    if (debriefOpen && e.touches.length === 1 && e.touches[0].clientX <= EDGE) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      tracking = true;
+    } else {
+      tracking = false;
+    }
+  }, { passive: true });
+  window.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    if (dx > THRESHOLD && dy < MAX_DRIFT) history.back();
+  }, { passive: true });
+})();
+
+// ---------- Refresh on open / focus ----------
+// Re-fetch when the installed PWA is brought back to the foreground after being
+// idle, so it's fresh the moment it's opened each morning without a manual tap.
+const STALE_MS = 5 * 60 * 1000;
+function maybeRefreshOnVisible() {
+  if (document.visibilityState === 'visible' && Date.now() - lastUpdated > STALE_MS) {
+    refreshAll();
+  }
+}
+document.addEventListener('visibilitychange', maybeRefreshOnVisible);
+window.addEventListener('pageshow', maybeRefreshOnVisible);
+
+// ---------- Boot ----------
 renderGreeting();
-document.getElementById('refreshBtn').addEventListener('click', loadWeather);
-loadWeather();
-loadCalendar();
-loadReminders();
-loadEmail();
+applyTheme(); // hour-based theme immediately; weather refines it with is_day
+// Seed a cached brief (if today's is stored) so the hero card is instant.
+const seededBrief = cachedBrief();
+if (seededBrief) { overview.brief = seededBrief.brief; overview.briefStructured = seededBrief.structured; }
+renderStreak();
+renderOverview();
+refreshAll();
+// Deep-link support: opening/reloading directly on #/debrief lands on the
+// full-screen page instead of the home dashboard.
+if (location.hash === '#/debrief') openDebrief();
+setInterval(renderUpdated, 30000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

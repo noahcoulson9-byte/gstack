@@ -76,12 +76,46 @@ of falling back to rendering `README.md`. Any static host works the same way
 (Netlify/Vercel/Cloudflare Pages, pointed at this folder).
 
 The `server/` backend needs a host that keeps a process running — GitHub
-Pages can't do this. Run it on whatever machine you leave on overnight (a
-laptop, a home server, a small VPS, a Raspberry Pi). Point your phone's
-Morning Dew install at that machine's address (or put it behind a tunnel like
-Cloudflare Tunnel / Tailscale if you want a stable public URL). Without the
-backend running, weather still works; calendar/reminders/email show "couldn't
-reach the service" instead of a placeholder (a clear signal to go start it).
+Pages can't do this. Two options:
+
+### Option A: Render (free, no machine to keep on)
+
+This repo includes a `render.yaml` Blueprint at the repo root that points at
+`morning-dew-app/Dockerfile`, so Render can build and run the backend without
+any manual service configuration.
+
+1. Go to <https://dashboard.render.com/blueprints> and connect this repo
+   (`noahcoulson9-byte/gstack`).
+2. Render detects `render.yaml` automatically and shows the
+   `morning-dew-backend` service. Click **Apply**.
+3. First deploy takes a few minutes (it's building a Docker image). Once it's
+   live, open the service's **Environment** tab in the Render dashboard and
+   fill in whichever variables you have from the table below (`ICLOUD_ICS_URL`,
+   `GOOGLE_CLIENT_ID`, etc.) — they were left blank in `render.yaml` on purpose
+   since they're secrets. Saving triggers a redeploy.
+4. Copy the service's URL (shown at the top of the Render dashboard page,
+   looks like `https://morning-dew-backend.onrender.com`).
+5. Open the installed Morning Dew app on your phone, tap the **Server**
+   button (below Refresh weather), and paste that URL in. It's saved on your
+   phone, so you only do this once per device.
+
+Render's free tier spins the service down after ~15 minutes idle, so the
+first request after a quiet period takes 10-30 seconds while it wakes back
+up — calendar/reminders/email will briefly show a loading or error state on
+that first load, then work normally. This is a known tradeoff of the free
+tier, not a bug.
+
+### Option B: self-host
+
+Run it on whatever machine you leave on overnight (a laptop, a home server, a
+small VPS, a Raspberry Pi): `bun run server` from `morning-dew-app/`. Point
+the Morning Dew app's **Server** button at that machine's address (or put it
+behind a tunnel like Cloudflare Tunnel / Tailscale if you want a stable
+public URL instead of a LAN IP).
+
+Either way: without the backend reachable, weather still works;
+calendar/reminders/email show "couldn't reach the service" instead of a
+placeholder (a clear signal to check the Server URL or go start it).
 
 ## Environment variables
 
@@ -90,6 +124,7 @@ All optional — every missing one degrades to a placeholder, nothing blocks.
 | Variable | Used for | How to get it |
 |---|---|---|
 | `PORT` | Backend listen port | Defaults to `8787` |
+| `ANTHROPIC_API_KEY` | AI Morning Brief (written daily plan) | console.anthropic.com → API keys |
 | `ICLOUD_ICS_URL` | Upcoming calendar events | See below |
 | `REMINDERS_ICS_URL` | Open reminders | See below |
 | `GOOGLE_CLIENT_ID` | Gmail triage | See below |
@@ -99,6 +134,115 @@ All optional — every missing one degrades to a placeholder, nothing blocks.
 | `MS_CLIENT_SECRET` | Outlook calendar/tasks/mail | See below |
 | `MS_REFRESH_TOKEN` | Outlook calendar/tasks/mail | See below |
 | `MS_TENANT_ID` | Outlook calendar/tasks/mail | See below (defaults to `common`) |
+| `HEALTH_TOKEN` | Apple Watch readiness rings (Strain/Recovery/Sleep) | Any secret you pick — see below |
+
+### Getting `ANTHROPIC_API_KEY` (AI Morning Brief)
+
+1. Go to [console.anthropic.com](https://console.anthropic.com/), sign in, add a
+   little credit, and create an **API key**.
+2. Set it as `ANTHROPIC_API_KEY` on the server (Render → Environment).
+
+The brief is generated once per day (cached on your device), so cost is a few cents
+a month. **Privacy:** generating the brief sends that day's context — your events,
+tasks, weather, and email senders/subjects — to Anthropic to write the plan. If
+`ANTHROPIC_API_KEY` is unset, the app falls back to the free computed glance and
+sends nothing.
+
+### Morning push notification (optional)
+
+Delivers a "your brief is ready" nudge to the **installed** app around 7am. iOS
+only supports this for a PWA added to the Home Screen (16.4+). Setup:
+
+1. **VAPID keys** (sign the push). Generate a pair (e.g. `npx web-push generate-vapid-keys`)
+   and set on the server: `VAPID_PUBLIC`, `VAPID_PRIVATE`, and `VAPID_SUBJECT`
+   (a `mailto:you@example.com`).
+2. **Subscription storage** — the 7am job runs while the app is asleep, and Render's
+   free disk is ephemeral, so subscriptions live in a free **Upstash Redis**: create a
+   database at [upstash.com](https://upstash.com/), then set `UPSTASH_REDIS_REST_URL`
+   and `UPSTASH_REDIS_REST_TOKEN` on the server.
+3. **Cron trigger** — set a shared `CRON_SECRET` on the server, and add the same value
+   as a GitHub Actions secret. The `morning-dew-ping` workflow's 7am job POSTs to
+   `/api/cron/morning-push` with that secret; the backend composes the nudge from the
+   day's counts and sends the push.
+4. In the app, open **Your brief → "Get this brief at 7am"** and allow notifications.
+
+If any of these aren't set, the button just reports push isn't configured — nothing
+else breaks.
+
+### Recovery (from Apple Health, with our own score)
+
+The **Recovery** card shows a 0–100 readiness score. There are three ways to feed it,
+in increasing order of automation:
+
+1. **Manual (zero setup):** tap the Recovery card and type today's number (from
+   Athlytic/Whoop/Bevel or your own judgement). Saves on-device; drives the ring,
+   the 7-day trend, and the brief's Recovery section. Always works, no backend.
+2. **A score from another app:** an iOS Shortcut POSTs a ready-made `recovery`
+   number (e.g. Athlytic's "View my Recovery").
+3. **Our own score from Apple Health:** an iOS Shortcut sends your raw Apple Watch
+   metrics and the backend computes recovery itself (`server/recovery.js`) — HRV-led,
+   refined by resting heart rate and sleep, scored against your personal rolling
+   baseline. No third-party recovery app needed.
+
+A website/PWA can't read Apple Health directly, so paths 2–3 use an iOS **Shortcut**
+that *pushes* values to the backend; the app reads them back. Both reuse the same
+**Upstash Redis** as push (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`).
+
+**Setup for the Apple Health path:**
+
+1. **Pick a secret** → set as `HEALTH_TOKEN` on the server (Render → Environment).
+2. **Build the Shortcut** (iOS Shortcuts → new Shortcut). Use **Find Health Samples**
+   to get the latest of each, then a value action to get the number:
+   - **Heart Rate Variability (SDNN)** → `hrv` (ms)
+   - **Resting Heart Rate** → `restingHeartRate` (bpm)
+   - **Sleep** → `sleepHours` (hours)
+   Then **Get Contents of URL**:
+   - URL: `https://<your-backend>.onrender.com/api/health`
+   - Method: **POST**, Request Body: **JSON**
+   - Header: `x-health-token` = your `HEALTH_TOKEN`
+   - JSON fields: `hrv`, `restingHeartRate`, `sleepHours` (numbers), plus
+     `source` = `"Apple Health"`. (Send any subset; HRV alone already yields a score.)
+3. **Automate** — Shortcuts → Automation → Time of Day (e.g. 7am) → run it.
+
+The backend computes `recovery` from whatever metrics arrive and stores both the
+score and the inputs; `GET /api/health` returns
+`{"configured":true,"data":{"recovery":…,"hrv":…,"restingHeartRate":…,"sleepHours":…,"computed":true}}`.
+The score is an honest approximation that sharpens once a few days of baseline
+accumulate (it's marked `calibrating` until then). A directly-supplied `recovery`
+field always overrides the computed one. Values refresh when the automation fires
+or you run the Shortcut — not real-time.
+
+> Note: the iOS variable picker can freeze on low battery; a full power-off restart
+> clears it. Until then, the manual path above gives the full feature with no Shortcut.
+
+### Health Auto Export (richer Sleep + Strain scores, no Shortcut to build)
+
+If you already use the [Health Auto Export](https://www.healthyapps.dev/apps/health-auto-export/)
+app, its **REST API automation** can push your raw Apple Watch metrics straight to
+`/api/health` — no Shortcut-building required, and it unlocks the **Sleep** and
+**Strain** rings (computed from sleep hours and active energy / exercise minutes)
+alongside Recovery.
+
+1. **Pick a secret** → set as `HEALTH_TOKEN` on the server (Render → Environment), same as above.
+2. In Health Auto Export: **Automations → New Automation → REST API**.
+   - URL: `https://<your-backend>.onrender.com/api/health`
+   - Method: **POST**
+   - Header: `x-health-token` = your `HEALTH_TOKEN`
+   - **Metrics to include** — this automation has its own metric checklist,
+     separate from any "export all" toggle elsewhere in the app. Check at least:
+     **Heart Rate Variability**, **Resting Heart Rate**, **Sleep Analysis** (drives
+     Recovery and Sleep), and **Active Energy**, **Apple Exercise Time** (drives
+     Strain). Metrics you don't check simply won't arrive — they don't block the
+     ones you did check.
+3. Schedule the automation (e.g. on a timer, or on Health app sync).
+
+The backend recognizes Health Auto Export's nested payload shape automatically (no
+field-mapping needed) and computes `recovery`, `sleep`, and `strain` from whatever
+arrived. To confirm exactly which metrics made it through on the last sync, open
+**Your readiness card → tap for details** — a small "Last sync sent: ..." line lists
+the raw metric names the backend actually received, so a blank Sleep or Strain ring
+is diagnosable without inspecting the API directly: if a metric you expect is missing
+from that line, it isn't checked in the automation above.
 
 ### Getting `ICLOUD_ICS_URL`
 

@@ -6,5 +6,8 @@
   "scripts": {
     "server": "bun run server/server.js",
     "dev:static": "python3 -m http.server 8080"
+  },
+  "dependencies": {
+    "web-push": "^3.6.7"
   }
 }

@@ -43,6 +43,28 @@ skips geolocation entirely and fetches that fixed location directly. Combined
 with an 8s `AbortController` timeout on every fetch, no card can hang forever
 now.
 
+**Superseded by decision 14** — Noah asked for live location after living
+with the Brisbane-only behavior for a while. Geolocation is back, but with
+the timeout this decision was originally about: `getCurrentPosition` is now
+raced against an 8s manual timer (`GEO_TIMEOUT_MS`) in addition to its own
+`timeout` option, since iOS Safari doesn't always honor the option alone.
+Brisbane is now the fallback when geolocation fails/times out/is denied,
+not the only behavior.
+
+## 14. Live geolocation with Brisbane as the timeout/denial fallback
+
+Implemented in `index.html`'s `loadWeather()`: tries `getCurrentPosition()`
+first (wrapped in the hard 8s race described in decision 3's update); on
+success, fetches Open-Meteo for the device's real coordinates and kicks off
+a best-effort reverse-geocode (BigDataCloud's free, keyless,
+CORS-enabled `reverse-geocode-client` endpoint) to label the card with the
+actual suburb/city instead of "Current location". On any failure (denied,
+no support, timeout), falls back to the original fixed Brisbane coordinates
+and labels the card "Brisbane, QLD (location unavailable)" so it's obvious
+which mode is active. The reverse-geocode call is decorative only — if it
+fails, the temperature/etc. already loaded from the real coordinates are
+unaffected, only the text label stays generic.
+
 ## 4. Apple Reminders: no public no-credential read API exists
 
 Apple does not expose a public .ics export endpoint for Reminders the way it
@@ -190,3 +212,261 @@ verified by curling each of those paths against a locally running backend
 (see BUILD_SUMMARY.md). `sw.js`'s `CACHE_NAME` was bumped to `v2` so already
 installed PWA clients pick up the corrected file layout instead of serving a
 stale cached copy of the old structure.
+
+## 13. Backend deploy target upgraded to Render, with a configurable frontend→backend origin
+
+Noah asked to "set up server or tell me how to get server running" and,
+given the choice between a free cloud host, his own always-on machine, or a
+Raspberry Pi/home server, picked the free cloud host and accepted the
+known cold-start tradeoff. Decision: added `Dockerfile` (thin `oven/bun:1`
+wrapper running `server/server.js`, no code changes needed since it already
+reads `process.env.PORT`) and a repo-root `render.yaml` Blueprint
+(`rootDir: morning-dew-app`) so Render's dashboard can build and run the
+backend with one "Apply" click instead of manual service configuration.
+Added `morning-dew-app/.dockerignore` excluding `.env` and `*.md` — without
+it, `Dockerfile`'s `COPY . .` would have baked the real iCloud calendar share
+links currently in `.env` into the built image. `render.yaml` leaves every
+secret as `sync: false` (filled in via the Render dashboard post-deploy,
+never committed).
+
+This surfaced a real architectural gap: the GitHub-Pages-hosted frontend and
+a Render-hosted backend are different origins, but `index.html` was calling
+`/api/calendar` etc. as same-origin relative paths (which only worked when
+`bun run server` served both the frontend and the API from one process).
+Fixed two ways: (1) `server/server.js`'s `json()` helper now sets
+`Access-Control-Allow-Origin: *` — these are read-only GET endpoints with no
+cookies or auth, so a wildcard origin adds no real risk; (2) `index.html`
+gained a "Server" button (next to "Refresh weather") that prompts for a
+backend base URL and persists it in `localStorage`, with all three
+`/api/*` fetches routed through an `apiUrl()` helper that prefixes that base
+(or none, for same-origin self-hosting — the original behavior is preserved
+when the field is left blank). This makes the frontend deploy-target-agnostic:
+GitHub Pages + Render, GitHub Pages + self-hosted-with-tunnel, or one box
+running everything all work without code changes, just a different value in
+that one prompt.
+
+## 14. Full-screen debrief uses a hash route (`#/debrief`), not a true path route
+
+Task 1 asked for "proper client-side routing (e.g. a new route like
+/debrief)". A true path route (`/debrief`) requires the host to rewrite
+unknown paths back to `index.html` (a 404.html trick on GitHub Pages, or a
+catch-all rewrite on Render). This app's exact hosting base path is
+ambiguous from what's in this repo: there's no `CNAME`, and the README
+notes Pages "can only be pointed at a repo's root or /docs," yet
+`morning-dew-app/` is itself nested inside the `gstack` monorepo. Getting
+the rewrite path wrong would 404 a deep link or hard reload.
+
+Decision: used `#/debrief` (a hash route) instead. `history.pushState`/
+`popstate` work identically to a true path route — same back-button
+support, same "feels like a new page" navigation — but a hash route never
+touches the server, so it works correctly regardless of which base path
+this app ends up served from, with zero server-side rewrite config. Reload
+on `#/debrief` is handled by a bootstrap-time check
+(`if (location.hash === '#/debrief') openDebrief();`) so deep links survive
+a hard refresh.
+
+## 15. AI brief restructured to JSON with graceful fallback to the legacy flat string
+
+Task 2 asked for the AI overview to be split into short, distinct,
+expandable sections instead of one markdown blob, and noted that if the
+single-blob format is "actually a prompt-structuring problem," the
+generation prompt should be adjusted to output structured fields instead
+of free text. It is — there's no reliable way to carve a flat markdown
+string back into named sections client-side. Changed `server/anthropic.js`'s
+`SYSTEM_PROMPT` to require a single fenced `\`\`\`json` block:
+`{headline, opener, sections: [{key, title, summary, detail}], tomorrow}`,
+with `inbox`/`headsup` sections omitted when not applicable and `tomorrow`
+set to JSON `null` when there's nothing to flag for the next day.
+
+`generateBrief()` parses that fence and returns `{configured: true,
+structured: true, brief: <object>}`. If the model's response doesn't parse
+as JSON or is missing a `sections` array (a non-deterministic LLM API
+response — a boundary worth validating, not over-engineering), it degrades
+to `{configured: true, structured: false, brief: <raw text>}`, preserving
+the old flat-markdown contract as a fallback rather than erroring the whole
+brief. The client (`index.html`'s `debriefBodyHtml()`) branches on
+`overview.briefStructured` to render either the new progressive-disclosure
+section cards or the legacy single markdown card, so a malformed model
+response degrades the UI instead of breaking it. `cachedBrief()` now
+persists and returns `{brief, structured}` so a same-day cached brief
+restores with the correct rendering path after a reload.
+
+Also decided: "tomorrow" data needs no new backend endpoint or HAE field.
+`fetchIcsEvents()` in `server.js` already windows both `/api/calendar` and
+`/api/reminders` 48 hours out, so `overview.calendar`/`overview.reminders`
+already contain tomorrow's events — `briefContext()` filters them
+client-side with a new `isTomorrow()` helper (mirroring the existing
+`isToday()`). Email has no per-item date, so rather than building an
+unavailable date-filtered email signal, the same `email.urgentItems` list
+is handed to the model as `tomorrow.possiblyRelevantEmail` and the prompt
+instructs it to judge tomorrow-relevance from subject/sender context.
+
+## 16. Home screen redesigned to a dark glassmorphic, no-scroll layout with a bottom nav
+
+User shared a Pinterest reference (dark task-manager UI, blue accent,
+colored left-accent-bar cards, day-picker strip, avatar, floating pill
+bottom nav) and asked for the home screen to match it. Two mockup rounds
+were built and screenshotted standalone (not against the real app) before
+any real-app edit, per the workflow the user required. Final approved
+round added: the Outlook-style inbox restored to its existing production
+look, an Apple-Calendar-style daily timeline, the original 3-ring
+recovery/sleep/strain triad preserved, and a rainbow/aurora glow behind
+the hero card. The user then asked for one more pass on the real app:
+shrink Readiness and Schedule, make Outlook reachable without scrolling,
+and add bottom-nav buttons for quick access — explicitly **no scrolling on
+the home screen at all**.
+
+**Dual-accent-token split.** `--accent: #ffb22e` (gold) stays untouched
+because the full-screen `#/debrief` page depends on it for its section
+titles, CTA button, and arrow glyphs, and the user never asked for that
+page's look to change. A new `--home-accent: #3D7BFF` token was introduced
+and only the home-screen-specific rules that read `var(--accent)`
+(`.nd-greet-line .accent`, `.nd-hero::after`, `.nd-hero-label`,
+`.nd-hero-cta`) were repointed to it. The generic `--text`/`--muted`/
+`--glass-*` tokens were repointed globally to a near-black palette since
+they're shared-but-generic and `.debrief-page` has its own independent
+hardcoded background — verified via screenshot that `#/debrief` still
+renders with its original gold accent and layout after the change.
+
+**Apple-Calendar day view lives in the tap-through detail overlay, not on
+the home card.** The "make the calendar look like Apple Calendar, daily
+layout with all hours" request and the later "no scrolling on home, make
+the calendar smaller" request looked contradictory until re-reading the
+app: tapping any home card already opens a full detail overlay via
+`data-detail="X"` → `openDetail(type)` → a per-card `*DetailHtml()`
+builder. The expansive day view (`dayTimelineHtml()`, a 24-hour grid with
+hour rule lines, time-positioned event blocks, greedy column-packing for
+overlapping events, and a live "now" line that the overlay auto-scrolls to
+on open) was built inside `scheduleDetailHtml()` (via the existing
+`scheduleListHtml()` call site), while the home page's `.nd-cal` card kept
+its existing compact "next event" design, just dark-restyled and shrunk.
+This satisfies both requests at once instead of trading one off against
+the other.
+
+**Outlook-style inbox needed no rewrite.** `renderInboxCard()` already
+matched the "Outlook style" ask (logo header, avatar-circle rows, urgent
+badge) — only CSS restyling (dark palette, smaller padding, colored
+left-borders) was needed to fit the no-scroll budget, no markup or JS
+changes.
+
+**Decorative, non-interactive day-picker strip.** `fetchIcsEvents()` only
+windows 48 hours out, so there's no per-day event index for the rest of
+the week without a backend change (out of scope for a visual pass). The
+strip (`renderDayStrip()`, called from `renderHome()`) renders today ± 2
+days with today highlighted solid blue; the other four cells are inert
+(no click handler, no data filtering) — an honest "this is the date
+strip, not a date picker" rather than a half-wired feature that looks
+interactive but does nothing.
+
+**Bottom nav reuses existing ids and handlers instead of duplicating
+them.** `#settingsBtn` (→ `openServerSetting()`, already wired) and
+`#pageRefreshBtn` (→ the existing refresh handler with its `.spinning`
+animation) moved into the new `<nav class="nd-bottom-nav">` markup with
+their ids unchanged, so zero JS changes were needed for those two — only
+`updateServerBtnLabel()`'s `getElementById('settingsBtn')` lookup, which
+sets `title`/`aria-label` (not innerHTML), needed re-verifying it still
+worked after the gear emoji was swapped for an inline SVG. Two new
+buttons were added with fresh handlers: `#navHealth` and `#navInbox` both
+call the existing `openDetail('health' | 'inbox')` — direct access
+instead of `scrollIntoView`, since the home page no longer scrolls at all.
+`#navHome` calls `history.back()` when a detail overlay or the debrief
+page is open (consistent with how the existing back button/Escape/swipe
+gesture already close those), otherwise does nothing (there's nothing to
+navigate to — home is the only base view).
+
+**Found and fixed a pre-existing bug while building the nav.** The global
+`button { border: none; cursor: pointer; }` reset never set
+`background: none`, so any button without its own explicit background
+fell back to the browser's default button face (light gray), which
+silently masked the muted-gray bottom-nav icons against the new dark
+background (confirmed via a cropped screenshot — three of five nav icons
+were invisible until this was added). Every other button in the app
+already set its own background explicitly, so this had no visible effect
+before now, but it's a correctness fix to the shared reset, not a
+nav-specific workaround.
+
+**Verification:** syntax-checked the extracted inline `<script>` with
+`node --check` (clean). Screenshotted the real app at a 390×844 viewport —
+confirmed `main.home`'s `scrollHeight` (809px) fits inside the viewport's
+`innerHeight` (844px), i.e. genuinely no scroll. Screenshotted the bottom
+nav cropped before/after the button-background fix. Injected mock
+calendar events via `page.evaluate()` (no live backend in this sandbox) to
+confirm the day-timeline renders hour lines, side-by-side columns for
+overlapping events, the all-day chip, and the auto-scroll-to-now position
+correctly. Confirmed no edits touched `server/` or the debrief page's own
+styling/logic.
+
+## 17. Two-column split layout: weather+full timeline on the left, readiness+inbox on the right
+
+Follow-up request: run the Schedule card down from roughly halfway along
+the AI-brief hero card to the bottom nav, as a full hour-by-hour daily
+timeline (the existing Apple-Calendar-style component, previously only
+reachable via the Schedule detail overlay) rather than the compact
+"next event" preview. Readiness and Inbox move to a right-hand column of
+equal width, and Weather sits above the timeline at the same half-screen
+width. The attached reference image was confirmed to be a visual-style
+reference only (timeline look, not literal column placement) — actual
+column layout follows the text description. The standing "no scroll on
+home" constraint stays in force, so the new columns had to grow to fill
+the remaining viewport height and scroll internally instead of pushing
+the page taller.
+
+**`main.home` needed a definite height, not just `flex: 1 1 auto`.** A
+dead "single-screen launcher" CSS block (unused `.home-tiles`/`.home-tile`
+classes, confirmed zero markup references via grep) already had an
+earlier `main.home { flex: 1 1 auto; ... }` rule that the later, active
+`main.home` rule didn't fully override — it only touched `min-height`
+(set to `auto`), `gap`, etc. `flex: 1 1 auto` makes a flex child willing
+to grow, but `min-height: auto` left it nothing to grow *into* — a flex
+item's automatic minimum size is its content size, so it just
+shrink-wrapped. Changing `min-height` to a definite
+`calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) -
+2.2rem)` gave `main.home` an actual height budget, which then propagates
+down through `.nd-split` → `.nd-split-col` → `.nd-cal`/`.nd-ol` (each
+with `flex: 1 1 auto; min-height: 0;`) to the innermost
+`.nd-cal-body`/`.nd-ol-rows`, which carry the real `overflow-y: auto`.
+The outer page stays exactly viewport-height; only those two inner panels
+scroll.
+
+**Reused `scheduleListHtml()`/`dayTimelineHtml()` unmodified** for the
+new persistent home panel (`renderScheduleCard()` → `#scheduleCardBody`),
+the same functions the Schedule detail overlay already called — no
+duplicate timeline-rendering logic. One bug surfaced from rendering the
+same timeline output in two places at once: `dayTimelineHtml()`'s
+"now" line had both a class and a hardcoded `id="dayTlNow"`; with the
+home panel and the detail overlay both able to hold a copy of the
+timeline simultaneously, the `id` had to go and every "find the now line"
+lookup was rescoped to `containerEl.querySelector('.day-tl-now')`
+instead. Added a one-time `homeCalAutoScrolled` flag so the home panel's
+periodic background re-renders don't keep re-centering the user's scroll
+position back to "now" after their first manual scroll.
+
+**Tasks card lost its home-screen entry point.** Fitting four cards
+(Weather, Schedule, Readiness, Inbox) into two equal-width, full-height
+columns left no slot for a fifth. `renderTasksCard()`, `DETAILS.tasks`,
+`tasksDetailHtml()`/`tasksListHtml()`, and the `.nd-glass*` CSS are all
+left fully intact — only the `#tasksCard` mount point was removed from
+the home markup, so the function is now a no-op via its existing
+`if (!el) return;` guard. This is a real reduction in reachability (no
+current way to open the Tasks list from the home screen) flagged to the
+user as a tradeoff, not a silent removal — restoring an entry point
+later (e.g. folding it into the bottom nav, or a tab inside one of the
+two columns) is a small follow-up if wanted.
+
+**Verification:** syntax-checked the extracted inline `<script>` with
+`node --check` (clean; zero output). Regression-grepped that
+`.nd-cal-head/-glyph/-title/-ev/-bar` (the old compact preview's classes)
+have zero remaining references, that `renderTasksCard()`/`DETAILS.tasks`
+are still present in source (preserved, not deleted), and that no edit
+touched anything under `server/`. Screenshotted at 390×844 with no
+backend running — outer page stays exactly viewport height
+(`bodyScrollHeight === innerHeight`, no scroll), Weather/Schedule detail
+overlays still open correctly on tap. Injected mock calendar/email/health
+data via `page.evaluate()` and confirmed: the full timeline renders inside
+`#scheduleCardBody` with its true content height (1350px) safely exceeding
+its visible budget (308px) and clipping rather than growing the page, the
+auto-scroll-to-now fires once and centers the current-time line, and the
+right column's Readiness/Inbox cards render with mock data. Confirmed the
+"review" detail overlay (reachable via the hero's CTA) still renders with
+its original gold `--accent` styling, untouched by the home-screen
+`--home-accent` token split from the prior round.
