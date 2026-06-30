@@ -1077,9 +1077,17 @@ function renderGlance() {
 
 // ---------- AI Morning Brief ----------
 const BRIEF_KEY = 'morningDewBrief';
+// 3 hours: long enough to skip needless regeneration cost on every app open,
+// short enough that the brief still reflects the day as it evolves.
+const BRIEF_STALE_MS = 3 * 60 * 60 * 1000;
 function cachedBrief() {
   const b = lsGet(BRIEF_KEY, null);
-  return b && b.date === localDateStr(new Date()) ? b.brief : null;
+  if (!b || b.date !== localDateStr(new Date())) return null;
+  if (b.generatedAt && Date.now() - b.generatedAt > BRIEF_STALE_MS) return null;
+  const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+  const currentHealthUpdatedAt = (health && health.updatedAt) || null;
+  if (b.healthUpdatedAt !== undefined && b.healthUpdatedAt !== currentHealthUpdatedAt) return null;
+  return b.brief;
 }
 function briefHeadline(md) {
   if (!md) return '';
@@ -1212,7 +1220,13 @@ async function fetchBrief(force) {
     else if (data.brief) {
       overview.brief = data.brief;
       overview.briefConfigured = true;
-      lsSet(BRIEF_KEY, { date: localDateStr(new Date()), brief: data.brief });
+      const healthNow = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+      lsSet(BRIEF_KEY, {
+        date: localDateStr(new Date()),
+        brief: data.brief,
+        generatedAt: Date.now(),
+        healthUpdatedAt: (healthNow && healthNow.updatedAt) || null,
+      });
     } else if (data.error) {
       overview.briefError = data.error;
     }
