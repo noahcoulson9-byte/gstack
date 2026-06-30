@@ -22,7 +22,7 @@
     --glass-border: rgba(255, 255, 255, 0.10);
     --glass-highlight: rgba(255, 255, 255, 0.14);
     --accent: #ffb22e;
-    --home-accent: #3D7BFF;
+    --home-accent: #5599ff;
     --bar-pink: #FF4D8D;
     --bar-orange: #FF9F43;
     --bar-blue: #3D7BFF;
@@ -39,7 +39,7 @@
   }
   body {
     position: relative;
-    background: linear-gradient(168deg, #0D1117 0%, #0A0C10 55%, #07080B 100%);
+    background: linear-gradient(168deg, #0c1020 0%, #0a0b12 55%, #0a080f 100%);
     background-attachment: fixed;
     min-height: 100dvh;
     overflow-x: hidden;
@@ -62,24 +62,24 @@
     will-change: transform;
   }
   .blob-a {
-    width: 65vw; height: 65vw;
-    top: -18vw; left: -15vw;
-    background: radial-gradient(circle, #6a8dff, transparent 70%);
-    opacity: 0.3;
+    width: 72vw; height: 72vw;
+    top: -20vw; left: -18vw;
+    background: radial-gradient(circle, #4d7fff, transparent 70%);
+    opacity: 0.52;
     animation: drift1 22s ease-in-out infinite alternate;
   }
   .blob-b {
-    width: 70vw; height: 70vw;
-    bottom: -28vw; right: -25vw;
-    background: radial-gradient(circle, #d24dd6, transparent 70%);
-    opacity: 0.22;
+    width: 75vw; height: 75vw;
+    bottom: -30vw; right: -28vw;
+    background: radial-gradient(circle, #b830e0, transparent 70%);
+    opacity: 0.42;
     animation: drift2 26s ease-in-out infinite alternate;
   }
   .blob-c {
-    width: 48vw; height: 48vw;
-    top: 32vh; right: -18vw;
-    background: radial-gradient(circle, #ffb22e, transparent 70%);
-    opacity: 0.16;
+    width: 55vw; height: 55vw;
+    top: 30vh; right: -20vw;
+    background: radial-gradient(circle, #ff7040, transparent 70%);
+    opacity: 0.32;
     animation: drift3 30s ease-in-out infinite alternate;
   }
   @keyframes drift1 { from { transform: translate(0,0); } to { transform: translate(6vw, 8vh); } }
@@ -554,11 +554,11 @@
   .tl-time { flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: var(--muted); white-space: nowrap; margin-top: 0.1rem; }
 
   /* ---- Time-of-day theming: subtle cool shifts on the same near-black base ---- */
-  body.theme-dawn  { background: linear-gradient(168deg, #161c2899 0%, #0A0C10 60%, #07080B 100%), linear-gradient(168deg, #0D1117, #07080B); }
-  body.theme-day   { background: linear-gradient(168deg, #0D1117 0%, #0A0C10 55%, #07080B 100%); }
-  body.theme-dusk  { background: linear-gradient(168deg, #1a142699 0%, #0A0C10 60%, #07080B 100%), linear-gradient(168deg, #0D1117, #07080B); }
-  body.theme-night { background: linear-gradient(168deg, #0A0D14 0%, #060709 60%, #050608 100%); }
-  body.theme-night .blob { opacity: 0.32; }
+  body.theme-dawn  { background: linear-gradient(168deg, #0e1528 0%, #0c0a18 60%, #07080B 100%); }
+  body.theme-day   { background: linear-gradient(168deg, #0c1020 0%, #0a0b12 55%, #0a080f 100%); }
+  body.theme-dusk  { background: linear-gradient(168deg, #160e22 0%, #100a14 60%, #07080B 100%); }
+  body.theme-night { background: linear-gradient(168deg, #0a0e18 0%, #07090e 60%, #050608 100%); }
+  body.theme-night .blob { opacity: 0.44; }
 
   /* ---- Drill-in affordance + detail screens ---- */
   .card-drill {
@@ -783,13 +783,13 @@
 
   .nd-hero-wrap { position: relative; }
   .nd-hero-glow {
-    position: absolute; inset: -14px; pointer-events: none; filter: blur(30px); opacity: 0.55;
+    position: absolute; inset: -24px; pointer-events: none; filter: blur(40px); opacity: 0.85;
     background:
-      radial-gradient(50% 60% at 12% 0%, rgba(61,123,255,0.55), transparent 70%),
-      radial-gradient(45% 60% at 85% 10%, rgba(216,77,214,0.4), transparent 70%),
-      radial-gradient(55% 70% at 70% 100%, rgba(255,178,46,0.3), transparent 70%);
+      radial-gradient(50% 60% at 12% 0%, rgba(70,130,255,0.80), transparent 70%),
+      radial-gradient(45% 60% at 85% 10%, rgba(195,55,230,0.65), transparent 70%),
+      radial-gradient(55% 70% at 70% 100%, rgba(255,110,50,0.50), transparent 70%);
   }
-  .nd-hero { background: rgba(255,255,255,0.055); border: 1px solid var(--glass-border); border-radius: 22px; padding: 0.85rem 1.05rem; position: relative; z-index: 1; overflow: hidden; }
+  .nd-hero { background: linear-gradient(130deg, rgba(28,52,170,0.42) 0%, rgba(82,22,140,0.30) 55%, rgba(130,28,78,0.18) 100%); border: 1px solid rgba(100,148,255,0.28); border-radius: 22px; padding: 0.85rem 1.05rem; position: relative; z-index: 1; overflow: hidden; }
   .nd-hero::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(var(--home-accent), rgba(61,123,255,0.25)); }
   .nd-hero-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--home-accent); }
   .nd-hero-headline { font-size: 1.2rem; font-weight: 800; line-height: 1.16; letter-spacing: -0.01em; margin-top: 0.35rem; }
