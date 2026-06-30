@@ -1210,7 +1210,7 @@ async function fetchBrief(force) {
   }
   if (overview.briefFetching) return;
   // Wait until the core data is in so the brief is built from a full picture.
-  if (overview.weatherReached === undefined || overview.calendarReached === undefined) return;
+  if (overview.weatherReached === undefined || overview.calendarReached === undefined || overview.healthConfigured === undefined) return;
   overview.briefFetching = true;
   if (currentDetail === 'brief') openDetail('brief');
   try {
@@ -2429,9 +2429,11 @@ async function fetchHealth() {
     else if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
   } catch {
     if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
+    if (overview.healthConfigured === undefined) overview.healthConfigured = false;
   }
   renderHealth();
   if (currentDetail === 'health') openDetail('health');
+  fetchBrief();
 }
 
 function renderHealth() {
@@ -2519,8 +2521,10 @@ function setRecoveryManual() {
   overview.health = data;
   lsSet(HEALTH_CACHE_KEY, data);
   recordRecoveryHistory(rec);
+  if (overview.healthConfigured === undefined) overview.healthConfigured = true;
   renderHealth();
   if (currentDetail === 'health') openDetail('health');
+  fetchBrief(true);
 }
 
 // ---------- Refresh orchestration ----------
