@@ -244,3 +244,59 @@ when the field is left blank). This makes the frontend deploy-target-agnostic:
 GitHub Pages + Render, GitHub Pages + self-hosted-with-tunnel, or one box
 running everything all work without code changes, just a different value in
 that one prompt.
+
+## 14. Full-screen debrief uses a hash route (`#/debrief`), not a true path route
+
+Task 1 asked for "proper client-side routing (e.g. a new route like
+/debrief)". A true path route (`/debrief`) requires the host to rewrite
+unknown paths back to `index.html` (a 404.html trick on GitHub Pages, or a
+catch-all rewrite on Render). This app's exact hosting base path is
+ambiguous from what's in this repo: there's no `CNAME`, and the README
+notes Pages "can only be pointed at a repo's root or /docs," yet
+`morning-dew-app/` is itself nested inside the `gstack` monorepo. Getting
+the rewrite path wrong would 404 a deep link or hard reload.
+
+Decision: used `#/debrief` (a hash route) instead. `history.pushState`/
+`popstate` work identically to a true path route — same back-button
+support, same "feels like a new page" navigation — but a hash route never
+touches the server, so it works correctly regardless of which base path
+this app ends up served from, with zero server-side rewrite config. Reload
+on `#/debrief` is handled by a bootstrap-time check
+(`if (location.hash === '#/debrief') openDebrief();`) so deep links survive
+a hard refresh.
+
+## 15. AI brief restructured to JSON with graceful fallback to the legacy flat string
+
+Task 2 asked for the AI overview to be split into short, distinct,
+expandable sections instead of one markdown blob, and noted that if the
+single-blob format is "actually a prompt-structuring problem," the
+generation prompt should be adjusted to output structured fields instead
+of free text. It is — there's no reliable way to carve a flat markdown
+string back into named sections client-side. Changed `server/anthropic.js`'s
+`SYSTEM_PROMPT` to require a single fenced `\`\`\`json` block:
+`{headline, opener, sections: [{key, title, summary, detail}], tomorrow}`,
+with `inbox`/`headsup` sections omitted when not applicable and `tomorrow`
+set to JSON `null` when there's nothing to flag for the next day.
+
+`generateBrief()` parses that fence and returns `{configured: true,
+structured: true, brief: <object>}`. If the model's response doesn't parse
+as JSON or is missing a `sections` array (a non-deterministic LLM API
+response — a boundary worth validating, not over-engineering), it degrades
+to `{configured: true, structured: false, brief: <raw text>}`, preserving
+the old flat-markdown contract as a fallback rather than erroring the whole
+brief. The client (`index.html`'s `debriefBodyHtml()`) branches on
+`overview.briefStructured` to render either the new progressive-disclosure
+section cards or the legacy single markdown card, so a malformed model
+response degrades the UI instead of breaking it. `cachedBrief()` now
+persists and returns `{brief, structured}` so a same-day cached brief
+restores with the correct rendering path after a reload.
+
+Also decided: "tomorrow" data needs no new backend endpoint or HAE field.
+`fetchIcsEvents()` in `server.js` already windows both `/api/calendar` and
+`/api/reminders` 48 hours out, so `overview.calendar`/`overview.reminders`
+already contain tomorrow's events — `briefContext()` filters them
+client-side with a new `isTomorrow()` helper (mirroring the existing
+`isToday()`). Email has no per-item date, so rather than building an
+unavailable date-filtered email signal, the same `email.urgentItems` list
+is handed to the model as `tomorrow.possiblyRelevantEmail` and the prompt
+instructs it to judge tomorrow-relevance from subject/sender context.
