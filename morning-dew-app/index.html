@@ -2398,11 +2398,13 @@ function targetTicksSvg(t) {
 
 // One mini progress ring for the home card's 3-up row. val null -> empty muted
 // track with "–" so one missing/uncalibrated metric never blocks the others.
-function miniRingHtml(val, grad, label) {
+// Optional underlay/overlay mirror detailRingHtml's so the home Strain ring can
+// show the same target-zone hatch/ticks as the detail screen, just smaller.
+function miniRingHtml(val, grad, label, underlay = '', overlay = '') {
   const ring = val == null
     ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="mring-val empty">–</span>`
     : `${ringSvg(val, grad)}<span class="mring-val">${val}%</span>`;
-  return `<div class="mring"><div class="mring-wrap">${ring}</div><span class="mring-label">${label}</span></div>`;
+  return `<div class="mring"><div class="mring-wrap">${underlay}${ring}${overlay}</div><span class="mring-label">${label}</span></div>`;
 }
 // Same as miniRingHtml but sized for the detail screen's larger .health-detail-rings grid.
 // Optional underlay (e.g. targetBandSvg) renders absolutely-positioned BEHIND the ring so
@@ -2469,9 +2471,11 @@ function renderHealth() {
   const t = recoveryTrend();
   const chip = trendChip(t);
   const chipHtml = chip ? `<span class="nd-trend ${t.delta > 0 ? 'up' : 'down'}">${chip}</span>` : '';
+  const target = targetStrainRange(rec);
+  const strainRing = miniRingHtml(h.strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target));
   card.innerHTML = `<div class="nd-readiness-triad">
     <div class="nd-readiness-triad-head"><b>Readiness</b><span style="margin-left:auto;display:flex;align-items:center;gap:0.4rem"><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</span></div>
-    <div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${miniRingHtml(h.strain, 'gStrain', 'Strain')}</div>
+    <div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${strainRing}</div>
   </div>`;
 }
 
