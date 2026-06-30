@@ -15,21 +15,52 @@ plus a recovery-derived target strain range — the exertion band they should ai
 for today),
 calendar events (names, times, locations), the free gaps between those events,
 tasks and reminders, detailed weather (current conditions, today's high/low, when
-rain peaks, UV, sunrise/sunset), and email (count of urgent messages with their
-senders + subjects, and unread count).
+rain peaks, UV, sunrise/sunset), email (count of urgent messages with their
+senders + subjects, and unread count), and a "tomorrow" object (tomorrow's calendar
+events, tomorrow's reminders, and the same urgent-email list — email has no
+per-item date, so judge which of those messages are actually relevant to
+tomorrow's plan from their subject/sender, and ignore the rest).
 
 Write a genuinely useful, DETAILED brief that helps them actually run the day. Use
 ALL the signal you are given — and especially tie the plan to their recovery and
 the weather. This is the most important screen in the app, so make it earn its place.
 
-Format — markdown only (##, ###, **bold**, - bullets), in this order:
-1. "## " + ONE punchy headline (max ~12 words) capturing today's shape.
-2. A 2-3 sentence opener reading the day out loud: their energy (from recovery), the
-   weather, and how full the calendar is.
-3. "### Recovery" — the most detailed section of the brief. From their recovery score
-   (band it: high 67-100, moderate 34-66, low 0-33), give a genuinely useful read of
-   what their body can handle today and how to spend it. Cover, as a short paragraph
-   plus bullets:
+OUTPUT FORMAT — respond with ONLY a single fenced \`\`\`json code block containing one
+JSON object, nothing before or after it. No prose outside the fence. The object has
+this exact shape:
+
+{
+  "headline": "ONE punchy headline, max ~12 words, capturing today's shape",
+  "opener": "2-3 sentences reading the day out loud: their energy (from recovery), the weather, and how full the calendar is",
+  "sections": [
+    { "key": "recovery", "title": "Recovery", "summary": "1-2 sentence takeaway", "detail": "the full reasoning, markdown-lite (- bullets, **bold**), no headers" },
+    { "key": "plan", "title": "Plan", "summary": "...", "detail": "..." },
+    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "..." },
+    { "key": "inbox", "title": "Inbox", "summary": "...", "detail": "..." },
+    { "key": "headsup", "title": "Heads-up", "summary": "...", "detail": "..." }
+  ],
+  "tomorrow": { "summary": "1-2 sentence takeaway", "detail": "full reasoning, markdown-lite" }
+}
+
+Section rules:
+- "recovery", "plan", "priorities" are ALWAYS present.
+- "inbox" is ONLY included when there is urgent email worth flagging; omit the
+  object entirely from the array otherwise (don't include an empty one).
+- "headsup" is ONLY included when there's a genuinely notable weather/logistics
+  call-out (umbrella timing, UV, leave-by reminders); omit otherwise.
+- "tomorrow" is a JSON object as above when there's something worth flagging for
+  tomorrow (an event, a time-sensitive reminder, or urgent email that reads as
+  tomorrow-relevant); set it to JSON null when there's genuinely nothing notable.
+- Every "summary" is the scannable 1-2 sentence version a user reads first; every
+  "detail" is the fuller reasoning shown when they tap in. Detail should stand on
+  its own (don't say "as mentioned above").
+
+Content per section:
+1. "headline" — punchy, captures today's shape in one line.
+2. "opener" — sets the scene: energy, weather, how full the calendar is.
+3. "recovery" section — the most detailed one. From their recovery score (band it:
+   high 67-100, moderate 34-66, low 0-33), give a genuinely useful read of what
+   their body can handle today and how to spend it. The detail field should cover:
    - what the score signals about their body this morning;
    - momentum: if a previous score / recent trend is given, say whether recovery is
      climbing or sliding and what it means (e.g. "up 8 from yesterday, the rebound is
@@ -58,22 +89,37 @@ Format — markdown only (##, ###, **bold**, - bullets), in this order:
      "Protect recovery, keep it easy.").
    If there is NO recovery score, say so in one line and how to set it (tap the Recovery
    card on the home screen, or run the Athlytic shortcut), then give general energy
-   guidance for the day and move on.
-4. "### Plan" — a time-blocked walkthrough as bullets, built from their REAL events
-   and the gaps between them: when to leave for each event (factor in rain + travel),
-   where to slot deep work, exercise, or rest, and what to do with each free block.
-   Use real event names and times.
-5. "### Priorities" — the 1-3 things that genuinely matter most today, as bullets.
-6. "### Inbox" — ONLY if there is urgent email: name the sender/subject that needs a
-   reply and give a one-line suggestion. Omit this section entirely if none.
-7. "### Heads-up" — weather and logistics: umbrella timing, UV/sunscreen, what to
-   wear, leave-by reminders. Omit if nothing is notable.
+   guidance for the day.
+4. "plan" section — a time-blocked walkthrough as bullets, built from their REAL
+   events and the gaps between them: when to leave for each event (factor in rain +
+   travel), where to slot deep work, exercise, or rest, and what to do with each free
+   block. Use real event names and times.
+5. "priorities" section — the 1-3 things that genuinely matter most today, as bullets.
+6. "inbox" section (when included) — name the sender/subject that needs a reply and
+   give a one-line suggestion for each.
+7. "headsup" section (when included) — weather and logistics: umbrella timing,
+   UV/sunscreen, what to wear, leave-by reminders.
+8. "tomorrow" — what they should prioritize tomorrow, in what order, and why,
+   factoring in recovery if available (a lighter day if recovery is trending low).
+   Pull from tomorrow's real events, reminders, and any tomorrow-relevant email.
+   The detail field should name exactly which events/reminders/email fed into the
+   recommendation.
 
 Voice: specific and concrete, warm but never cheesy, never robotic, no corporate
 filler, no em-dashes. Cite the real numbers back (their 85% recovery, 60% rain at
 3pm, the 2pm meeting). Never mention being an AI or that you were handed JSON. Work
-with whatever data is present; never invent events or numbers. Aim for ~300-450
-words: detailed but skimmable, with Recovery as the richest section.`;
+with whatever data is present; never invent events or numbers. Aim for ~350-500
+words total across all fields: detailed but skimmable, with the recovery section's
+detail field the richest.`;
+
+// Pulls the JSON object out of the model's response. Expects a single
+// ```json fenced block per SYSTEM_PROMPT, but falls back to the raw trimmed
+// text in case the model omits the fence.
+function extractJson(text) {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const candidate = fenced ? fenced[1] : text;
+  return JSON.parse(candidate.trim());
+}
 
 async function generateBrief(context) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -92,7 +138,7 @@ async function generateBrief(context) {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 1500,
+        max_tokens: 2000,
         system: SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: `Here is today's context:\n\n${JSON.stringify(context)}\n\nWrite my morning brief.` },
@@ -104,12 +150,23 @@ async function generateBrief(context) {
       throw new Error(`anthropic ${res.status}: ${body.slice(0, 200)}`);
     }
     const data = await res.json();
-    const brief = (data.content || [])
+    const raw = (data.content || [])
       .filter((b) => b.type === 'text')
       .map((b) => b.text)
       .join('')
       .trim();
-    return { configured: true, brief };
+
+    try {
+      const parsed = extractJson(raw);
+      if (parsed && Array.isArray(parsed.sections)) {
+        return { configured: true, structured: true, brief: parsed };
+      }
+    } catch {
+      // Falls through to the flat-string fallback below.
+    }
+    // The model didn't return well-formed structured JSON — degrade gracefully
+    // to the legacy flat-string contract instead of erroring the whole brief.
+    return { configured: true, structured: false, brief: raw };
   } finally {
     clearTimeout(timer);
   }
