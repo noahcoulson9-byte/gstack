@@ -2359,6 +2359,24 @@ function targetStrainCompare(actual, t) {
   if (actual < t.lo) return `Today's strain is below target — there's room for more if you want it.`;
   return `Right in your target range — well matched to today's recovery.`;
 }
+// A thin marker band drawn just outside the Strain ring showing the target
+// lo–hi zone, using the same dasharray arc technique as ringSvg but offset
+// to start at lo instead of 12 o'clock. Overlaid (not stacked) via absolute
+// positioning so it rings the same center as the progress arc inside it.
+function targetBandSvg(t) {
+  if (!t) return '';
+  const r = RING_R + 12;
+  const c = 2 * Math.PI * r;
+  const lo = Math.max(0, Math.min(100, t.lo));
+  const hi = Math.max(0, Math.min(100, t.hi));
+  const arcLen = ((hi - lo) / 100) * c;
+  const offset = -(lo / 100) * c;
+  return `<svg viewBox="0 0 200 200" style="position:absolute;inset:0;pointer-events:none">
+    <circle cx="100" cy="100" r="${r}" fill="none" stroke="#fff" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round"
+      stroke-dasharray="${arcLen.toFixed(1)} ${(c - arcLen).toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+      transform="rotate(-90 100 100)"/>
+  </svg>`;
+}
 
 // One mini progress ring for the home card's 3-up row. val null -> empty muted
 // track with "–" so one missing/uncalibrated metric never blocks the others.
@@ -2369,11 +2387,12 @@ function miniRingHtml(val, grad, label) {
   return `<div class="mring"><div class="mring-wrap">${ring}</div><span class="mring-label">${label}</span></div>`;
 }
 // Same as miniRingHtml but sized for the detail screen's larger .health-detail-rings grid.
-function detailRingHtml(val, grad, label) {
+// Optional overlay (e.g. targetBandSvg) renders absolutely-positioned on top of the ring.
+function detailRingHtml(val, grad, label, overlay = '') {
   const ring = val == null
     ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="hring-val" style="color:var(--muted)">–</span>`
     : `${ringSvg(val, grad)}<span class="hring-val">${val}%</span>`;
-  return `<div class="hring"><div class="hring-wrap">${ring}</div><span class="hring-label">${label}</span></div>`;
+  return `<div class="hring"><div class="hring-wrap">${ring}${overlay}</div><span class="hring-label">${label}</span></div>`;
 }
 
 // On-device recovery history (date -> score) so the card and the brief can show a
@@ -2480,7 +2499,7 @@ function healthDetailHtml() {
   return `<div class="health-detail-rings">
       ${detailRingHtml(rec, 'gRecovery', 'Recovery')}
       ${detailRingHtml(sleep, 'gSleep', 'Sleep')}
-      ${detailRingHtml(strain, 'gStrain', 'Strain')}
+      ${detailRingHtml(strain, 'gStrain', 'Strain', targetBandSvg(target))}
     </div>
     ${chart}
     <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${targetLine}${metricsLine}${rawNamesLine}${setBtn}`;
