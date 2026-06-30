@@ -300,3 +300,98 @@ client-side with a new `isTomorrow()` helper (mirroring the existing
 unavailable date-filtered email signal, the same `email.urgentItems` list
 is handed to the model as `tomorrow.possiblyRelevantEmail` and the prompt
 instructs it to judge tomorrow-relevance from subject/sender context.
+
+## 16. Home screen redesigned to a dark glassmorphic, no-scroll layout with a bottom nav
+
+User shared a Pinterest reference (dark task-manager UI, blue accent,
+colored left-accent-bar cards, day-picker strip, avatar, floating pill
+bottom nav) and asked for the home screen to match it. Two mockup rounds
+were built and screenshotted standalone (not against the real app) before
+any real-app edit, per the workflow the user required. Final approved
+round added: the Outlook-style inbox restored to its existing production
+look, an Apple-Calendar-style daily timeline, the original 3-ring
+recovery/sleep/strain triad preserved, and a rainbow/aurora glow behind
+the hero card. The user then asked for one more pass on the real app:
+shrink Readiness and Schedule, make Outlook reachable without scrolling,
+and add bottom-nav buttons for quick access — explicitly **no scrolling on
+the home screen at all**.
+
+**Dual-accent-token split.** `--accent: #ffb22e` (gold) stays untouched
+because the full-screen `#/debrief` page depends on it for its section
+titles, CTA button, and arrow glyphs, and the user never asked for that
+page's look to change. A new `--home-accent: #3D7BFF` token was introduced
+and only the home-screen-specific rules that read `var(--accent)`
+(`.nd-greet-line .accent`, `.nd-hero::after`, `.nd-hero-label`,
+`.nd-hero-cta`) were repointed to it. The generic `--text`/`--muted`/
+`--glass-*` tokens were repointed globally to a near-black palette since
+they're shared-but-generic and `.debrief-page` has its own independent
+hardcoded background — verified via screenshot that `#/debrief` still
+renders with its original gold accent and layout after the change.
+
+**Apple-Calendar day view lives in the tap-through detail overlay, not on
+the home card.** The "make the calendar look like Apple Calendar, daily
+layout with all hours" request and the later "no scrolling on home, make
+the calendar smaller" request looked contradictory until re-reading the
+app: tapping any home card already opens a full detail overlay via
+`data-detail="X"` → `openDetail(type)` → a per-card `*DetailHtml()`
+builder. The expansive day view (`dayTimelineHtml()`, a 24-hour grid with
+hour rule lines, time-positioned event blocks, greedy column-packing for
+overlapping events, and a live "now" line that the overlay auto-scrolls to
+on open) was built inside `scheduleDetailHtml()` (via the existing
+`scheduleListHtml()` call site), while the home page's `.nd-cal` card kept
+its existing compact "next event" design, just dark-restyled and shrunk.
+This satisfies both requests at once instead of trading one off against
+the other.
+
+**Outlook-style inbox needed no rewrite.** `renderInboxCard()` already
+matched the "Outlook style" ask (logo header, avatar-circle rows, urgent
+badge) — only CSS restyling (dark palette, smaller padding, colored
+left-borders) was needed to fit the no-scroll budget, no markup or JS
+changes.
+
+**Decorative, non-interactive day-picker strip.** `fetchIcsEvents()` only
+windows 48 hours out, so there's no per-day event index for the rest of
+the week without a backend change (out of scope for a visual pass). The
+strip (`renderDayStrip()`, called from `renderHome()`) renders today ± 2
+days with today highlighted solid blue; the other four cells are inert
+(no click handler, no data filtering) — an honest "this is the date
+strip, not a date picker" rather than a half-wired feature that looks
+interactive but does nothing.
+
+**Bottom nav reuses existing ids and handlers instead of duplicating
+them.** `#settingsBtn` (→ `openServerSetting()`, already wired) and
+`#pageRefreshBtn` (→ the existing refresh handler with its `.spinning`
+animation) moved into the new `<nav class="nd-bottom-nav">` markup with
+their ids unchanged, so zero JS changes were needed for those two — only
+`updateServerBtnLabel()`'s `getElementById('settingsBtn')` lookup, which
+sets `title`/`aria-label` (not innerHTML), needed re-verifying it still
+worked after the gear emoji was swapped for an inline SVG. Two new
+buttons were added with fresh handlers: `#navHealth` and `#navInbox` both
+call the existing `openDetail('health' | 'inbox')` — direct access
+instead of `scrollIntoView`, since the home page no longer scrolls at all.
+`#navHome` calls `history.back()` when a detail overlay or the debrief
+page is open (consistent with how the existing back button/Escape/swipe
+gesture already close those), otherwise does nothing (there's nothing to
+navigate to — home is the only base view).
+
+**Found and fixed a pre-existing bug while building the nav.** The global
+`button { border: none; cursor: pointer; }` reset never set
+`background: none`, so any button without its own explicit background
+fell back to the browser's default button face (light gray), which
+silently masked the muted-gray bottom-nav icons against the new dark
+background (confirmed via a cropped screenshot — three of five nav icons
+were invisible until this was added). Every other button in the app
+already set its own background explicitly, so this had no visible effect
+before now, but it's a correctness fix to the shared reset, not a
+nav-specific workaround.
+
+**Verification:** syntax-checked the extracted inline `<script>` with
+`node --check` (clean). Screenshotted the real app at a 390×844 viewport —
+confirmed `main.home`'s `scrollHeight` (809px) fits inside the viewport's
+`innerHeight` (844px), i.e. genuinely no scroll. Screenshotted the bottom
+nav cropped before/after the button-background fix. Injected mock
+calendar events via `page.evaluate()` (no live backend in this sandbox) to
+confirm the day-timeline renders hour lines, side-by-side columns for
+overlapping events, the all-day chip, and the auto-scroll-to-now position
+correctly. Confirmed no edits touched `server/` or the debrief page's own
+styling/logic.
