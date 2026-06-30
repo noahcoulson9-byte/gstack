@@ -731,6 +731,17 @@
   .nd-rtrack { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 16; }
   .nd-chev { margin-left: auto; color: var(--muted); opacity: 0.55; flex-shrink: 0; align-self: center; }
 
+  .nd-readiness-triad { display: flex; flex-direction: column; gap: 0.7rem; width: 100%; }
+  .nd-readiness-triad-head { display: flex; align-items: center; gap: 0.5rem; }
+  .nd-readiness-triad-head b { font-size: 1rem; font-weight: 800; }
+  .nd-mini-rings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; }
+  .mring { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
+  .mring-wrap { position: relative; width: 3.6rem; height: 3.6rem; }
+  .mring-wrap svg { width: 100%; height: 100%; display: block; }
+  .mring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.84rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .mring-val.empty { color: var(--muted); font-weight: 700; }
+  .mring-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); }
+
   .nd-wx { border-radius: 22px; padding: 1.05rem 1.15rem; color: #fff; background: linear-gradient(165deg, #5d6b7d, #46525f 55%, #3a4450); box-shadow: 0 10px 26px rgba(0,0,0,0.3); cursor: pointer; }
   .nd-wx-top { display: flex; justify-content: space-between; align-items: flex-start; }
   .nd-wx-loc { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem; }
@@ -830,6 +841,8 @@
 
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
     <linearGradient id="gRecovery" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aee63b"/><stop offset="1" stop-color="#27b24a"/></linearGradient>
+    <linearGradient id="gSleep" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd8ff"/><stop offset="1" stop-color="#2f8fd9"/></linearGradient>
+    <linearGradient id="gStrain" x1="0.2" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb22e"/><stop offset="1" stop-color="#ff5d3a"/></linearGradient>
   </defs></svg>
 
   <section class="nd-hero" id="overviewCard">
@@ -838,7 +851,7 @@
   </section>
 
   <section class="nd-readiness" data-detail="health" id="healthCard">
-    <div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">Athlytic</span></div>
+    <div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
       <div class="nd-recov-sub">Connecting your Apple Watch…</div></div>
   </section>
 
@@ -2295,6 +2308,32 @@ function recoveryWord(r) {
   if (r >= 34) return 'Moderate — pace yourself';
   return 'Low — take it easy today';
 }
+function sleepWord(s) {
+  if (s >= 75) return 'Well rested';
+  if (s >= 40) return 'Adequate sleep';
+  return 'Short on sleep';
+}
+function strainWord(s) {
+  if (s >= 67) return 'High exertion';
+  if (s >= 34) return 'Moderate activity';
+  return 'Light day';
+}
+
+// One mini progress ring for the home card's 3-up row. val null -> empty muted
+// track with "–" so one missing/uncalibrated metric never blocks the others.
+function miniRingHtml(val, grad, label) {
+  const ring = val == null
+    ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="mring-val empty">–</span>`
+    : `${ringSvg(val, grad)}<span class="mring-val">${val}%</span>`;
+  return `<div class="mring"><div class="mring-wrap">${ring}</div><span class="mring-label">${label}</span></div>`;
+}
+// Same as miniRingHtml but sized for the detail screen's larger .health-detail-rings grid.
+function detailRingHtml(val, grad, label) {
+  const ring = val == null
+    ? `<svg viewBox="0 0 200 200"><circle class="nd-rtrack" cx="100" cy="100" r="${RING_R}"/></svg><span class="hring-val" style="color:var(--muted)">–</span>`
+    : `${ringSvg(val, grad)}<span class="hring-val">${val}%</span>`;
+  return `<div class="hring"><div class="hring-wrap">${ring}</div><span class="hring-label">${label}</span></div>`;
+}
 
 // On-device recovery history (date -> score) so the card and the brief can show a
 // trend, even though the server only keeps the latest snapshot. Keyed by local
@@ -2341,18 +2380,18 @@ function renderHealth() {
   const h = overview.health;
   const rec = h ? h.recovery : null;
   if (rec == null) {
-    card.innerHTML = `<div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">Athlytic</span></div>
+    card.innerHTML = `<div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
       <div class="nd-recov-sub">Tap to enter today's recovery →</div></div>${ND_CHEV_MUTED}`;
     return;
   }
   const src = (h && h.source) ? h.source : 'Athlytic';
-  const upd = (h && h.updatedAt) ? ' · ' + fmtAgo(new Date(h.updatedAt).getTime()) : '';
   const t = recoveryTrend();
   const chip = trendChip(t);
   const chipHtml = chip ? `<span class="nd-trend ${t.delta > 0 ? 'up' : 'down'}">${chip}</span>` : '';
-  card.innerHTML = `<div class="nd-recov-wrap">${ringSvg(rec, 'gRecovery')}<span class="nd-recov-val">${rec}%</span></div>
-    <div class="nd-recov-body"><div class="nd-recov-title"><b>Recovery</b><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</div>
-      <div class="nd-recov-sub">${recoveryWord(rec)}${upd}</div></div>${ND_CHEV_MUTED}`;
+  card.innerHTML = `<div class="nd-readiness-triad">
+    <div class="nd-readiness-triad-head"><b>Readiness</b><span style="margin-left:auto;display:flex;align-items:center;gap:0.4rem"><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</span></div>
+    <div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${miniRingHtml(h.strain, 'gStrain', 'Strain')}</div>
+  </div>`;
 }
 
 function healthDetailHtml() {
@@ -2363,6 +2402,8 @@ function healthDetailHtml() {
     return `<div class="health-foot-note">No recovery yet. Tap below and type today's number from Athlytic — it saves on this device, no setup needed.<br><br>
       <span style="opacity:0.75">Optional: a one-time iOS Shortcut can push it automatically each morning instead.</span></div>${setBtn}`;
   }
+  const sleep = h.sleep;
+  const strain = h.strain;
   const bits = [];
   if (h.source) bits.push(`${escapeHtml(h.source)}`);
   if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
@@ -2370,21 +2411,27 @@ function healthDetailHtml() {
   if (h.hrv != null) m.push(`HRV ${Math.round(h.hrv)}ms`);
   if (h.restingHeartRate != null) m.push(`resting HR ${Math.round(h.restingHeartRate)}`);
   if (h.sleepHours != null) m.push(`${h.sleepHours}h sleep`);
+  if (h.activeEnergy != null) m.push(`${Math.round(h.activeEnergy)} kcal active`);
+  if (h.exerciseMinutes != null) m.push(`${Math.round(h.exerciseMinutes)} active min`);
   const metricsLine = (h.computed && m.length)
     ? `<div class="health-foot-note" style="margin-top:0.5rem;opacity:0.8">Computed from ${m.join(' · ')}${h.calibrating ? ' · calibrating, sharpens as your baseline builds' : ''}.</div>`
     : '';
   const t = recoveryTrend();
   const momentum = t && t.delta !== 0 ? ` ${t.delta > 0 ? 'Up' : 'Down'} ${Math.abs(t.delta)} from ${t.previousScore} last reading.` : '';
+  const sleepBit = sleep != null ? ` ${sleepWord(sleep)}.` : '';
+  const strainBit = strain != null ? ` ${strainWord(strain)}.` : '';
   const hist = recoveryHistory().slice(0, 7).reverse();
   const chart = hist.length >= 2 ? `<div class="recov-chart">${hist.map((d) => {
     const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
     return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
   }).join('')}</div>` : '';
-  return `<div class="health-detail-rings" style="grid-template-columns:1fr;justify-items:center">
-      <div class="hring"><div class="hring-wrap" style="width:9rem;height:9rem">${ringSvg(rec, 'gRecovery')}<span class="hring-val" style="font-size:2rem">${rec}%</span></div><span class="hring-label">Recovery</span></div>
+  return `<div class="health-detail-rings">
+      ${detailRingHtml(rec, 'gRecovery', 'Recovery')}
+      ${detailRingHtml(sleep, 'gSleep', 'Sleep')}
+      ${detailRingHtml(strain, 'gStrain', 'Strain')}
     </div>
     ${chart}
-    <div class="health-foot-note">${recoveryWord(rec)}.${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${metricsLine}${setBtn}`;
+    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${metricsLine}${setBtn}`;
 }
 
 // Manual entry — type today's recovery from Athlytic; saved on-device (no
