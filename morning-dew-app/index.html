@@ -752,7 +752,11 @@
   .overview-line .icon { flex-shrink: 0; }
 
   /* ===================== New homepage (native-app tiles) ===================== */
-  main.home { gap: 0.6rem; min-height: auto; display: flex; flex-direction: column; padding-bottom: 6.5rem; }
+  main.home {
+    gap: 0.6rem;
+    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2.2rem);
+    display: flex; flex-direction: column; padding-bottom: 6.5rem;
+  }
   .nd-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0.3rem; }
   .nd-wordmark { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
 
@@ -839,23 +843,26 @@
   .nd-wx-hour svg { width: 1.7rem; height: 1.45rem; display: block; }
   .nd-wx-msg { font-size: 0.85rem; color: #cfd6dd; margin-top: 0.2rem; }
 
-  .nd-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-  .nd-cal { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; padding: 0.65rem 0.75rem; cursor: pointer; }
-  .nd-cal-head { display: flex; align-items: center; gap: 0.5rem; }
-  .nd-cal-glyph { width: 2rem; height: 2rem; border-radius: 0.5rem; background: #fff; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-  .nd-cal-glyph .m { background: var(--bar-pink); color: #fff; font-size: 0.46rem; font-weight: 700; text-align: center; padding: 0.1rem 0 0.06rem; letter-spacing: 0.04em; }
-  .nd-cal-glyph .d { color: #1c1c1e; font-size: 1.05rem; font-weight: 700; text-align: center; line-height: 1; padding-top: 0.1rem; }
-  .nd-cal-title { min-width: 0; }
-  .nd-cal-title b { font-size: 0.84rem; font-weight: 700; display: block; }
-  .nd-cal-title span { font-size: 0.7rem; color: var(--muted); }
-  .nd-cal-ev { display: flex; gap: 0.45rem; margin-top: 0.55rem; }
-  .nd-cal-bar { width: 4px; border-radius: 2px; background: var(--bar-pink); flex-shrink: 0; }
-  .nd-cal-ev .et { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
-  .nd-cal-ev .en { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Lower split: weather+calendar on the left, readiness+inbox on the right,
+     both columns spanning from below the AI brief down to the bottom nav. */
+  .nd-split { display: flex; gap: 0.6rem; flex: 1 1 auto; min-height: 0; }
+  .nd-split-col { display: flex; flex-direction: column; gap: 0.6rem; flex: 1 1 50%; min-width: 0; min-height: 0; }
+  .nd-split-col .nd-wx, .nd-split-col .nd-readiness { flex-shrink: 0; }
+
+  .nd-cal {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px;
+    padding: 0.65rem 0.75rem; cursor: pointer;
+    display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+  }
+  .nd-cal-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; flex-shrink: 0; }
+  .nd-cal-top b { font-size: 0.84rem; font-weight: 700; }
+  .nd-cal-top span { font-size: 0.7rem; color: var(--muted); }
+  .nd-cal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; margin-top: 0.3rem; }
   .nd-cal-empty { font-size: 0.78rem; color: var(--muted); margin-top: 0.55rem; }
 
-  .nd-ol { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; overflow: hidden; cursor: pointer; }
-  .nd-ol-head { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.7rem; background: linear-gradient(180deg, rgba(43,111,214,0.18), transparent); }
+  .nd-ol { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+  .nd-ol-head { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.7rem; background: linear-gradient(180deg, rgba(43,111,214,0.18), transparent); flex-shrink: 0; }
+  .nd-ol-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .nd-ol-logo { width: 1.4rem; height: 1.4rem; border-radius: 0.36rem; background: #2b6fd6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .nd-ol-title { font-size: 0.84rem; font-weight: 700; }
   .nd-ol-count { margin-left: auto; font-size: 0.64rem; font-weight: 700; color: #fff; background: #2b6fd6; border-radius: 999px; padding: 0.08rem 0.45rem; display: flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
@@ -964,30 +971,26 @@
     </section>
   </div>
 
-  <section class="nd-readiness" data-detail="health" id="healthCard">
-    <div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
-      <div class="nd-recov-sub">Connecting your Apple Watch…</div></div>
-  </section>
-
-  <section class="nd-wx" data-detail="weather" id="weatherCard">
-    <div class="nd-wx-loc">Weather</div>
-    <div class="nd-wx-msg">Loading…</div>
-  </section>
-
-  <div class="nd-row">
-    <section class="nd-cal" data-detail="schedule" id="scheduleCard">
-      <div class="nd-cal-empty">Loading…</div>
-    </section>
-    <section class="nd-ol" data-detail="inbox" id="inboxCard">
-      <div class="nd-ol-empty">Loading…</div>
-    </section>
-  </div>
-
-  <div class="nd-glass-wrap">
-    <div class="nd-glass-glow"></div>
-    <section class="nd-glass" data-detail="tasks" id="tasksCard">
-      <div class="nd-glass-head"><div class="nd-glass-title"><b>Tasks</b><span>Loading…</span></div></div>
-    </section>
+  <div class="nd-split">
+    <div class="nd-split-col">
+      <section class="nd-wx" data-detail="weather" id="weatherCard">
+        <div class="nd-wx-loc">Weather</div>
+        <div class="nd-wx-msg">Loading…</div>
+      </section>
+      <section class="nd-cal" data-detail="schedule" id="scheduleCard">
+        <div class="nd-cal-top"><b>Schedule</b><span id="scheduleCardCount"></span></div>
+        <div class="nd-cal-body" id="scheduleCardBody"><div class="nd-cal-empty">Loading…</div></div>
+      </section>
+    </div>
+    <div class="nd-split-col">
+      <section class="nd-readiness" data-detail="health" id="healthCard">
+        <div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
+          <div class="nd-recov-sub">Connecting your Apple Watch…</div></div>
+      </section>
+      <section class="nd-ol" data-detail="inbox" id="inboxCard">
+        <div class="nd-ol-empty">Loading…</div>
+      </section>
+    </div>
   </div>
 </main>
 
@@ -1821,7 +1824,7 @@ function dayTimelineHtml(events) {
   }).join('');
 
   const nowMins = (new Date() - dayStart) / 60000;
-  const nowHtml = `<div class="day-tl-now" id="dayTlNow" style="top:${(nowMins / 60) * HOUR_PX}px"><span class="day-tl-now-dot"></span></div>`;
+  const nowHtml = `<div class="day-tl-now" style="top:${(nowMins / 60) * HOUR_PX}px"><span class="day-tl-now-dot"></span></div>`;
 
   return `${allDayHtml}<div class="day-timeline" style="height:${24 * HOUR_PX}px">${hoursHtml}${eventsHtml}${nowHtml}</div>`;
 }
@@ -2352,7 +2355,7 @@ function openDetail(type) {
   ov.scrollTop = 0;
   document.body.style.overflow = 'hidden';
   if (type === 'schedule') {
-    const nowLine = document.getElementById('dayTlNow');
+    const nowLine = document.getElementById('detailContent').querySelector('.day-tl-now');
     if (nowLine) nowLine.scrollIntoView({ block: 'center' });
   }
   // Push a history entry the first time we open, so the OS back gesture closes it.
@@ -2451,7 +2454,6 @@ function renderHome() {
   renderWeatherCard();
   renderScheduleCard();
   renderInboxCard();
-  renderTasksCard();
   renderStreak();
 }
 
@@ -2523,24 +2525,24 @@ function renderWeatherCard() {
     <div class="nd-wx-hours">${hours}</div>`;
 }
 
+// Scrolls the home schedule panel to the current-time line once per page
+// load, so background re-renders (periodic refresh) don't keep yanking the
+// user's manual scroll position back to "now".
+let homeCalAutoScrolled = false;
 function renderScheduleCard() {
-  const el = document.getElementById('scheduleCard');
-  if (!el) return;
-  const now = new Date();
-  const mon = now.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
-  const dd = now.getDate();
-  let count = '', body = `<div class="nd-cal-empty">Loading…</div>`;
-  if (overview.calendarReached === false) { body = `<div class="nd-cal-empty">Tap to retry</div>`; }
-  else if (overview.calendarReached !== undefined) {
-    const evs = todaysEvents();
-    count = evs.length ? `${evs.length} event${evs.length > 1 ? 's' : ''}` : 'Free';
-    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now) || evs[0];
-    body = next
-      ? `<div class="nd-cal-ev"><div class="nd-cal-bar"></div><div><div class="et">${next.allDay ? 'All day' : escapeHtml(fmtClock(next.start))}</div><div class="en">${escapeHtml(next.summary)}</div></div></div>`
-      : `<div class="nd-cal-empty">Nothing today</div>`;
+  const bodyEl = document.getElementById('scheduleCardBody');
+  if (!bodyEl) return;
+  const countEl = document.getElementById('scheduleCardCount');
+  if (countEl) {
+    countEl.textContent = (overview.calendarReached !== undefined && overview.calendarReached !== false)
+      ? (() => { const n = todaysEvents().length; return n ? `${n} event${n > 1 ? 's' : ''}` : 'Free'; })()
+      : '';
   }
-  el.innerHTML = `<div class="nd-cal-head"><div class="nd-cal-glyph"><div class="m">${mon}</div><div class="d">${dd}</div></div>
-    <div class="nd-cal-title"><b>Schedule</b><span>${count}</span></div></div>${body}`;
+  bodyEl.innerHTML = scheduleListHtml();
+  if (!homeCalAutoScrolled && overview.calendarReached !== undefined) {
+    const nowLine = bodyEl.querySelector('.day-tl-now');
+    if (nowLine) { homeCalAutoScrolled = true; nowLine.scrollIntoView({ block: 'center' }); }
+  }
 }
 
 function renderInboxCard() {
@@ -2548,22 +2550,22 @@ function renderInboxCard() {
   if (!el) return;
   const logo = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M13 4h7a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-7z" opacity="0.55"/><rect x="2" y="6" width="12" height="12" rx="2.5"/></svg>';
   const head = (countHtml) => `<div class="nd-ol-head"><div class="nd-ol-logo">${logo}</div><span class="nd-ol-title">Inbox</span>${countHtml}</div>`;
-  if (overview.emailReached === false) { el.innerHTML = head('') + `<div class="nd-ol-empty">Tap to retry</div>`; return; }
-  if (overview.emailReached === undefined) { el.innerHTML = head('') + `<div class="nd-ol-empty">Loading…</div>`; return; }
-  if (overview.emailConfigured === false) { el.innerHTML = head('') + `<div class="nd-ol-empty">Not set up</div>`; return; }
+  if (overview.emailReached === false) { el.innerHTML = head('') + `<div class="nd-ol-rows"><div class="nd-ol-empty">Tap to retry</div></div>`; return; }
+  if (overview.emailReached === undefined) { el.innerHTML = head('') + `<div class="nd-ol-rows"><div class="nd-ol-empty">Loading…</div></div>`; return; }
+  if (overview.emailConfigured === false) { el.innerHTML = head('') + `<div class="nd-ol-rows"><div class="nd-ol-empty">Not set up</div></div>`; return; }
   const d = overview.emailData || { urgent: [], recent: [] };
   const urgent = d.urgent || [];
   if (urgent.length) {
     const warn = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 17H2.5z"/><line x1="12" y1="9.5" x2="12" y2="14"/></svg>';
-    const rows = urgent.slice(0, 2).map((m) => {
+    const rows = urgent.slice(0, 4).map((m) => {
       const name = senderName(m.from);
       const color = avatarColor(name + (m.source || ''));
       return `<div class="nd-ol-row"><span class="nd-ol-dot urgent"></span><div class="nd-ol-av" style="background:${color}">${escapeHtml((name.charAt(0) || '?').toUpperCase())}</div><div class="nd-ol-body"><div class="nd-ol-sender">${escapeHtml(name)}</div><div class="nd-ol-subj">${escapeHtml(m.subject || '')}</div></div></div>`;
     }).join('');
-    el.innerHTML = head(`<span class="nd-ol-count urgent">${warn}${urgent.length} urgent</span>`) + rows;
+    el.innerHTML = head(`<span class="nd-ol-count urgent">${warn}${urgent.length} urgent</span>`) + `<div class="nd-ol-rows">${rows}</div>`;
   } else {
     const n = (d.recent || []).length;
-    el.innerHTML = head(`<span class="nd-ol-count">${n}</span>`) + `<div class="nd-ol-empty">No urgent mail ✨</div>`;
+    el.innerHTML = head(`<span class="nd-ol-count">${n}</span>`) + `<div class="nd-ol-rows"><div class="nd-ol-empty">No urgent mail ✨</div></div>`;
   }
 }
 

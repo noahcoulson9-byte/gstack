@@ -395,3 +395,78 @@ confirm the day-timeline renders hour lines, side-by-side columns for
 overlapping events, the all-day chip, and the auto-scroll-to-now position
 correctly. Confirmed no edits touched `server/` or the debrief page's own
 styling/logic.
+
+## 17. Two-column split layout: weather+full timeline on the left, readiness+inbox on the right
+
+Follow-up request: run the Schedule card down from roughly halfway along
+the AI-brief hero card to the bottom nav, as a full hour-by-hour daily
+timeline (the existing Apple-Calendar-style component, previously only
+reachable via the Schedule detail overlay) rather than the compact
+"next event" preview. Readiness and Inbox move to a right-hand column of
+equal width, and Weather sits above the timeline at the same half-screen
+width. The attached reference image was confirmed to be a visual-style
+reference only (timeline look, not literal column placement) — actual
+column layout follows the text description. The standing "no scroll on
+home" constraint stays in force, so the new columns had to grow to fill
+the remaining viewport height and scroll internally instead of pushing
+the page taller.
+
+**`main.home` needed a definite height, not just `flex: 1 1 auto`.** A
+dead "single-screen launcher" CSS block (unused `.home-tiles`/`.home-tile`
+classes, confirmed zero markup references via grep) already had an
+earlier `main.home { flex: 1 1 auto; ... }` rule that the later, active
+`main.home` rule didn't fully override — it only touched `min-height`
+(set to `auto`), `gap`, etc. `flex: 1 1 auto` makes a flex child willing
+to grow, but `min-height: auto` left it nothing to grow *into* — a flex
+item's automatic minimum size is its content size, so it just
+shrink-wrapped. Changing `min-height` to a definite
+`calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) -
+2.2rem)` gave `main.home` an actual height budget, which then propagates
+down through `.nd-split` → `.nd-split-col` → `.nd-cal`/`.nd-ol` (each
+with `flex: 1 1 auto; min-height: 0;`) to the innermost
+`.nd-cal-body`/`.nd-ol-rows`, which carry the real `overflow-y: auto`.
+The outer page stays exactly viewport-height; only those two inner panels
+scroll.
+
+**Reused `scheduleListHtml()`/`dayTimelineHtml()` unmodified** for the
+new persistent home panel (`renderScheduleCard()` → `#scheduleCardBody`),
+the same functions the Schedule detail overlay already called — no
+duplicate timeline-rendering logic. One bug surfaced from rendering the
+same timeline output in two places at once: `dayTimelineHtml()`'s
+"now" line had both a class and a hardcoded `id="dayTlNow"`; with the
+home panel and the detail overlay both able to hold a copy of the
+timeline simultaneously, the `id` had to go and every "find the now line"
+lookup was rescoped to `containerEl.querySelector('.day-tl-now')`
+instead. Added a one-time `homeCalAutoScrolled` flag so the home panel's
+periodic background re-renders don't keep re-centering the user's scroll
+position back to "now" after their first manual scroll.
+
+**Tasks card lost its home-screen entry point.** Fitting four cards
+(Weather, Schedule, Readiness, Inbox) into two equal-width, full-height
+columns left no slot for a fifth. `renderTasksCard()`, `DETAILS.tasks`,
+`tasksDetailHtml()`/`tasksListHtml()`, and the `.nd-glass*` CSS are all
+left fully intact — only the `#tasksCard` mount point was removed from
+the home markup, so the function is now a no-op via its existing
+`if (!el) return;` guard. This is a real reduction in reachability (no
+current way to open the Tasks list from the home screen) flagged to the
+user as a tradeoff, not a silent removal — restoring an entry point
+later (e.g. folding it into the bottom nav, or a tab inside one of the
+two columns) is a small follow-up if wanted.
+
+**Verification:** syntax-checked the extracted inline `<script>` with
+`node --check` (clean; zero output). Regression-grepped that
+`.nd-cal-head/-glyph/-title/-ev/-bar` (the old compact preview's classes)
+have zero remaining references, that `renderTasksCard()`/`DETAILS.tasks`
+are still present in source (preserved, not deleted), and that no edit
+touched anything under `server/`. Screenshotted at 390×844 with no
+backend running — outer page stays exactly viewport height
+(`bodyScrollHeight === innerHeight`, no scroll), Weather/Schedule detail
+overlays still open correctly on tap. Injected mock calendar/email/health
+data via `page.evaluate()` and confirmed: the full timeline renders inside
+`#scheduleCardBody` with its true content height (1350px) safely exceeding
+its visible budget (308px) and clipping rather than growing the page, the
+auto-scroll-to-now fires once and centers the current-time line, and the
+right column's Readiness/Inbox cards render with mock data. Confirmed the
+"review" detail overlay (reachable via the hero's CTA) still renders with
+its original gold `--accent` styling, untouched by the home-screen
+`--home-accent` token split from the prior round.
