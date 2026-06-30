@@ -215,6 +215,35 @@ or you run the Shortcut — not real-time.
 > Note: the iOS variable picker can freeze on low battery; a full power-off restart
 > clears it. Until then, the manual path above gives the full feature with no Shortcut.
 
+### Health Auto Export (richer Sleep + Strain scores, no Shortcut to build)
+
+If you already use the [Health Auto Export](https://www.healthyapps.dev/apps/health-auto-export/)
+app, its **REST API automation** can push your raw Apple Watch metrics straight to
+`/api/health` — no Shortcut-building required, and it unlocks the **Sleep** and
+**Strain** rings (computed from sleep hours and active energy / exercise minutes)
+alongside Recovery.
+
+1. **Pick a secret** → set as `HEALTH_TOKEN` on the server (Render → Environment), same as above.
+2. In Health Auto Export: **Automations → New Automation → REST API**.
+   - URL: `https://<your-backend>.onrender.com/api/health`
+   - Method: **POST**
+   - Header: `x-health-token` = your `HEALTH_TOKEN`
+   - **Metrics to include** — this automation has its own metric checklist,
+     separate from any "export all" toggle elsewhere in the app. Check at least:
+     **Heart Rate Variability**, **Resting Heart Rate**, **Sleep Analysis** (drives
+     Recovery and Sleep), and **Active Energy**, **Apple Exercise Time** (drives
+     Strain). Metrics you don't check simply won't arrive — they don't block the
+     ones you did check.
+3. Schedule the automation (e.g. on a timer, or on Health app sync).
+
+The backend recognizes Health Auto Export's nested payload shape automatically (no
+field-mapping needed) and computes `recovery`, `sleep`, and `strain` from whatever
+arrived. To confirm exactly which metrics made it through on the last sync, open
+**Your readiness card → tap for details** — a small "Last sync sent: ..." line lists
+the raw metric names the backend actually received, so a blank Sleep or Strain ring
+is diagnosable without inspecting the API directly: if a metric you expect is missing
+from that line, it isn't checked in the automation above.
+
 ### Getting `ICLOUD_ICS_URL`
 
 1. On Mac: open Calendar.app → right-click the calendar you want → **Share
