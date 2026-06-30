@@ -1367,6 +1367,27 @@ async function updateLocationLabel(latitude, longitude) {
   }
 }
 
+// Open-Meteo (with timezone=auto) returns hourly/daily timestamps as naive
+// local time for the QUERIED location, with no UTC offset in the string
+// (e.g. "2026-06-30T07:00"). `new Date(...)` on an offset-less string is
+// parsed as local time in the DEVICE's own timezone, not the location's —
+// so whenever the two differ (the Brisbane geolocation fallback while the
+// device is elsewhere, travel, etc.) every derived time (sunrise/sunset,
+// the hourly "Now" marker, rain-peak time) silently drifts by the gap
+// between the two zones. Re-anchor each naive string to its real UTC
+// instant using the response's own utc_offset_seconds before anything else
+// reads it, so all the comparisons/labels downstream are correct regardless
+// of what timezone the device itself is set to.
+function reanchorWeatherTimes(data) {
+  const offsetSec = data.utc_offset_seconds || 0;
+  const fix = (s) => new Date(Date.parse(s + 'Z') - offsetSec * 1000).toISOString();
+  if (data.hourly && data.hourly.time) data.hourly.time = data.hourly.time.map(fix);
+  if (data.daily) {
+    if (data.daily.sunrise) data.daily.sunrise = data.daily.sunrise.map(fix);
+    if (data.daily.sunset) data.daily.sunset = data.daily.sunset.map(fix);
+  }
+}
+
 async function loadWeather() {
   let { latitude, longitude } = BRISBANE;
   overview.locationLabel = 'Current location';
@@ -1390,6 +1411,7 @@ async function loadWeather() {
     const res = await fetchWithTimeout(url);
     if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
     const data = await res.json();
+    reanchorWeatherTimes(data);
     const cur = data.current;
     const daily = data.daily;
     const [label, icon] = describeWeather(cur.weather_code);
