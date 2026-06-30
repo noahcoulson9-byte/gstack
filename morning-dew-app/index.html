@@ -1705,13 +1705,18 @@ function fmtMailDate(iso) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-// Deep link straight to the exact message, by its source. Gmail messages open
-// in Gmail (app or web) by their API id; Outlook messages open in OWA. The
-// Outlook iOS app can't be pointed at a specific Gmail message, so opening the
-// precise email means opening it via its own provider.
+// Deep link straight to the exact message, by its source. Outlook messages use
+// the real Graph webLink — iOS registers outlook.office.com/office365.com as
+// Universal Link domains, so tapping that exact URL opens the Outlook app
+// directly when installed and falls back to Safari automatically when it's
+// not, with no custom URL scheme needed. Gmail messages open in Gmail (app or
+// web) by their API id. The Outlook iOS app can't be pointed at a specific
+// Gmail message, so opening the precise email means opening it via its own
+// provider.
 function mailUrl(m) {
-  if (m.source === 'Outlook' && m.id) {
-    return `https://outlook.office.com/mail/inbox/id/${encodeURIComponent(m.id)}`;
+  if (m.source === 'Outlook') {
+    if (m.webLink) return m.webLink;
+    if (m.id) return `https://outlook.office.com/mail/inbox/id/${encodeURIComponent(m.id)}`;
   }
   if (m.id) {
     return `https://mail.google.com/mail/u/0/#all/${encodeURIComponent(m.id)}`;
@@ -1724,7 +1729,7 @@ function mailRow(m) {
   const initial = escapeHtml(name.charAt(0).toUpperCase() || '?');
   const color = avatarColor(name + (m.source || ''));
   return `
-    <a class="mail-row" href="${escapeHtml(mailUrl(m))}" target="_blank" rel="noopener">
+    <a class="mail-row" href="${escapeHtml(mailUrl(m))}">
       <span class="mail-unread-dot"></span>
       <span class="mail-avatar" style="background:${color}">${initial}</span>
       <span class="mail-body">
@@ -2064,7 +2069,7 @@ function inboxDetailHtml() {
   return `
     <section class="glass detail-hero">
       <div class="metric-big">${d.recent.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> new</span></div>
-      <div class="metric-sub">${d.urgent.length} urgent · tap any email to open it in Gmail</div>
+      <div class="metric-sub">${d.urgent.length} urgent · tap any email to open it</div>
     </section>
     ${insights}
     <section class="glass insight-card"><div class="insight-head">Urgent</div>${mailListHtml(d.urgent, 'No urgent email right now.')}</section>
