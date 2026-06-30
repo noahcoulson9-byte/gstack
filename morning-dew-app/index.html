@@ -577,6 +577,39 @@
   .detail-back:active { background: rgba(255,255,255,0.16); }
   .detail-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; }
 
+  /* ---- Full-screen debrief page: solid background (no blur-through to home),
+     horizontal push transition — reads as a new page, not an overlay sheet. ---- */
+  .debrief-page {
+    position: fixed; inset: 0; z-index: 60;
+    background: linear-gradient(168deg, #2a1d13 0%, #1c130c 55%, #130d08 100%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(env(safe-area-inset-top) + 0.8rem) 1.1rem calc(env(safe-area-inset-bottom) + 2rem);
+    display: flex; flex-direction: column; gap: 1rem;
+    animation: debriefIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .debrief-page[hidden] { display: none; }
+  .debrief-page.closing { animation: debriefOut 0.22s ease forwards; }
+  @keyframes debriefIn { from { opacity: 0.5; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+  @keyframes debriefOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(32px); } }
+  .debrief-refresh-btn { margin-left: auto; }
+
+  .debrief-section { padding: 1rem 1.1rem; cursor: pointer; }
+  .debrief-section-head { display: flex; align-items: center; gap: 0.6rem; }
+  .debrief-section-title { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); flex: 1; }
+  .debrief-section-chev { color: var(--muted); font-size: 1.1rem; transition: transform 0.2s ease; flex-shrink: 0; }
+  .debrief-section.expanded .debrief-section-chev { transform: rotate(90deg); }
+  .debrief-section-summary { font-size: 1.02rem; font-weight: 600; line-height: 1.45; margin-top: 0.45rem; }
+  /* Grid-rows 0fr->1fr trick: animates height without measuring it in JS. */
+  .debrief-section-detail {
+    font-size: 0.92rem; color: var(--muted); line-height: 1.55;
+    display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: 0;
+    transition: grid-template-rows 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+  }
+  .debrief-section-detail > div { overflow: hidden; min-height: 0; }
+  .debrief-section-detail .brief-h3 { color: var(--accent); opacity: 0.85; }
+  .debrief-section.expanded .debrief-section-detail { grid-template-rows: 1fr; opacity: 1; margin-top: 0.75rem; }
+  .debrief-tomorrow .debrief-section-title { color: #7dd8ff; }
+
   .detail-hero { padding: 1.2rem 1.2rem; }
   .metric-big { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
   .metric-sub { color: var(--muted); font-size: 0.92rem; margin-top: 0.35rem; }
@@ -889,6 +922,15 @@
   <div id="detailContent"></div>
 </div>
 
+<div class="debrief-page" id="debriefPage" hidden>
+  <div class="detail-header">
+    <button class="detail-back" id="debriefBack" data-debrief-back aria-label="Back">‹</button>
+    <div class="detail-title">Your brief</div>
+    <button class="detail-back debrief-refresh-btn" data-debrief-refresh aria-label="Refresh">⟳</button>
+  </div>
+  <div id="debriefContent"></div>
+</div>
+
 <script>
 const BRISBANE = { latitude: -27.4698, longitude: 153.0251 };
 const FETCH_TIMEOUT_MS = 8000;
@@ -933,6 +975,13 @@ function isToday(iso) {
   const d = new Date(iso);
   const now = new Date();
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function isTomorrow(iso) {
+  const d = new Date(iso);
+  const t = new Date();
+  t.setDate(t.getDate() + 1);
+  return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
 }
 
 // ---------- Local stores (single-user, on-device): tasks, review, streak ----------
@@ -1091,12 +1140,15 @@ function cachedBrief() {
   const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
   const currentHealthUpdatedAt = (health && health.updatedAt) || null;
   if (b.healthUpdatedAt !== undefined && b.healthUpdatedAt !== currentHealthUpdatedAt) return null;
-  return b.brief;
+  return { brief: b.brief, structured: !!b.structured };
 }
-function briefHeadline(md) {
-  if (!md) return '';
-  const h = md.split('\n').find((l) => l.startsWith('## '));
-  return (h ? h.slice(3) : md.split('\n').find((l) => l.trim())).replace(/\*\*/g, '').trim();
+// brief is either a structured object ({headline, opener, sections, tomorrow})
+// from the redesigned AI prompt, or a legacy flat markdown string.
+function briefHeadline(brief) {
+  if (!brief) return '';
+  if (typeof brief === 'object') return (brief.headline || '').replace(/\*\*/g, '').trim();
+  const h = brief.split('\n').find((l) => l.startsWith('## '));
+  return (h ? h.slice(3) : brief.split('\n').find((l) => l.trim())).replace(/\*\*/g, '').trim();
 }
 // Tiny markdown → HTML for the brief (## heading, **bold**, - bullets).
 function mdToHtml(md) {
@@ -1189,6 +1241,20 @@ function briefContext() {
   const strain = (health && health.strain != null) ? { score: health.strain, read: strainWord(health.strain) } : null;
   const targetStrain = targetStrainRange(health && health.recovery != null ? health.recovery : null);
 
+  // Tomorrow's plan input: /api/calendar and /api/reminders already return a
+  // 48h window (see fetchIcsEvents in server.js), so this is a pure client-side
+  // filter — no extra fetch needed. Email has no per-item date, so we hand the
+  // model the same urgent list and let it judge tomorrow-relevance contextually.
+  const tomorrowEvents = (overview.calendar || [])
+    .filter((e) => e.start && isTomorrow(e.start))
+    .map((e) => ({ title: e.summary, start: e.allDay ? 'all day' : fmtClock(e.start), location: e.location || null }));
+  const tomorrowReminders = (overview.reminders || [])
+    .filter((r) => !r.start || isTomorrow(r.start))
+    .map((r) => ({ title: r.summary, due: r.start ? fmtClock(r.start) : null }));
+  const tomorrow = (tomorrowEvents.length || tomorrowReminders.length || (email && email.urgentItems.length))
+    ? { events: tomorrowEvents, reminders: tomorrowReminders, possiblyRelevantEmail: email ? email.urgentItems : [] }
+    : null;
+
   const hour = now.getHours();
   return {
     localTime: fmtClock(now.toISOString()),
@@ -1205,18 +1271,19 @@ function briefContext() {
     freeBlocks,
     tasks,
     email,
+    tomorrow,
   };
 }
 async function fetchBrief(force) {
   if (!force) {
     const c = cachedBrief();
-    if (c) { overview.brief = c; renderOverview(); return; }
+    if (c) { overview.brief = c.brief; overview.briefStructured = c.structured; renderOverview(); return; }
   }
   if (overview.briefFetching) return;
   // Wait until the core data is in so the brief is built from a full picture.
   if (overview.weatherReached === undefined || overview.calendarReached === undefined || overview.healthConfigured === undefined) return;
   overview.briefFetching = true;
-  if (currentDetail === 'brief') openDetail('brief');
+  if (debriefOpen) renderDebriefPage();
   try {
     const res = await fetchWithTimeout(apiUrl('/api/brief'), {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(briefContext()),
@@ -1225,11 +1292,13 @@ async function fetchBrief(force) {
     if (data.configured === false) { overview.briefConfigured = false; }
     else if (data.brief) {
       overview.brief = data.brief;
+      overview.briefStructured = !!data.structured;
       overview.briefConfigured = true;
       const healthNow = overview.health || lsGet(HEALTH_CACHE_KEY, null);
       lsSet(BRIEF_KEY, {
         date: localDateStr(new Date()),
         brief: data.brief,
+        structured: !!data.structured,
         generatedAt: Date.now(),
         healthUpdatedAt: (healthNow && healthNow.updatedAt) || null,
       });
@@ -1241,7 +1310,7 @@ async function fetchBrief(force) {
   } finally {
     overview.briefFetching = false;
     renderOverview();
-    if (currentDetail === 'brief') openDetail('brief');
+    if (debriefOpen) renderDebriefPage();
   }
 }
 
@@ -2024,8 +2093,30 @@ function tasksDetailHtml() {
     <section class="glass insight-card"><div class="insight-head">Imported reminders</div>${tasksListHtml()}</section>`;
 }
 
-// ---- Brief section: the full AI morning plan ----
-function briefDetailHtml() {
+// ---- Debrief page: the full-screen AI morning plan, progressive-disclosure ----
+// Each section: a short summary always visible, full AI reasoning behind a tap.
+function debriefSectionHtml(s, idx) {
+  return `<section class="glass insight-card debrief-section" data-debrief-section="${idx}">
+    <div class="debrief-section-head"><span class="debrief-section-title">${escapeHtml(s.title || '')}</span><span class="debrief-section-chev">${ND_CHEV}</span></div>
+    <div class="debrief-section-summary">${escapeHtml(s.summary || '')}</div>
+    <div class="debrief-section-detail"><div>${mdToHtml(s.detail || '')}</div></div>
+  </section>`;
+}
+function debriefTomorrowHtml(t) {
+  if (t === undefined) return '';
+  if (t === null) {
+    return `<section class="glass insight-card debrief-section debrief-tomorrow">
+      <div class="debrief-section-title">Plan for Tomorrow</div>
+      <div class="debrief-section-summary" style="margin-top:0.45rem">Nothing notable lined up yet — check back once more of tomorrow takes shape.</div>
+    </section>`;
+  }
+  return `<section class="glass insight-card debrief-section debrief-tomorrow" data-debrief-section="tomorrow">
+    <div class="debrief-section-head"><span class="debrief-section-title">Plan for Tomorrow</span><span class="debrief-section-chev">${ND_CHEV}</span></div>
+    <div class="debrief-section-summary">${escapeHtml(t.summary || '')}</div>
+    <div class="debrief-section-detail"><div>${mdToHtml(t.detail || '')}</div></div>
+  </section>`;
+}
+function debriefBodyHtml() {
   if (overview.briefConfigured === false) {
     return `<section class="glass insight-card"><div class="placeholder-state">The AI brief needs <code>ANTHROPIC_API_KEY</code> set on the server. Once it's set you'll get a written, time-blocked plan here each morning.</div></section>`;
   }
@@ -2033,12 +2124,30 @@ function briefDetailHtml() {
     return `<section class="glass insight-card"><div class="loading-state">✨ Writing your morning brief…</div></section>`;
   }
   if (!overview.brief) {
-    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-brief-refresh>Generate brief</button></div></section>
+    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>Generate brief</button></div></section>
       <div class="brief-actions">${pushButtonHtml()}</div>`;
   }
-  return `<section class="glass insight-card brief-card">${mdToHtml(overview.brief)}</section>
-    <div class="brief-actions"><button class="brief-refresh" data-brief-refresh>↻ Regenerate</button></div>
+  const b = overview.brief;
+  let body;
+  if (overview.briefStructured && typeof b === 'object' && Array.isArray(b.sections)) {
+    body = `<section class="glass insight-card brief-card">
+        <div class="brief-h" style="margin-top:0">${escapeHtml(b.headline || '')}</div>
+        <p class="brief-p">${escapeHtml(b.opener || '')}</p>
+      </section>
+      ${b.sections.map((s, i) => debriefSectionHtml(s, i)).join('')}
+      ${debriefTomorrowHtml(b.tomorrow)}`;
+  } else {
+    // Legacy flat-markdown brief, or a server-side JSON-parse fallback — no
+    // progressive disclosure available, render it as one scrollable card.
+    body = `<section class="glass insight-card brief-card">${mdToHtml(typeof b === 'string' ? b : JSON.stringify(b))}</section>`;
+  }
+  return `${body}
+    <div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>↻ Regenerate</button></div>
     <div class="brief-actions">${pushButtonHtml()}</div>`;
+}
+function renderDebriefPage() {
+  const el = document.getElementById('debriefContent');
+  if (el) el.innerHTML = debriefBodyHtml();
 }
 
 // ---- Review section: end-of-day wrap + streak ----
@@ -2101,7 +2210,6 @@ function inboxDetailHtml() {
 }
 
 const DETAILS = {
-  brief: { title: 'Your brief', build: briefDetailHtml },
   weather: { title: 'Weather', build: weatherDetailHtml },
   schedule: { title: 'Schedule', build: scheduleDetailHtml },
   tasks: { title: 'Tasks', build: tasksDetailHtml },
@@ -2130,8 +2238,35 @@ function closeDetail() {
   document.getElementById('detailOverlay').hidden = true;
   document.body.style.overflow = '';
 }
+
+// ---- Debrief page: full-screen route (hash-based — works regardless of the
+// app's actual hosting base path, no server rewrite needed), distinct from the
+// translucent detail-overlay sheets above (own state, own page-push transition).
+let debriefOpen = false;
+function openDebrief() {
+  renderDebriefPage();
+  const page = document.getElementById('debriefPage');
+  page.classList.remove('closing');
+  page.hidden = false;
+  page.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  const wasOpen = debriefOpen;
+  debriefOpen = true;
+  if (!wasOpen && location.hash !== '#/debrief') history.pushState({ debrief: true }, '', '#/debrief');
+}
+function closeDebrief() {
+  if (!debriefOpen) return;
+  debriefOpen = false;
+  const page = document.getElementById('debriefPage');
+  page.classList.add('closing');
+  document.body.style.overflow = '';
+  setTimeout(() => { page.hidden = true; page.classList.remove('closing'); }, 220);
+}
 // The back button and OS back both route through history so state stays balanced.
-window.addEventListener('popstate', () => { if (currentDetail !== null) closeDetail(); });
+window.addEventListener('popstate', () => {
+  if (currentDetail !== null) closeDetail();
+  if (debriefOpen) closeDebrief();
+});
 
 // Re-renders whichever section is open (after a task/brief/review mutation).
 function refreshOpenSection() { if (currentDetail !== null) openDetail(currentDetail); }
@@ -2154,7 +2289,10 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-task-add-inline]')) { commitTaskInput(); return; }
-  if (e.target.closest('[data-brief-refresh]')) { fetchBrief(true); return; }
+  if (e.target.closest('[data-debrief-refresh]')) { fetchBrief(true); return; }
+  if (e.target.closest('[data-debrief-back]')) { if (debriefOpen) history.back(); return; }
+  const sectionEl = e.target.closest('[data-debrief-section]');
+  if (sectionEl) { sectionEl.classList.toggle('expanded'); return; }
   if (e.target.closest('[data-set-recovery]')) { setRecoveryManual(); return; }
   if (e.target.closest('[data-enable-push]')) { enablePush(); return; }
   if (e.target.closest('[data-review-rollover]')) {
@@ -2609,13 +2747,16 @@ document.addEventListener('click', (e) => {
   const trigger = e.target.closest('[data-detail]');
   if (trigger) {
     e.preventDefault();
-    openDetail(trigger.getAttribute('data-detail'));
+    const type = trigger.getAttribute('data-detail');
+    // The brief gets its own full-screen page (not a translucent sheet) — see Task 1.
+    if (type === 'brief') openDebrief();
+    else openDetail(type);
   }
 });
 // Route the back button and Escape through history so the pushed state is
 // consumed (keeps the OS back gesture in sync via the popstate listener).
 document.getElementById('detailBack').addEventListener('click', () => { if (currentDetail !== null) history.back(); });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && currentDetail !== null) history.back(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (currentDetail !== null || debriefOpen)) history.back(); });
 // Pressing Return in the checklist input adds the reminder and keeps you typing.
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target && e.target.id === 'taskInput') { e.preventDefault(); commitTaskInput(); }
@@ -2636,7 +2777,7 @@ document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   let startY = 0;
   let pulling = false;
   window.addEventListener('touchstart', (e) => {
-    if (!currentDetail && window.scrollY <= 0 && e.touches.length === 1) {
+    if (!currentDetail && !debriefOpen && window.scrollY <= 0 && e.touches.length === 1) {
       startY = e.touches[0].clientY;
       pulling = true;
     } else {
@@ -2672,6 +2813,30 @@ document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   }, { passive: true });
 })();
 
+// ---------- Debrief page: edge swipe-back gesture ----------
+// Isolated from pull-to-refresh above (which gates on !debriefOpen and
+// vertical scroll) so the two gestures never compete on the same touch.
+(function setupDebriefSwipeBack() {
+  const EDGE = 24, THRESHOLD = 80, MAX_DRIFT = 60;
+  let startX = 0, startY = 0, tracking = false;
+  window.addEventListener('touchstart', (e) => {
+    if (debriefOpen && e.touches.length === 1 && e.touches[0].clientX <= EDGE) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      tracking = true;
+    } else {
+      tracking = false;
+    }
+  }, { passive: true });
+  window.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    if (dx > THRESHOLD && dy < MAX_DRIFT) history.back();
+  }, { passive: true });
+})();
+
 // ---------- Refresh on open / focus ----------
 // Re-fetch when the installed PWA is brought back to the foreground after being
 // idle, so it's fresh the moment it's opened each morning without a manual tap.
@@ -2689,10 +2854,13 @@ renderGreeting();
 applyTheme(); // hour-based theme immediately; weather refines it with is_day
 // Seed a cached brief (if today's is stored) so the hero card is instant.
 const seededBrief = cachedBrief();
-if (seededBrief) overview.brief = seededBrief;
+if (seededBrief) { overview.brief = seededBrief.brief; overview.briefStructured = seededBrief.structured; }
 renderStreak();
 renderOverview();
 refreshAll();
+// Deep-link support: opening/reloading directly on #/debrief lands on the
+// full-screen page instead of the home dashboard.
+if (location.hash === '#/debrief') openDebrief();
 setInterval(renderUpdated, 30000);
 
 if ('serviceWorker' in navigator) {
