@@ -1173,6 +1173,8 @@ function briefContext() {
         recent: recoveryHistory().slice(0, 7),
       }
     : null;
+  const sleep = (health && health.sleep != null) ? { score: health.sleep, read: sleepWord(health.sleep) } : null;
+  const strain = (health && health.strain != null) ? { score: health.strain, read: strainWord(health.strain) } : null;
 
   const hour = now.getHours();
   return {
@@ -1181,6 +1183,8 @@ function briefContext() {
     partOfDay: hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening',
     location: overview.locationLabel || null,
     recovery,
+    sleep,
+    strain,
     streakDays: currentStreak(),
     weather,
     events: evs,
