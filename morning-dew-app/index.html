@@ -1183,6 +1183,7 @@ function briefContext() {
     : null;
   const sleep = (health && health.sleep != null) ? { score: health.sleep, read: sleepWord(health.sleep) } : null;
   const strain = (health && health.strain != null) ? { score: health.strain, read: strainWord(health.strain) } : null;
+  const targetStrain = targetStrainRange(health && health.recovery != null ? health.recovery : null);
 
   const hour = now.getHours();
   return {
@@ -1193,6 +1194,7 @@ function briefContext() {
     recovery,
     sleep,
     strain,
+    targetStrain,
     streakDays: currentStreak(),
     weather,
     events: evs,
@@ -2341,6 +2343,22 @@ function strainWord(s) {
   if (s >= 34) return 'Moderate activity';
   return 'Light day';
 }
+// Today's recommended exertion ceiling/floor based on current recovery — same
+// idea as Whoop's Strain Coach: a well-recovered body can absorb a harder day,
+// a depleted one should stay light. A function of recovery alone (not today's
+// strain itself) so it always answers "what should I do today", independent
+// of what's already accumulated.
+function targetStrainRange(rec) {
+  if (rec == null) return null;
+  const mid = 20 + (rec / 100) * 55; // 20 at recovery 0 .. 75 at recovery 100
+  return { lo: Math.max(1, Math.round(mid - 12)), hi: Math.min(99, Math.round(mid + 12)) };
+}
+function targetStrainCompare(actual, t) {
+  if (actual == null || !t) return 'Aim to land in this range today.';
+  if (actual > t.hi) return `Today's strain is above target — you pushed harder than your recovery suggested.`;
+  if (actual < t.lo) return `Today's strain is below target — there's room for more if you want it.`;
+  return `Right in your target range — well matched to today's recovery.`;
+}
 
 // One mini progress ring for the home card's 3-up row. val null -> empty muted
 // track with "–" so one missing/uncalibrated metric never blocks the others.
@@ -2446,6 +2464,10 @@ function healthDetailHtml() {
   const rawNamesLine = rawNames && rawNames.length
     ? `<div class="health-foot-note" style="margin-top:0.35rem;opacity:0.55;font-size:0.8em">Last sync sent: ${rawNames.map(escapeHtml).join(', ')}.</div>`
     : '';
+  const target = targetStrainRange(rec);
+  const targetLine = target
+    ? `<div class="health-foot-note" style="margin-top:0.35rem">Target Strain: ${target.lo}–${target.hi}. ${targetStrainCompare(strain, target)}</div>`
+    : '';
   const t = recoveryTrend();
   const momentum = t && t.delta !== 0 ? ` ${t.delta > 0 ? 'Up' : 'Down'} ${Math.abs(t.delta)} from ${t.previousScore} last reading.` : '';
   const sleepBit = sleep != null ? ` ${sleepWord(sleep)}.` : '';
@@ -2461,7 +2483,7 @@ function healthDetailHtml() {
       ${detailRingHtml(strain, 'gStrain', 'Strain')}
     </div>
     ${chart}
-    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${metricsLine}${rawNamesLine}${setBtn}`;
+    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${targetLine}${metricsLine}${rawNamesLine}${setBtn}`;
 }
 
 // Manual entry — type today's recovery from Athlytic; saved on-device (no
