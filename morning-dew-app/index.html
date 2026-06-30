@@ -2439,6 +2439,13 @@ function healthDetailHtml() {
   const metricsLine = (h.computed && m.length)
     ? `<div class="health-foot-note" style="margin-top:0.5rem;opacity:0.8">Computed from ${m.join(' · ')}${h.calibrating ? ' · calibrating, sharpens as your baseline builds' : ''}.</div>`
     : '';
+  // Raw Health Auto Export metric names from the last sync, so a blank Sleep/
+  // Strain ring is diagnosable at a glance instead of guessing what the
+  // automation actually sent.
+  const rawNames = Array.isArray(h.rawMetricNames) ? h.rawMetricNames : null;
+  const rawNamesLine = rawNames && rawNames.length
+    ? `<div class="health-foot-note" style="margin-top:0.35rem;opacity:0.55;font-size:0.8em">Last sync sent: ${rawNames.map(escapeHtml).join(', ')}.</div>`
+    : '';
   const t = recoveryTrend();
   const momentum = t && t.delta !== 0 ? ` ${t.delta > 0 ? 'Up' : 'Down'} ${Math.abs(t.delta)} from ${t.previousScore} last reading.` : '';
   const sleepBit = sleep != null ? ` ${sleepWord(sleep)}.` : '';
@@ -2454,7 +2461,7 @@ function healthDetailHtml() {
       ${detailRingHtml(strain, 'gStrain', 'Strain')}
     </div>
     ${chart}
-    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${metricsLine}${setBtn}`;
+    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${metricsLine}${rawNamesLine}${setBtn}`;
 }
 
 // Manual entry — type today's recovery from Athlytic; saved on-device (no
