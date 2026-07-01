@@ -1153,7 +1153,7 @@
     <button class="news-back" id="newsBack" aria-label="Back">‹</button>
     <div class="news-hdr-brand">
       <div class="news-breaking-label">Breaking News</div>
-      <div class="news-hdr-title">BBC News</div>
+      <div class="news-hdr-title" id="newsHdrTitle">BBC News</div>
     </div>
   </header>
   <div id="newsPageContent"><div class="news-empty">Loading…</div></div>
@@ -3170,28 +3170,61 @@ function closeHealth() {
 let newsOpen = false;
 let _newsCache = null;
 let _newsCacheAt = 0;
+function _parseRssXml(xml) {
+  const articles = [];
+  const itemRe = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  const getField = (raw, tag) => {
+    const re = new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`);
+    const match = raw.match(re);
+    return match ? match[1].replace(/\s+/g, ' ').trim() : '';
+  };
+  const strip = (s) => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+  while ((m = itemRe.exec(xml)) !== null && articles.length < 20) {
+    const raw = m[1];
+    const thumb = (raw.match(/<media:thumbnail[^>]+url="([^"]+)"/) || [])[1]
+      || (raw.match(/<enclosure[^>]+url="([^"]+)"/) || [])[1] || '';
+    articles.push({
+      title: strip(getField(raw, 'title')),
+      link: getField(raw, 'link'),
+      description: strip(getField(raw, 'description')),
+      pubDate: getField(raw, 'pubDate'),
+      thumbnail: thumb,
+    });
+  }
+  return articles;
+}
+async function _tryFeedProxy(rssUrl) {
+  const proxy = 'https://corsproxy.io/?' + encodeURIComponent(rssUrl);
+  const res = await Promise.race([
+    fetch(proxy),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+  ]);
+  if (!res.ok) throw new Error(`${res.status}`);
+  const xml = await res.text();
+  const articles = _parseRssXml(xml);
+  if (!articles.length) throw new Error('no items');
+  return articles;
+}
 async function fetchNews() {
   if (_newsCache && Date.now() - _newsCacheAt < 5 * 60 * 1000) return _newsCache;
-  try {
-    // Fetch BBC RSS client-side via rss2json.com (CORS-enabled, free, no key needed)
-    const url = 'https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent('https://feeds.bbci.co.uk/news/rss.xml');
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`rss2json ${res.status}`);
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'feed error');
-    const articles = (data.items || []).map(item => ({
-      title: (item.title || '').replace(/<[^>]+>/g, '').trim(),
-      link: item.link || '',
-      description: (item.description || '').replace(/<[^>]+>/g, '').trim(),
-      pubDate: item.pubDate || '',
-      thumbnail: item.thumbnail || (item.enclosure && item.enclosure.link) || '',
-    }));
-    _newsCache = { articles };
-    _newsCacheAt = Date.now();
-    return _newsCache;
-  } catch (err) {
-    return { articles: [], error: String(err.message || err) };
+  const sources = [
+    { url: 'https://feeds.bbci.co.uk/news/rss.xml', label: 'BBC News' },
+    { url: 'https://feeds.skynews.com/feeds/rss/home.xml', label: 'Sky News' },
+    { url: 'https://feeds.npr.org/1001/rss.xml', label: 'NPR' },
+  ];
+  const errors = [];
+  for (const src of sources) {
+    try {
+      const articles = await _tryFeedProxy(src.url);
+      _newsCache = { articles, source: src.label };
+      _newsCacheAt = Date.now();
+      return _newsCache;
+    } catch (err) {
+      errors.push(`${src.label}: ${err.message}`);
+    }
   }
+  return { articles: [], error: errors.join(' | ') };
 }
 function newsTimeAgo(pubDate) {
   if (!pubDate) return '';
@@ -3206,6 +3239,7 @@ function newsTimeAgo(pubDate) {
 function newsPageHtml(data) {
   const articles = (data && data.articles) || [];
   if (!articles.length) return `<div class="news-empty">${data && data.error ? escapeHtml('Could not load: ' + data.error) : 'No news available right now.'}</div>`;
+  const src = escapeHtml((data && data.source) || 'News');
   const hero = articles[0];
   const tops = articles.slice(1, 6);
   const list = articles.slice(6);
@@ -3222,9 +3256,9 @@ function newsPageHtml(data) {
     const img = a.thumbnail
       ? `<img class="news-list-thumb" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
       : '<div class="news-list-thumb" style="display:flex;align-items:center;justify-content:center;background:#222;border-radius:8px;font-size:1.3rem;">📰</div>';
-    return `<a class="news-list-row" href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${img}<div class="news-list-body"><div class="news-list-badge">BBC News</div><div class="news-list-title">${escapeHtml(a.title)}</div><div class="news-list-time">${newsTimeAgo(a.pubDate)}</div></div></a>`;
+    return `<a class="news-list-row" href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${img}<div class="news-list-body"><div class="news-list-badge">${src}</div><div class="news-list-title">${escapeHtml(a.title)}</div><div class="news-list-time">${newsTimeAgo(a.pubDate)}</div></div></a>`;
   }).join('');
-  return `<a class="news-hero-card" href="${escapeHtml(hero.link)}" target="_blank" rel="noopener">${heroImg}<div class="news-hero-body"><div class="news-hero-badge">BBC News</div><h2 class="news-hero-title">${escapeHtml(hero.title)}</h2>${hero.description ? `<p class="news-hero-desc">${escapeHtml(hero.description)}</p>` : ''}<div class="news-hero-time">${newsTimeAgo(hero.pubDate)}</div></div></a><div class="news-section-hdr"><div class="news-section-title">Top Stories</div></div><div class="news-top-scroll">${topsHtml}</div><div class="news-divider"></div><div class="news-list">${listHtml}</div>`;
+  return `<a class="news-hero-card" href="${escapeHtml(hero.link)}" target="_blank" rel="noopener">${heroImg}<div class="news-hero-body"><div class="news-hero-badge">${src}</div><h2 class="news-hero-title">${escapeHtml(hero.title)}</h2>${hero.description ? `<p class="news-hero-desc">${escapeHtml(hero.description)}</p>` : ''}<div class="news-hero-time">${newsTimeAgo(hero.pubDate)}</div></div></a><div class="news-section-hdr"><div class="news-section-title">Top Stories</div></div><div class="news-top-scroll">${topsHtml}</div><div class="news-divider"></div><div class="news-list">${listHtml}</div>`;
 }
 function openNews() {
   const page = document.getElementById('newsPage');
@@ -3236,7 +3270,11 @@ function openNews() {
   document.body.style.overflow = 'hidden';
   history.pushState({ news: true }, '');
   document.getElementById('newsPageContent').innerHTML = '<div class="news-empty">Loading…</div>';
-  fetchNews().then(data => { if (newsOpen) document.getElementById('newsPageContent').innerHTML = newsPageHtml(data); });
+  fetchNews().then(data => {
+    if (!newsOpen) return;
+    document.getElementById('newsPageContent').innerHTML = newsPageHtml(data);
+    if (data.source) document.getElementById('newsHdrTitle').textContent = data.source;
+  });
 }
 function closeNews() {
   if (!newsOpen) return;

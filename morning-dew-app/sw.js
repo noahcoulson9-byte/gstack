@@ -1,4 +1,4 @@
-const CACHE_NAME = 'morning-dew-v40';
+const CACHE_NAME = 'morning-dew-v41';
 const ASSETS = ['./', './index.html', './manifest.json', './offline.html', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
