@@ -301,6 +301,13 @@
   .rd-tile-ic { color: #8ea6d6; margin-bottom: 8px; }
   .rd-tile-val { font-size: 25px; font-weight: 800; color: #fff; }
   .rd-tile-lbl { font-size: 11.5px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .rd-wake-row { display: flex; align-items: center; justify-content: space-between; background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 12px 16px; margin-top: 10px; }
+  .rd-wake-lbl { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #fff; }
+  .rd-wake-lbl .rd-tile-ic { margin-bottom: 0; }
+  .rd-wake-input { font-family: inherit; font-size: 18px; font-weight: 800; color: #fff; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 10px; color-scheme: dark; }
+  .rd-alarm-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .rd-alarm-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(244,244,240,0.92); color: #16110c; font-size: 13px; font-weight: 700; padding: 10px 18px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; text-decoration: none; }
+  .rd-alarm-help { background: none; border: none; color: #8ea6d6; font-size: 12px; font-weight: 600; font-family: inherit; padding: 6px 2px; cursor: pointer; text-decoration: underline; }
   .rd-ovhead { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 500; padding: 6px 6px 0; color: #fff; }
   .rd-ovgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; padding: 14px 6px 0; }
   .rd-ovcard { background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 14px 16px; }
@@ -3147,6 +3154,8 @@ const RD_MOON = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" str
 const RD_WAVE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b79cff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-6 10-6 10 6 10 6"/><path d="M4 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 4-1.5"/></svg>';
 const RD_BED = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z"/></svg>';
 const RD_CLOCK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const RD_SUNRISE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>';
+const RD_ALARM_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16110c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg>';
 const RD_CHEV = '<svg class="rd-cchev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
 const RD_NAV_SUN = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>';
 const RD_NAV_MOON = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z"/></svg>';
@@ -3168,7 +3177,29 @@ function rdFmtDuration(hrs) {
 //  - high recovery (>=80, "Go get 'em") trims -0.25h back toward baseline
 //  - high strain (>=67, the house "HIGH" bucket) adds +0.25h for extra repair
 // Result is clamped to 7h-9.5h and rounded to the nearest 15 minutes.
-// Bedtime is then back-computed from a fixed 6:45 AM wake target.
+// Bedtime is then back-computed from the user's wake-up target (rdWakeTimeMinutes,
+// editable on the Sleep screen; defaults to 6:45 AM until customized).
+// User-editable wake-up target, persisted on-device (defaults to the old
+// fixed 6:45 AM assumption so behavior is unchanged until customized).
+const WAKE_TIME_KEY = 'morningDewWakeTime';
+function rdWakeTimeStr() {
+  const v = lsGet(WAKE_TIME_KEY, '06:45');
+  return /^\d{2}:\d{2}$/.test(v) ? v : '06:45';
+}
+function rdWakeTimeMinutes() {
+  const [hh, mm] = rdWakeTimeStr().split(':').map(Number);
+  return hh * 60 + mm;
+}
+function rdSetWakeTime(v) {
+  if (!/^\d{2}:\d{2}$/.test(v)) return;
+  lsSet(WAKE_TIME_KEY, v);
+}
+function rdWakeTimeDisplay() {
+  const [hh, mm] = rdWakeTimeStr().split(':').map(Number);
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+  let h12 = hh % 12; if (h12 === 0) h12 = 12;
+  return `${h12}:${String(mm).padStart(2, '0')} ${ampm}`;
+}
 function rdSleepDebtHours() {
   const nights = sleepHistory().slice(0, 5);
   if (!nights.length) return 0;
@@ -3190,7 +3221,7 @@ function rdRecommended(h) {
   const target = rdTargetSleepHours(h);
   const debt = rdSleepDebtHours();
   const durMin = Math.round(target * 60);
-  const wakeMin = 6 * 60 + 45;
+  const wakeMin = rdWakeTimeMinutes();
   const to12 = (mins) => {
     mins = ((mins % 1440) + 1440) % 1440;
     const hh = Math.floor(mins / 60), m = mins % 60, ampm = hh >= 12 ? 'PM' : 'AM';
@@ -3200,6 +3231,30 @@ function rdRecommended(h) {
   const bed = to12(wakeMin - durMin);
   const wind = to12(wakeMin - durMin - 30);
   return { bedtime: bed.s, duration: rdFmtDuration(target), windDown: wind.short, targetHours: target, debtHours: debt };
+}
+
+// ---- "Set Alarm" via Apple Shortcuts ----
+// iOS gives web content no API to create a Clock-app alarm directly (by
+// design — otherwise any website could spam a user's alarms). The closest
+// real integration is a user-created Shortcut (built once, using the
+// Shortcuts app's own "Set Alarm" action) that we hand a wake time to via
+// the shortcuts:// URL scheme. See rdAlarmSetupHelp() for the one-time
+// setup text shown to the user.
+const RD_ALARM_SHORTCUT_NAME = 'Morning Dew Alarm';
+function rdNextWakeIso(wakeMinutes) {
+  const now = new Date();
+  const hh = Math.floor(wakeMinutes / 60), mm = wakeMinutes % 60;
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+  if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 1);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+}
+function rdAlarmShortcutUrl(wakeMinutes) {
+  const iso = rdNextWakeIso(wakeMinutes);
+  return `shortcuts://run-shortcut?name=${encodeURIComponent(RD_ALARM_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(iso)}`;
+}
+function rdAlarmSetupHelp() {
+  alert(`One-time setup (about 2 minutes):\n\n1. Open the Shortcuts app.\n2. Tap + to create a new shortcut.\n3. Name it exactly: "${RD_ALARM_SHORTCUT_NAME}"\n4. Add the action "Get Dates from Input" (search "date").\n5. Add the action "Set Alarm" below it — tap its Time field and choose the date variable from step 4.\n6. Save.\n\nAfter that, tapping "Set Alarm" here will open Shortcuts and create a real Clock alarm for your chosen wake time. iOS may show a brief confirmation before it runs — that's normal.`);
 }
 function rdDesc(rec) {
   return rec >= 67
@@ -3296,9 +3351,19 @@ function rdSleepContent(h, recArg) {
   } else {
     insight = `You slept ${rdFmtDuration(h.sleepHours)} last night. Aiming for lights out around ${r.bedtime} should keep tomorrow's readiness high.`;
   }
-  return `<div class="rd-tiles">
+  const wakeStr = rdWakeTimeStr();
+  const alarmUrl = rdAlarmShortcutUrl(rdWakeTimeMinutes());
+  return `<div class="rd-wake-row">
+      <div class="rd-wake-lbl"><span class="rd-tile-ic">${RD_SUNRISE}</span>Wake me up at</div>
+      <input class="rd-wake-input" id="rdWakeInput" type="time" value="${escapeHtml(wakeStr)}" />
+    </div>
+    <div class="rd-tiles">
       <div class="rd-tile"><div class="rd-tile-ic">${RD_BED}</div><div class="rd-tile-val">${escapeHtml(r.bedtime)}</div><div class="rd-tile-lbl">Recommended bedtime</div></div>
       <div class="rd-tile"><div class="rd-tile-ic">${RD_CLOCK}</div><div class="rd-tile-val">${escapeHtml(r.duration)}</div><div class="rd-tile-lbl">Recommended sleep</div></div>
+    </div>
+    <div class="rd-alarm-row">
+      <a class="rd-alarm-btn" href="${escapeHtml(alarmUrl)}">${RD_ALARM_ICON}Set Alarm for ${escapeHtml(rdWakeTimeDisplay())}</a>
+      <button class="rd-alarm-help" id="rdAlarmHelp">How this works</button>
     </div>
     <div class="rd-sec"><div class="rd-sh">Wind down by ${escapeHtml(r.windDown)}</div><div class="rd-sp">${escapeHtml(insight)}</div></div>`;
 }
@@ -3813,6 +3878,15 @@ document.getElementById('healthPage').addEventListener('click', (e) => {
     fab.classList.add('spin');
     Promise.resolve(fetchHealth()).finally(() => { const f = document.getElementById('rdFab'); if (f) f.classList.remove('spin'); });
     return;
+  }
+  const help = e.target.closest('#rdAlarmHelp');
+  if (help) { rdAlarmSetupHelp(); return; }
+});
+document.getElementById('healthPage').addEventListener('change', (e) => {
+  const input = e.target.closest('#rdWakeInput');
+  if (input && input.value) {
+    rdSetWakeTime(input.value);
+    if (healthOpen && healthTab === 'sleep') renderHealthPage();
   }
 });
 document.getElementById('navInbox').addEventListener('click', () => openDetail('inbox'));
