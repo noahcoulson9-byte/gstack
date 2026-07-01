@@ -1152,8 +1152,8 @@
   <header class="news-hdr">
     <button class="news-back" id="newsBack" aria-label="Back">‹</button>
     <div class="news-hdr-brand">
-      <div class="news-breaking-label">Breaking News</div>
-      <div class="news-hdr-title" id="newsHdrTitle">BBC News</div>
+      <div class="news-breaking-label">Latest News</div>
+      <div class="news-hdr-title" id="newsHdrTitle">The Guardian</div>
     </div>
   </header>
   <div id="newsPageContent"><div class="news-empty">Loading…</div></div>
@@ -3170,61 +3170,29 @@ function closeHealth() {
 let newsOpen = false;
 let _newsCache = null;
 let _newsCacheAt = 0;
-function _parseRssXml(xml) {
-  const articles = [];
-  const itemRe = /<item>([\s\S]*?)<\/item>/g;
-  let m;
-  const getField = (raw, tag) => {
-    const re = new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`);
-    const match = raw.match(re);
-    return match ? match[1].replace(/\s+/g, ' ').trim() : '';
-  };
-  const strip = (s) => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
-  while ((m = itemRe.exec(xml)) !== null && articles.length < 20) {
-    const raw = m[1];
-    const thumb = (raw.match(/<media:thumbnail[^>]+url="([^"]+)"/) || [])[1]
-      || (raw.match(/<enclosure[^>]+url="([^"]+)"/) || [])[1] || '';
-    articles.push({
-      title: strip(getField(raw, 'title')),
-      link: getField(raw, 'link'),
-      description: strip(getField(raw, 'description')),
-      pubDate: getField(raw, 'pubDate'),
-      thumbnail: thumb,
-    });
-  }
-  return articles;
-}
-async function _tryFeedProxy(rssUrl) {
-  const proxy = 'https://corsproxy.io/?' + encodeURIComponent(rssUrl);
-  const res = await Promise.race([
-    fetch(proxy),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
-  ]);
-  if (!res.ok) throw new Error(`${res.status}`);
-  const xml = await res.text();
-  const articles = _parseRssXml(xml);
-  if (!articles.length) throw new Error('no items');
-  return articles;
-}
 async function fetchNews() {
   if (_newsCache && Date.now() - _newsCacheAt < 5 * 60 * 1000) return _newsCache;
-  const sources = [
-    { url: 'https://feeds.bbci.co.uk/news/rss.xml', label: 'BBC News' },
-    { url: 'https://feeds.skynews.com/feeds/rss/home.xml', label: 'Sky News' },
-    { url: 'https://feeds.npr.org/1001/rss.xml', label: 'NPR' },
-  ];
-  const errors = [];
-  for (const src of sources) {
-    try {
-      const articles = await _tryFeedProxy(src.url);
-      _newsCache = { articles, source: src.label };
-      _newsCacheAt = Date.now();
-      return _newsCache;
-    } catch (err) {
-      errors.push(`${src.label}: ${err.message}`);
-    }
+  try {
+    // Guardian Open Platform — CORS-enabled JSON API, public test key, no registration
+    const url = 'https://content.guardianapis.com/search?show-fields=thumbnail,trailText&order-by=newest&page-size=20&api-key=test';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Guardian API ${res.status}`);
+    const data = await res.json();
+    const results = (data && data.response && data.response.results) || [];
+    if (!results.length) throw new Error('no results');
+    const articles = results.map(r => ({
+      title: (r.webTitle || '').replace(/ \| .*$/, '').trim(),
+      link: r.webUrl || '',
+      description: ((r.fields && r.fields.trailText) || '').replace(/<[^>]+>/g, '').trim(),
+      pubDate: r.webPublicationDate || '',
+      thumbnail: (r.fields && r.fields.thumbnail) || '',
+    }));
+    _newsCache = { articles, source: 'The Guardian' };
+    _newsCacheAt = Date.now();
+    return _newsCache;
+  } catch (err) {
+    return { articles: [], error: String(err.message || err) };
   }
-  return { articles: [], error: errors.join(' | ') };
 }
 function newsTimeAgo(pubDate) {
   if (!pubDate) return '';
