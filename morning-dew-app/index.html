@@ -1015,7 +1015,8 @@
   .news-back { background: none; border: none; color: #ff3b30; font-size: 0.88rem; font-weight: 600; padding: 0; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 0.25rem; }
   .news-hdr-date { font-size: 0.72rem; color: #8e8e93; font-weight: 500; margin-bottom: 0.08rem; }
   .news-hdr-headline { font-size: 2rem; font-weight: 800; color: #000; letter-spacing: -0.03em; line-height: 1.08; }
-  .news-hero { display: block; text-decoration: none; background: #fff; border-bottom: 0.5px solid #d1d1d6; }
+  .news-hero { position: relative; display: block; background: #fff; border-bottom: 0.5px solid #d1d1d6; }
+  .news-hero-link { display: block; text-decoration: none; }
   .news-hero-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #f2f2f7; }
   .news-hero-body { padding: 0.7rem 1rem 0.9rem; }
   .news-hero-badge { display: inline-block; background: #052962; color: #fff; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border-radius: 3px; margin-bottom: 0.45rem; }
@@ -1034,7 +1035,7 @@
   .news-top-body { padding: 0.5rem 0.6rem 0.65rem; }
   .news-top-title { font-size: 0.78rem; font-weight: 700; color: #000; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .news-top-time { font-size: 0.65rem; color: #8e8e93; margin-top: 0.25rem; }
-  .news-list { display: flex; flex-direction: column; padding-bottom: calc(env(safe-area-inset-bottom) + 5rem); }
+  .news-list { display: flex; flex-direction: column; }
   .news-list-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.85rem 1rem; border-bottom: 0.5px solid #e5e5ea; text-decoration: none; }
   .news-list-body { flex: 1; min-width: 0; }
   .news-list-pub { font-size: 0.64rem; font-weight: 800; color: #8e8e93; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.2rem; }
@@ -1042,6 +1043,38 @@
   .news-list-time { font-size: 0.66rem; color: #8e8e93; margin-top: 0.22rem; }
   .news-list-thumb { width: 80px; height: 70px; flex-shrink: 0; border-radius: 6px; object-fit: cover; background: #f2f2f7; display: block; }
   .news-empty { text-align: center; padding: 3rem 1.5rem; color: #8e8e93; font-size: 0.9rem; }
+  #newsPageContent { padding-bottom: calc(env(safe-area-inset-bottom) + 4.8rem); }
+
+  /* Search bar in header */
+  .news-search { display: flex; align-items: center; gap: 0.5rem; background: #e3e3e8; border-radius: 10px; padding: 0.5rem 0.7rem; margin-top: 0.7rem; }
+  .news-search svg { flex-shrink: 0; color: #8e8e93; }
+  .news-search input { flex: 1; min-width: 0; border: none; background: none; outline: none; font-family: inherit; font-size: 0.95rem; color: #000; padding: 0; -webkit-appearance: none; }
+  .news-search input::placeholder { color: #8e8e93; }
+  .news-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .news-search-cancel { background: none; border: none; color: #ff3b30; font-size: 0.85rem; font-weight: 600; font-family: inherit; padding: 0 0 0 0.2rem; cursor: pointer; white-space: nowrap; }
+  .news-search-cancel[hidden] { display: none; }
+
+  /* Save (bookmark) buttons on articles */
+  .news-list-main { display: flex; gap: 0.75rem; align-items: flex-start; flex: 1; min-width: 0; text-decoration: none; }
+  .news-save-btn { background: none; border: none; padding: 0.35rem; margin: 0; cursor: pointer; color: #b0b0b6; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; align-self: center; -webkit-tap-highlight-color: transparent; }
+  .news-save-btn.saved { color: #ff3b30; }
+  .news-hero-save { position: absolute; top: 0.65rem; right: 0.65rem; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; padding: 0; }
+  .news-hero-save.saved { color: #ff5a5f; }
+
+  /* Bottom tab bar */
+  .news-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; background: rgba(249,249,249,0.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 0.5px solid #c8c8cd; padding: 0.35rem 0 calc(env(safe-area-inset-bottom) + 0.3rem); }
+  .news-tab { flex: 1; background: none; border: none; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 0.18rem; color: #8e8e93; cursor: pointer; padding: 0.15rem 0; -webkit-tap-highlight-color: transparent; }
+  .news-tab-icon { display: flex; align-items: center; justify-content: center; width: 2.6rem; height: 1.75rem; border-radius: 9px; transition: background 0.15s; }
+  .news-tab-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.01em; }
+  .news-tab.active { color: #ff3b30; }
+  .news-tab.active .news-tab-icon { background: #ff3b30; color: #fff; }
+
+  /* For Later empty state */
+  .news-saved-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4rem 2rem; color: #8e8e93; }
+  .news-saved-empty-icon { color: #c8c8cd; margin-bottom: 0.9rem; }
+  .news-saved-empty-icon svg { width: 2.6rem; height: 2.6rem; }
+  .news-saved-empty-title { font-size: 1.05rem; font-weight: 800; color: #000; margin-bottom: 0.35rem; }
+  .news-saved-empty-sub { font-size: 0.85rem; line-height: 1.4; max-width: 17rem; }
 </style>
 </head>
 <body>
@@ -1159,9 +1192,32 @@
       </button>
     </div>
     <div class="news-hdr-date" id="newsHdrDate"></div>
-    <div class="news-hdr-headline">Breaking News</div>
+    <div class="news-hdr-headline" id="newsHdrHeadline">Breaking News</div>
+    <div class="news-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      <input id="newsSearchInput" type="search" placeholder="Search news" autocomplete="off" autocorrect="off" enterkeyhint="search" />
+      <button class="news-search-cancel" id="newsSearchCancel" hidden>Cancel</button>
+    </div>
   </header>
   <div id="newsPageContent"><div class="news-empty">Loading…</div></div>
+  <nav class="news-tabbar">
+    <button class="news-tab" data-newstab="today">
+      <span class="news-tab-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14H5a1 1 0 0 1-1-1V5z"/><path d="M17 8h3v9a2 2 0 0 1-2 2"/><line x1="7" y1="9" x2="14" y2="9"/><line x1="7" y1="12" x2="14" y2="12"/><line x1="7" y1="15" x2="11" y2="15"/></svg></span>
+      <span class="news-tab-label">Today</span>
+    </button>
+    <button class="news-tab" data-newstab="foryou">
+      <span class="news-tab-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span>
+      <span class="news-tab-label">For You</span>
+    </button>
+    <button class="news-tab" data-newstab="later">
+      <span class="news-tab-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></span>
+      <span class="news-tab-label">For Later</span>
+    </button>
+    <button class="news-tab" id="newsTabSearch">
+      <span class="news-tab-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></span>
+      <span class="news-tab-label">Search</span>
+    </button>
+  </nav>
 </div>
 
 <script>
@@ -3163,72 +3219,190 @@ function closeHealth() {
   document.body.style.overflow = '';
 }
 
-// ---- News page ----
+// ---- News page (Apple News style: Today / For You / For Later + Search) ----
 let newsOpen = false;
-let _newsCache = null;
-let _newsCacheAt = 0;
+let newsTab = 'today';          // 'today' | 'foryou' | 'later'
+let newsSearching = false;
+let _newsCache = null, _newsCacheAt = 0;
+let _newsForYouCache = null, _newsForYouAt = 0;
+const _newsById = {};           // link -> article snapshot, for save-button lookups
+const SAVED_NEWS_KEY = 'morningDewSavedNews';
+const GUARDIAN_KEY = 'test';
+
+// Guardian Open Platform — CORS-enabled JSON API, public test key, no registration.
+async function fetchGuardian(qs, source) {
+  const url = `https://content.guardianapis.com/search?${qs}&show-fields=thumbnail,trailText&api-key=${GUARDIAN_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Guardian API ${res.status}`);
+  const data = await res.json();
+  const results = (data && data.response && data.response.results) || [];
+  return results.map(r => ({
+    title: (r.webTitle || '').replace(/ \| .*$/, '').trim(),
+    link: r.webUrl || '',
+    description: ((r.fields && r.fields.trailText) || '').replace(/<[^>]+>/g, '').trim(),
+    pubDate: r.webPublicationDate || '',
+    thumbnail: (r.fields && r.fields.thumbnail) || '',
+    source,
+  }));
+}
 async function fetchNews() {
   if (_newsCache && Date.now() - _newsCacheAt < 5 * 60 * 1000) return _newsCache;
   try {
-    // Guardian Open Platform — CORS-enabled JSON API, public test key, no registration
-    const url = 'https://content.guardianapis.com/search?show-fields=thumbnail,trailText&order-by=newest&page-size=20&api-key=test';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Guardian API ${res.status}`);
-    const data = await res.json();
-    const results = (data && data.response && data.response.results) || [];
-    if (!results.length) throw new Error('no results');
-    const articles = results.map(r => ({
-      title: (r.webTitle || '').replace(/ \| .*$/, '').trim(),
-      link: r.webUrl || '',
-      description: ((r.fields && r.fields.trailText) || '').replace(/<[^>]+>/g, '').trim(),
-      pubDate: r.webPublicationDate || '',
-      thumbnail: (r.fields && r.fields.thumbnail) || '',
-    }));
-    _newsCache = { articles, source: 'The Guardian' };
-    _newsCacheAt = Date.now();
+    const articles = await fetchGuardian('order-by=newest&page-size=20', 'The Guardian');
+    if (!articles.length) throw new Error('no results');
+    _newsCache = { articles, source: 'The Guardian' }; _newsCacheAt = Date.now();
     return _newsCache;
-  } catch (err) {
-    return { articles: [], error: String(err.message || err) };
-  }
+  } catch (err) { return { articles: [], error: String(err.message || err) }; }
+}
+async function fetchForYou() {
+  if (_newsForYouCache && Date.now() - _newsForYouAt < 5 * 60 * 1000) return _newsForYouCache;
+  try {
+    const articles = await fetchGuardian('section=technology|science|sport|culture|film|music&order-by=newest&page-size=20', 'The Guardian');
+    if (!articles.length) throw new Error('no results');
+    _newsForYouCache = { articles, source: 'The Guardian' }; _newsForYouAt = Date.now();
+    return _newsForYouCache;
+  } catch (err) { return { articles: [], error: String(err.message || err) }; }
+}
+async function searchNews(q) {
+  try {
+    const articles = await fetchGuardian(`q=${encodeURIComponent(q)}&order-by=relevance&page-size=30`, 'The Guardian');
+    return { articles, source: 'The Guardian', query: q };
+  } catch (err) { return { articles: [], error: String(err.message || err), query: q }; }
 }
 function newsTimeAgo(pubDate) {
   if (!pubDate) return '';
   const d = new Date(pubDate);
   if (isNaN(d.getTime())) return '';
   const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.round(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.round(hrs / 24)}d ago`;
 }
-function newsPageHtml(data) {
-  const articles = (data && data.articles) || [];
-  if (!articles.length) return `<div class="news-empty">${data && data.error ? escapeHtml('Could not load: ' + data.error) : 'No news available right now.'}</div>`;
-  const src = (data && data.source) || 'News';
-  const srcUpper = src.toUpperCase();
-  const hero = articles[0];
-  const tops = articles.slice(1, 6);
-  const list = articles.slice(6);
 
-  const heroImg = hero.thumbnail
-    ? `<img class="news-hero-img" src="${escapeHtml(hero.thumbnail)}" alt="" loading="lazy">`
+// ---- Saved-for-later store (localStorage, full article snapshots) ----
+function getSavedNews() { const v = lsGet(SAVED_NEWS_KEY, []); return Array.isArray(v) ? v : []; }
+function isNewsSaved(link) { return getSavedNews().some(a => a.link === link); }
+function registerArticles(articles) { for (const a of articles) if (a && a.link) _newsById[a.link] = a; }
+function toggleNewsSaved(link) {
+  const saved = getSavedNews();
+  const idx = saved.findIndex(a => a.link === link);
+  if (idx >= 0) { saved.splice(idx, 1); lsSet(SAVED_NEWS_KEY, saved); return false; }
+  const a = _newsById[link];
+  if (!a) return false;
+  saved.unshift({ title: a.title, link: a.link, description: a.description, pubDate: a.pubDate, thumbnail: a.thumbnail, source: a.source || 'News' });
+  lsSet(SAVED_NEWS_KEY, saved);
+  return true;
+}
+const NEWS_BM_OUTLINE = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+const NEWS_BM_FILLED = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+function newsSaveBtnHtml(a, cls) {
+  const saved = isNewsSaved(a.link);
+  return `<button class="news-save-btn${cls ? ' ' + cls : ''}${saved ? ' saved' : ''}" data-link="${escapeHtml(a.link)}" aria-label="${saved ? 'Saved for later' : 'Save for later'}">${saved ? NEWS_BM_FILLED : NEWS_BM_OUTLINE}</button>`;
+}
+
+// ---- Renderers ----
+function newsHeroHtml(a) {
+  const img = a.thumbnail
+    ? `<img class="news-hero-img" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
     : '<div class="news-hero-img" style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:2.5rem;background:#f2f2f7">📰</div>';
-
-  const topsHtml = tops.map(a => {
+  return `<div class="news-hero"><a class="news-hero-link" href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${img}<div class="news-hero-body"><div class="news-hero-badge">${escapeHtml((a.source || 'News').toUpperCase())}</div><h2 class="news-hero-title">${escapeHtml(a.title)}</h2><div class="news-hero-time">${newsTimeAgo(a.pubDate)}</div></div></a>${newsSaveBtnHtml(a, 'news-hero-save')}</div>`;
+}
+function newsTopStripHtml(tops, title) {
+  const cards = tops.map(a => {
     const img = a.thumbnail
       ? `<img class="news-top-img" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
       : '<div class="news-top-img" style="display:flex;align-items:center;justify-content:center;background:#f2f2f7;font-size:1.4rem">📰</div>';
-    return `<a class="news-top-card" href="${escapeHtml(a.link)}" target="_blank" rel="noopener"><div class="news-top-img-wrap">${img}<span class="news-top-badge">${escapeHtml(srcUpper)}</span></div><div class="news-top-body"><div class="news-top-title">${escapeHtml(a.title)}</div><div class="news-top-time">${newsTimeAgo(a.pubDate)}</div></div></a>`;
+    return `<a class="news-top-card" href="${escapeHtml(a.link)}" target="_blank" rel="noopener"><div class="news-top-img-wrap">${img}<span class="news-top-badge">${escapeHtml((a.source || 'News').toUpperCase())}</span></div><div class="news-top-body"><div class="news-top-title">${escapeHtml(a.title)}</div><div class="news-top-time">${newsTimeAgo(a.pubDate)}</div></div></a>`;
   }).join('');
+  return `<div class="news-section-row"><span class="news-section-title">${escapeHtml(title)}</span><span class="news-section-more">See All ›</span></div><div class="news-top-scroll">${cards}</div>`;
+}
+function newsRowHtml(a) {
+  const img = a.thumbnail
+    ? `<img class="news-list-thumb" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
+    : '<div class="news-list-thumb" style="display:flex;align-items:center;justify-content:center;background:#f2f2f7;border-radius:6px;font-size:1.3rem">📰</div>';
+  return `<div class="news-list-row"><a class="news-list-main" href="${escapeHtml(a.link)}" target="_blank" rel="noopener"><div class="news-list-body"><div class="news-list-pub">${escapeHtml(a.source || 'News')}</div><div class="news-list-title">${escapeHtml(a.title)}</div><div class="news-list-time">${newsTimeAgo(a.pubDate)}</div></div>${img}</a>${newsSaveBtnHtml(a)}</div>`;
+}
+function newsFeedHtml(data, stripTitle) {
+  const articles = (data && data.articles) || [];
+  if (!articles.length) return `<div class="news-empty">${data && data.error ? escapeHtml('Could not load: ' + data.error) : 'No stories right now.'}</div>`;
+  registerArticles(articles);
+  const hero = articles[0];
+  const tops = articles.slice(1, 6);
+  const list = articles.slice(6);
+  return newsHeroHtml(hero) + newsTopStripHtml(tops, stripTitle || 'Top Stories') + `<div class="news-list">${list.map(newsRowHtml).join('')}</div>`;
+}
+function newsSearchResultsHtml(data) {
+  const articles = (data && data.articles) || [];
+  const q = escapeHtml(data.query || '');
+  if (!articles.length) return `<div class="news-section-row"><span class="news-section-title">Search</span></div><div class="news-empty">${data.error ? escapeHtml('Could not load: ' + data.error) : `No stories found for “${q}”.`}</div>`;
+  registerArticles(articles);
+  return `<div class="news-section-row"><span class="news-section-title">Results for “${q}”</span></div><div class="news-list">${articles.map(newsRowHtml).join('')}</div>`;
+}
+function newsSavedHtml() {
+  const saved = getSavedNews();
+  registerArticles(saved);
+  if (!saved.length) return `<div class="news-saved-empty"><div class="news-saved-empty-icon">${NEWS_BM_OUTLINE}</div><div class="news-saved-empty-title">No Saved Stories</div><div class="news-saved-empty-sub">Tap the bookmark on any story to save it here and read it later.</div></div>`;
+  return `<div class="news-section-row"><span class="news-section-title">For Later</span></div><div class="news-list">${saved.map(newsRowHtml).join('')}</div>`;
+}
 
-  const listHtml = list.map(a => {
-    const img = a.thumbnail
-      ? `<img class="news-list-thumb" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
-      : '<div class="news-list-thumb" style="display:flex;align-items:center;justify-content:center;background:#f2f2f7;border-radius:6px;font-size:1.3rem">📰</div>';
-    return `<a class="news-list-row" href="${escapeHtml(a.link)}" target="_blank" rel="noopener"><div class="news-list-body"><div class="news-list-pub">${escapeHtml(src)}</div><div class="news-list-title">${escapeHtml(a.title)}</div><div class="news-list-time">${newsTimeAgo(a.pubDate)}</div></div>${img}</a>`;
-  }).join('');
-
-  return `<a class="news-hero" href="${escapeHtml(hero.link)}" target="_blank" rel="noopener">${heroImg}<div class="news-hero-body"><div class="news-hero-badge">${escapeHtml(srcUpper)}</div><h2 class="news-hero-title">${escapeHtml(hero.title)}</h2><div class="news-hero-time">${newsTimeAgo(hero.pubDate)}</div></div></a><div class="news-section-row"><span class="news-section-title">Top Stories</span><span class="news-section-more">See All ›</span></div><div class="news-top-scroll">${topsHtml}</div><div class="news-list">${listHtml}</div>`;
+// ---- Header + tab-bar state ----
+function updateNewsHeader() {
+  const headline = document.getElementById('newsHdrHeadline');
+  const dateEl = document.getElementById('newsHdrDate');
+  const titles = { today: 'Breaking News', foryou: 'For You', later: 'For Later' };
+  headline.textContent = newsSearching ? 'Search' : (titles[newsTab] || 'News');
+  dateEl.style.display = (!newsSearching && newsTab === 'today') ? '' : 'none';
+}
+function updateNewsTabbar() {
+  document.querySelectorAll('.news-tab[data-newstab]').forEach(b => b.classList.toggle('active', !newsSearching && b.dataset.newstab === newsTab));
+  const searchTab = document.getElementById('newsTabSearch');
+  if (searchTab) searchTab.classList.toggle('active', newsSearching);
+}
+function renderNewsContent() {
+  const content = document.getElementById('newsPageContent');
+  if (newsTab === 'later') { content.innerHTML = newsSavedHtml(); return; }
+  content.innerHTML = '<div class="news-empty">Loading…</div>';
+  const forTab = newsTab;
+  const fetcher = newsTab === 'foryou' ? fetchForYou : fetchNews;
+  const stripTitle = newsTab === 'foryou' ? 'Trending' : 'Top Stories';
+  fetcher().then(data => {
+    if (!newsOpen || newsSearching || newsTab !== forTab) return;
+    content.innerHTML = newsFeedHtml(data, stripTitle);
+  });
+}
+function switchNewsTab(tab) {
+  newsSearching = false;
+  const input = document.getElementById('newsSearchInput');
+  if (input) input.value = '';
+  document.getElementById('newsSearchCancel').hidden = true;
+  newsTab = tab;
+  updateNewsHeader(); updateNewsTabbar();
+  document.getElementById('newsPage').scrollTop = 0;
+  renderNewsContent();
+}
+function runNewsSearch(q) {
+  q = (q || '').trim();
+  if (!q) { exitNewsSearch(); return; }
+  newsSearching = true;
+  document.getElementById('newsSearchCancel').hidden = false;
+  updateNewsHeader(); updateNewsTabbar();
+  const content = document.getElementById('newsPageContent');
+  content.innerHTML = '<div class="news-empty">Searching…</div>';
+  document.getElementById('newsPage').scrollTop = 0;
+  searchNews(q).then(data => {
+    if (!newsOpen || !newsSearching) return;
+    content.innerHTML = newsSearchResultsHtml(data);
+  });
+}
+function exitNewsSearch() {
+  newsSearching = false;
+  const input = document.getElementById('newsSearchInput');
+  if (input) input.value = '';
+  document.getElementById('newsSearchCancel').hidden = true;
+  updateNewsHeader(); updateNewsTabbar();
+  renderNewsContent();
 }
 function openNews() {
   const page = document.getElementById('newsPage');
@@ -3236,16 +3410,18 @@ function openNews() {
   page.hidden = false;
   page.scrollTop = 0;
   newsOpen = true;
+  newsSearching = false;
+  newsTab = 'today';
   document.getElementById('navNews').classList.add('active');
   document.body.style.overflow = 'hidden';
   history.pushState({ news: true }, '');
+  const input = document.getElementById('newsSearchInput');
+  if (input) input.value = '';
+  document.getElementById('newsSearchCancel').hidden = true;
   const dateEl = document.getElementById('newsHdrDate');
   if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-  document.getElementById('newsPageContent').innerHTML = '<div class="news-empty">Loading…</div>';
-  fetchNews().then(data => {
-    if (!newsOpen) return;
-    document.getElementById('newsPageContent').innerHTML = newsPageHtml(data);
-  });
+  updateNewsHeader(); updateNewsTabbar();
+  renderNewsContent();
 }
 function closeNews() {
   if (!newsOpen) return;
@@ -3448,6 +3624,25 @@ document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
 
 document.getElementById('navNews').addEventListener('click', () => openNews());
 document.getElementById('newsBack').addEventListener('click', () => { if (newsOpen) history.back(); });
+document.querySelectorAll('.news-tab[data-newstab]').forEach(b => b.addEventListener('click', () => switchNewsTab(b.dataset.newstab)));
+document.getElementById('newsTabSearch').addEventListener('click', () => { const i = document.getElementById('newsSearchInput'); i.focus(); });
+(() => {
+  const input = document.getElementById('newsSearchInput');
+  const cancel = document.getElementById('newsSearchCancel');
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); runNewsSearch(input.value); } });
+  input.addEventListener('input', () => { cancel.hidden = !input.value; });
+  cancel.addEventListener('click', () => exitNewsSearch());
+})();
+document.getElementById('newsPageContent').addEventListener('click', (e) => {
+  const btn = e.target.closest('.news-save-btn');
+  if (!btn) return;
+  e.preventDefault(); e.stopPropagation();
+  const nowSaved = toggleNewsSaved(btn.dataset.link);
+  btn.classList.toggle('saved', nowSaved);
+  btn.innerHTML = nowSaved ? NEWS_BM_FILLED : NEWS_BM_OUTLINE;
+  btn.setAttribute('aria-label', nowSaved ? 'Saved for later' : 'Save for later');
+  if (newsTab === 'later' && !newsSearching) document.getElementById('newsPageContent').innerHTML = newsSavedHtml();
+});
 document.getElementById('navHealth').addEventListener('click', () => openHealth());
 document.getElementById('healthBack').addEventListener('click', () => { if (healthOpen) history.back(); });
 document.getElementById('healthPage').addEventListener('click', (e) => {
