@@ -3156,6 +3156,7 @@ const RD_BED = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stro
 const RD_CLOCK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 const RD_SUNRISE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>';
 const RD_ALARM_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16110c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg>';
+const RD_ALARM_ICON_LIGHT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg>';
 const RD_CHEV = '<svg class="rd-cchev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
 const RD_NAV_SUN = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>';
 const RD_NAV_MOON = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z"/></svg>';
@@ -3200,6 +3201,18 @@ function rdWakeTimeDisplay() {
   let h12 = hh % 12; if (h12 === 0) h12 = 12;
   return `${h12}:${String(mm).padStart(2, '0')} ${ampm}`;
 }
+// How many minutes before the main alarm the heads-up alarm fires, editable
+// on the Sleep screen (defaults to 5 to match the original ask).
+const ALARM_LEAD_KEY = 'morningDewAlarmLeadMin';
+const RD_LEAD_OPTIONS = [5, 10, 15, 20, 30];
+function rdAlarmLeadMin() {
+  const v = Number(lsGet(ALARM_LEAD_KEY, 5));
+  return RD_LEAD_OPTIONS.includes(v) ? v : 5;
+}
+function rdSetAlarmLeadMin(v) {
+  const n = Number(v);
+  if (RD_LEAD_OPTIONS.includes(n)) lsSet(ALARM_LEAD_KEY, n);
+}
 function rdSleepDebtHours() {
   const nights = sleepHistory().slice(0, 5);
   if (!nights.length) return 0;
@@ -3237,24 +3250,43 @@ function rdRecommended(h) {
 // iOS gives web content no API to create a Clock-app alarm directly (by
 // design — otherwise any website could spam a user's alarms). The closest
 // real integration is a user-created Shortcut (built once, using the
-// Shortcuts app's own "Set Alarm" action) that we hand a wake time to via
+// Shortcuts app's own "Set Alarm" action) that we hand wake times to via
 // the shortcuts:// URL scheme. See rdAlarmSetupHelp() for the one-time
 // setup text shown to the user.
+//
+// We send BOTH the exact wake time and a "heads-up" time (lead minutes
+// earlier) as one comma-joined string, computed from the SAME target date —
+// never independently re-rolled to "next occurrence" — so the early alarm
+// always lands on the same day as the exact one, even right at the moment
+// the earlier time-of-day has already passed today but the exact time
+// hasn't. Passing both values means the lead time is fully adjustable from
+// the app; the Shortcut itself never needs to do date math.
 const RD_ALARM_SHORTCUT_NAME = 'Morning Dew Alarm';
-function rdNextWakeIso(wakeMinutes) {
+function rdNextWakeDate(wakeMinutes) {
   const now = new Date();
   const hh = Math.floor(wakeMinutes / 60), mm = wakeMinutes % 60;
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
   if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 1);
+  return d;
+}
+function rdIsoLocal(d) {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 }
 function rdAlarmShortcutUrl(wakeMinutes) {
-  const iso = rdNextWakeIso(wakeMinutes);
-  return `shortcuts://run-shortcut?name=${encodeURIComponent(RD_ALARM_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(iso)}`;
+  const lead = rdAlarmLeadMin();
+  const exactDate = rdNextWakeDate(wakeMinutes);
+  const earlyDate = new Date(exactDate.getTime() - lead * 60000);
+  const combined = `${rdIsoLocal(exactDate)},${rdIsoLocal(earlyDate)}`;
+  // ephemeral=1 asks Shortcuts to run without switching the visible app to
+  // Shortcuts. It's Apple's own lever for this — there's no way for the web
+  // app itself to suppress the switch. Some iOS versions may still flash a
+  // brief system confirmation for actions like Set Alarm; that's outside
+  // what any web code can control.
+  return `shortcuts://run-shortcut?name=${encodeURIComponent(RD_ALARM_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(combined)}&ephemeral=1`;
 }
 function rdAlarmSetupHelp() {
-  alert(`One-time setup (about 2 minutes):\n\n1. Open the Shortcuts app.\n2. Tap + to create a new shortcut.\n3. Name it exactly: "${RD_ALARM_SHORTCUT_NAME}"\n4. Add the action "Get Dates from Input" (search "date").\n5. Add the action "Set Alarm" below it — tap its Time field and choose the date variable from step 4.\n6. Save.\n\nAfter that, tapping "Set Alarm" here will open Shortcuts and create a real Clock alarm for your chosen wake time. iOS may show a brief confirmation before it runs — that's normal.`);
+  alert(`One-time setup (about 3 minutes) — this creates TWO alarms per tap: your exact wake time, and a heads-up alarm however many minutes earlier you've set below.\n\n1. Open the Shortcuts app.\n2. Tap + to create a new shortcut.\n3. Name it exactly: "${RD_ALARM_SHORTCUT_NAME}"\n4. Add "Split Text" — set Text to Shortcut Input, set Separator to Custom, and type a single comma ",".\n5. Add "Get Dates from Input" — set Input to the Split Text result, choosing its First Item. This is your exact wake time.\n6. Add "Set Alarm" — set Time to the date from step 5.\n7. Add "Get Dates from Input" again — set Input to the Split Text result, this time choosing its Last Item. This is the heads-up time.\n8. Add "Set Alarm" again — set Time to the date from step 7.\n9. Save.\n\nAfter that, tapping "Set Alarm" here creates both Clock alarms in one go, and stays in this app instead of switching to Shortcuts (a brief system flash is still possible on some iOS versions — that's Apple's Shortcuts runtime, not something a website can suppress).`);
 }
 function rdDesc(rec) {
   return rec >= 67
@@ -3352,7 +3384,9 @@ function rdSleepContent(h, recArg) {
     insight = `You slept ${rdFmtDuration(h.sleepHours)} last night. Aiming for lights out around ${r.bedtime} should keep tomorrow's readiness high.`;
   }
   const wakeStr = rdWakeTimeStr();
+  const leadMin = rdAlarmLeadMin();
   const alarmUrl = rdAlarmShortcutUrl(rdWakeTimeMinutes());
+  const leadOptionsHtml = RD_LEAD_OPTIONS.map((m) => `<option value="${m}"${m === leadMin ? ' selected' : ''}>${m} min before</option>`).join('');
   return `<div class="rd-wake-row">
       <div class="rd-wake-lbl"><span class="rd-tile-ic">${RD_SUNRISE}</span>Wake me up at</div>
       <input class="rd-wake-input" id="rdWakeInput" type="time" value="${escapeHtml(wakeStr)}" />
@@ -3361,8 +3395,12 @@ function rdSleepContent(h, recArg) {
       <div class="rd-tile"><div class="rd-tile-ic">${RD_BED}</div><div class="rd-tile-val">${escapeHtml(r.bedtime)}</div><div class="rd-tile-lbl">Recommended bedtime</div></div>
       <div class="rd-tile"><div class="rd-tile-ic">${RD_CLOCK}</div><div class="rd-tile-val">${escapeHtml(r.duration)}</div><div class="rd-tile-lbl">Recommended sleep</div></div>
     </div>
+    <div class="rd-wake-row">
+      <div class="rd-wake-lbl"><span class="rd-tile-ic">${RD_ALARM_ICON_LIGHT}</span>Heads-up alarm</div>
+      <select class="rd-wake-input" id="rdLeadSelect">${leadOptionsHtml}</select>
+    </div>
     <div class="rd-alarm-row">
-      <a class="rd-alarm-btn" href="${escapeHtml(alarmUrl)}">${RD_ALARM_ICON}Set Alarm for ${escapeHtml(rdWakeTimeDisplay())}</a>
+      <a class="rd-alarm-btn" href="${escapeHtml(alarmUrl)}">${RD_ALARM_ICON}Set Alarm — ${escapeHtml(rdWakeTimeDisplay())} + ${leadMin}m early</a>
       <button class="rd-alarm-help" id="rdAlarmHelp">How this works</button>
     </div>
     <div class="rd-sec"><div class="rd-sh">Wind down by ${escapeHtml(r.windDown)}</div><div class="rd-sp">${escapeHtml(insight)}</div></div>`;
@@ -3886,6 +3924,12 @@ document.getElementById('healthPage').addEventListener('change', (e) => {
   const input = e.target.closest('#rdWakeInput');
   if (input && input.value) {
     rdSetWakeTime(input.value);
+    if (healthOpen && healthTab === 'sleep') renderHealthPage();
+    return;
+  }
+  const lead = e.target.closest('#rdLeadSelect');
+  if (lead && lead.value) {
+    rdSetAlarmLeadMin(lead.value);
     if (healthOpen && healthTab === 'sleep') renderHealthPage();
   }
 });
