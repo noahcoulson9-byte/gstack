@@ -1,4 +1,4 @@
-const CACHE_NAME = 'morning-dew-v50';
+const CACHE_NAME = 'morning-dew-v51';
 // Minimal offline shell only. Larger/optional files (e.g. the readiness hero
 // image) are cached on demand by the network-first fetch handler below — they
 // are intentionally NOT precached, because cache.addAll is atomic: one failed
