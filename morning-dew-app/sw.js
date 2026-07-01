@@ -1,10 +1,15 @@
-const CACHE_NAME = 'morning-dew-v46';
-const ASSETS = ['./', './index.html', './manifest.json', './offline.html', './icons/icon-192.png', './icons/icon-512.png', './assets/readiness-hero.jpg'];
+const CACHE_NAME = 'morning-dew-v47';
+// Minimal offline shell only. Larger/optional files (e.g. the readiness hero
+// image) are cached on demand by the network-first fetch handler below — they
+// are intentionally NOT precached, because cache.addAll is atomic: one failed
+// fetch would abort the whole install and strand the user on the old worker.
+const ASSETS = ['./', './index.html', './manifest.json', './offline.html', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
+  // Resilient install: a single missing/blocked asset must not abort activation.
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(ASSETS))
+      .then((cache) => Promise.allSettled(ASSETS.map((asset) => cache.add(asset))))
       .then(() => self.skipWaiting())
   );
 });
