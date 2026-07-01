@@ -247,6 +247,50 @@
   .hd-target-row { display: flex; justify-content: space-between; align-items: center; }
   .hd-target-band { font-size: 1.2rem; font-weight: 800; color: var(--bar-orange); }
   .hd-chart-hdr { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.6rem; }
+
+  /* Oura-style Health full-screen page */
+  .health-page {
+    position: fixed; inset: 0; z-index: 60;
+    background: linear-gradient(168deg, #0e2018 0%, #0a1510 55%, #07100d 100%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column;
+    animation: debriefIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .health-page[hidden] { display: none; }
+  .health-page.closing { animation: debriefOut 0.22s ease forwards; }
+  .hp-back-row { display: flex; align-items: center; gap: 0.8rem; padding: calc(env(safe-area-inset-top) + 0.8rem) 1.1rem 0; flex-shrink: 0; }
+  .hp-stat-bar { display: flex; justify-content: space-around; padding: 0.9rem 1rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+  .hp-stat { text-align: center; }
+  .hp-stat-val { font-size: 1.35rem; font-weight: 700; }
+  .hp-stat-lbl { font-size: 0.59rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); margin-top: 0.12rem; }
+  .hp-hero { text-align: center; padding: 2rem 1.5rem 1.25rem; position: relative; }
+  .hp-hero-glow { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); width: 220px; height: 220px; border-radius: 50%; pointer-events: none; }
+  .hp-hero-num { font-size: 5.5rem; font-weight: 200; letter-spacing: -0.04em; line-height: 1; position: relative; }
+  .hp-hero-cat { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-top: 0.5rem; }
+  .hp-hero-headline { font-size: 1.75rem; font-weight: 700; margin-top: 0.4rem; }
+  .hp-hero-trend { font-size: 0.82rem; color: rgba(255,255,255,0.45); margin-top: 0.55rem; }
+  .hp-metrics { padding: 0 1rem 0.5rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  .hp-metric-row { display: flex; align-items: center; gap: 0.85rem; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 0.85rem 1rem; border: 1px solid rgba(255,255,255,0.06); }
+  .hp-metric-icon { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  .hp-metric-body { flex: 1; min-width: 0; }
+  .hp-metric-name { font-size: 0.9rem; font-weight: 600; }
+  .hp-status-pill { display: inline-block; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 20px; margin-top: 0.22rem; }
+  .hp-pill-green { background: rgba(52,201,138,0.18); color: #5fd39b; }
+  .hp-pill-orange { background: rgba(255,159,67,0.18); color: #ffb347; }
+  .hp-pill-red { background: rgba(255,107,107,0.18); color: #ff8080; }
+  .hp-pill-blue { background: rgba(100,150,255,0.18); color: #7fa8ff; }
+  .hp-metric-right { text-align: right; flex-shrink: 0; }
+  .hp-metric-val { font-size: 1.55rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1; }
+  .hp-metric-unit { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
+  .hp-metric-bar { width: 4rem; height: 3px; background: rgba(255,255,255,0.12); border-radius: 3px; margin-top: 0.35rem; margin-left: auto; overflow: hidden; }
+  .hp-metric-bar-fill { height: 100%; border-radius: 3px; }
+  .hp-metric-chev { color: rgba(255,255,255,0.2); margin-left: 0.3rem; font-size: 1rem; flex-shrink: 0; }
+  .hp-chart { padding: 0 1rem 0.5rem; }
+  .hp-chart-hdr { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(255,255,255,0.4); margin-bottom: 0.65rem; }
+  .hp-footer { padding: 0.75rem 1rem calc(env(safe-area-inset-bottom) + 5rem); }
+  .hp-update-btn { width: 100%; padding: 0.8rem; border-radius: 14px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .hp-update-btn:active { background: rgba(255,255,255,0.13); }
+
   .tile-icon { font-size: 1.7rem; line-height: 1; }
   .tile-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
   .tile-value { font-size: 1.55rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
@@ -1037,6 +1081,14 @@
     <button class="detail-back debrief-refresh-btn" data-debrief-refresh aria-label="Refresh">⟳</button>
   </div>
   <div id="debriefContent"></div>
+</div>
+
+<div class="health-page" id="healthPage" hidden>
+  <div class="hp-back-row">
+    <button class="detail-back" id="healthBack" aria-label="Back">‹</button>
+    <div class="detail-title">Readiness</div>
+  </div>
+  <div id="healthPageContent"></div>
 </div>
 
 <script>
@@ -2495,6 +2547,7 @@ function closeDebrief() {
 window.addEventListener('popstate', () => {
   if (currentDetail !== null) closeDetail();
   if (debriefOpen) closeDebrief();
+  if (healthOpen) closeHealth();
 });
 
 // Re-renders whichever section is open (after a task/brief/review mutation).
@@ -2832,7 +2885,7 @@ async function fetchHealth() {
     if (overview.healthConfigured === undefined) overview.healthConfigured = false;
   }
   renderHealth();
-  if (currentDetail === 'health') openDetail('health');
+  if (healthOpen) renderHealthPage();
   fetchBrief();
 }
 
@@ -2856,6 +2909,167 @@ function renderHealth() {
     <div class="nd-readiness-triad-head"><b>Readiness</b><span style="margin-left:auto;display:flex;align-items:center;gap:0.4rem"><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</span></div>
     <div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${strainRing}</div>
   </div>`;
+}
+
+// ---- Oura-style Health page helpers ----
+function recoveryHeadline(r) {
+  if (r >= 80) return "Go get 'em";
+  if (r >= 67) return 'Ready to push';
+  if (r >= 50) return 'Pace yourself';
+  if (r >= 34) return 'Take it steady';
+  return 'Rest up today';
+}
+function hpPill(label, cls) {
+  return `<div class="hp-status-pill hp-pill-${cls}">${escapeHtml(label)}</div>`;
+}
+function hpMetricRow(iconSvg, iconBg, name, pillHtml, valStr, unit, barPct, barColor) {
+  const bar = barPct != null
+    ? `<div class="hp-metric-bar"><div class="hp-metric-bar-fill" style="width:${Math.min(100,Math.max(0,barPct)).toFixed(1)}%;background:${barColor}"></div></div>` : '';
+  return `<div class="hp-metric-row">
+    <div class="hp-metric-icon" style="background:${iconBg}">${iconSvg}</div>
+    <div class="hp-metric-body">
+      <div class="hp-metric-name">${escapeHtml(name)}</div>
+      ${pillHtml}
+    </div>
+    <div class="hp-metric-right">
+      <div class="hp-metric-val">${escapeHtml(String(valStr))}</div>
+      ${unit ? `<div class="hp-metric-unit">${escapeHtml(unit)}</div>` : ''}
+      ${bar}
+    </div>
+    <span class="hp-metric-chev">›</span>
+  </div>`;
+}
+
+function healthPageHtml() {
+  const h = overview.health;
+  const rec = h ? h.recovery : null;
+
+  if (rec == null) {
+    return `<div style="padding:2.5rem 1.5rem;text-align:center">
+      <div style="font-size:3rem;margin-bottom:1rem">🌿</div>
+      <div style="font-size:1.15rem;font-weight:700;margin-bottom:0.75rem">No recovery data yet</div>
+      <div style="font-size:0.88rem;line-height:1.6;color:rgba(255,255,255,0.55);margin-bottom:2rem">Enter your Recovery % from Athlytic — saved on-device, no setup needed.</div>
+      <div class="hp-footer"><button class="hp-update-btn" data-set-recovery>Enter today's recovery</button></div>
+    </div>`;
+  }
+
+  const sleep = h.sleep;
+  const strain = h.strain;
+  const t = recoveryTrend();
+  const target = targetStrainRange(rec);
+  const recColor = rec >= 67 ? '#34c98a' : rec >= 34 ? '#ffb347' : '#ff6b6b';
+  const recGlow = rec >= 67 ? 'rgba(52,201,138,0.15)' : rec >= 34 ? 'rgba(255,179,71,0.12)' : 'rgba(255,107,107,0.12)';
+
+  // Top stat bar
+  const statItems = [
+    { val: String(rec), lbl: 'Recovery' },
+    sleep != null ? { val: `${Math.round(sleep * 10) / 10}`, lbl: 'Sleep' } : null,
+    strain != null ? { val: String(strain), lbl: 'Strain' } : null,
+    h.hrv != null ? { val: String(Math.round(h.hrv)), lbl: 'HRV' } : null,
+  ].filter(Boolean).slice(0, 4);
+  const statBarHtml = `<div class="hp-stat-bar">${statItems.map(({ val, lbl }) =>
+    `<div class="hp-stat"><div class="hp-stat-val">${escapeHtml(val)}</div><div class="hp-stat-lbl">${escapeHtml(lbl)}</div></div>`
+  ).join('')}</div>`;
+
+  const trendStr = t && t.delta !== 0
+    ? `${t.delta > 0 ? '↑' : '↓'} ${Math.abs(t.delta)} pts from ${t.previousScore} yesterday`
+    : t ? 'Holding steady from yesterday' : '';
+
+  const heroHtml = `<div class="hp-hero">
+    <div class="hp-hero-glow" style="background:radial-gradient(ellipse, ${recGlow} 0%, transparent 70%)"></div>
+    <div class="hp-hero-num" style="color:${recColor}">${rec}</div>
+    <div class="hp-hero-cat">Readiness</div>
+    <div class="hp-hero-headline">${escapeHtml(recoveryHeadline(rec))}</div>
+    ${trendStr ? `<div class="hp-hero-trend">${escapeHtml(trendStr)}</div>` : ''}
+  </div>`;
+
+  const SVG_HEART = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  const SVG_MOON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  const SVG_CLOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+  const SVG_ZAP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+  const SVG_WAVE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+  const SVG_TARGET = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
+
+  const rows = [];
+
+  // Readiness row
+  const recPill = rec >= 80 ? hpPill('OPTIMAL', 'green') : rec >= 67 ? hpPill('GOOD', 'green') : rec >= 34 ? hpPill('MODERATE', 'orange') : hpPill('NEEDS CARE', 'red');
+  rows.push(hpMetricRow(SVG_HEART, 'rgba(52,201,138,0.18)', 'Readiness', recPill, rec, null, rec, recColor));
+
+  // Sleep score
+  if (sleep != null) {
+    const sleepColor = sleep >= 67 ? '#34c98a' : sleep >= 40 ? '#ffb347' : '#ff6b6b';
+    const sleepPill = sleep >= 75 ? hpPill('GOOD', 'green') : sleep >= 40 ? hpPill('ADEQUATE', 'orange') : hpPill('SHORT', 'red');
+    rows.push(hpMetricRow(SVG_MOON, 'rgba(100,130,255,0.18)', 'Sleep', sleepPill, `${Math.round(sleep * 10) / 10}%`, null, sleep, sleepColor));
+  }
+
+  // Sleep hours
+  if (h.sleepHours != null) {
+    rows.push(hpMetricRow(SVG_CLOCK, 'rgba(100,130,255,0.12)', 'Sleep Duration', hpPill('DURATION', 'blue'), `${Math.round(h.sleepHours * 10) / 10}`, 'hrs', Math.min(100, (h.sleepHours / 9) * 100), '#7fa8ff'));
+  }
+
+  // Strain
+  if (strain != null) {
+    const strainColor = strain >= 67 ? '#ff6b6b' : strain >= 34 ? '#ffb347' : '#5fd39b';
+    const strainPill = strain >= 67 ? hpPill('HIGH', 'red') : strain >= 34 ? hpPill('MODERATE', 'orange') : hpPill('LIGHT', 'green');
+    rows.push(hpMetricRow(SVG_ZAP, 'rgba(255,159,67,0.18)', 'Strain', strainPill, strain, null, strain, strainColor));
+  }
+
+  // HRV
+  if (h.hrv != null) {
+    rows.push(hpMetricRow(SVG_WAVE, 'rgba(61,123,255,0.18)', 'HRV', hpPill('HEART RATE VAR', 'blue'), Math.round(h.hrv), 'ms', Math.min(100, (h.hrv / 120) * 100), '#7fa8ff'));
+  }
+
+  // Resting HR
+  if (h.restingHeartRate != null) {
+    const rhr = Math.round(h.restingHeartRate);
+    rows.push(hpMetricRow(SVG_HEART, 'rgba(255,80,100,0.18)', 'Resting HR', hpPill('HEART RATE', 'blue'), rhr, 'bpm', Math.max(0, 100 - ((rhr - 40) / 60) * 100), '#ff8080'));
+  }
+
+  // Target strain
+  if (target) {
+    rows.push(hpMetricRow(SVG_TARGET, 'rgba(255,200,50,0.15)', 'Target Strain', hpPill('RECOMMENDED', 'orange'), `${target.lo}–${target.hi}`, null, null, null));
+  }
+
+  // 7-day chart
+  const hist = recoveryHistory().slice(0, 7).reverse();
+  const chartHtml = hist.length >= 2
+    ? `<div class="hp-chart">
+        <div class="hp-chart-hdr">7-Day Recovery Trend</div>
+        <div class="recov-chart">${hist.map((d) => {
+          const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
+          const fill = d.score >= 67 ? 'linear-gradient(#5fd39b,#34c98a)' : d.score >= 34 ? 'linear-gradient(#ffcc70,#ff9f43)' : 'linear-gradient(#ff9a9a,#ff6b6b)';
+          return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%;background:${fill}"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
+        }).join('')}</div>
+      </div>` : '';
+
+  return `${statBarHtml}${heroHtml}
+    <div class="hp-metrics">${rows.join('')}</div>
+    ${chartHtml}
+    <div class="hp-footer"><button class="hp-update-btn" data-set-recovery>Update recovery</button></div>`;
+}
+
+let healthOpen = false;
+function renderHealthPage() {
+  const el = document.getElementById('healthPageContent');
+  if (el) el.innerHTML = healthPageHtml();
+}
+function openHealth() {
+  renderHealthPage();
+  const page = document.getElementById('healthPage');
+  page.classList.remove('closing');
+  page.hidden = false;
+  page.scrollTop = 0;
+  healthOpen = true;
+  document.body.style.overflow = 'hidden';
+  history.pushState({ health: true }, '');
+}
+function closeHealth() {
+  const page = document.getElementById('healthPage');
+  page.classList.add('closing');
+  setTimeout(() => { page.hidden = true; page.classList.remove('closing'); }, 220);
+  healthOpen = false;
+  document.body.style.overflow = '';
 }
 
 function healthDetailHtml() {
@@ -2960,7 +3174,7 @@ function setRecoveryManual() {
   recordRecoveryHistory(rec);
   if (overview.healthConfigured === undefined) overview.healthConfigured = true;
   renderHealth();
-  if (currentDetail === 'health') openDetail('health');
+  if (healthOpen) renderHealthPage();
   fetchBrief(true);
 }
 
@@ -3026,13 +3240,14 @@ document.addEventListener('click', (e) => {
     const type = trigger.getAttribute('data-detail');
     // The brief gets its own full-screen page (not a translucent sheet) — see Task 1.
     if (type === 'brief') openDebrief();
+    else if (type === 'health') openHealth();
     else openDetail(type);
   }
 });
 // Route the back button and Escape through history so the pushed state is
 // consumed (keeps the OS back gesture in sync via the popstate listener).
 document.getElementById('detailBack').addEventListener('click', () => { if (currentDetail !== null) history.back(); });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (currentDetail !== null || debriefOpen)) history.back(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (currentDetail !== null || debriefOpen || healthOpen)) history.back(); });
 // Pressing Return in the checklist input adds the reminder and keeps you typing.
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target && e.target.id === 'taskInput') { e.preventDefault(); commitTaskInput(); }
@@ -3047,9 +3262,10 @@ document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
 });
 
 document.getElementById('navHome').addEventListener('click', () => {
-  if (currentDetail !== null || debriefOpen) history.back();
+  if (currentDetail !== null || debriefOpen || healthOpen) history.back();
 });
-document.getElementById('navHealth').addEventListener('click', () => openDetail('health'));
+document.getElementById('navHealth').addEventListener('click', () => openHealth());
+document.getElementById('healthBack').addEventListener('click', () => { if (healthOpen) history.back(); });
 document.getElementById('navInbox').addEventListener('click', () => openDetail('inbox'));
 
 // ---------- Pull to refresh ----------
