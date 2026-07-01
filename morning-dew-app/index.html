@@ -251,13 +251,72 @@
   /* Oura-style Health full-screen page */
   .health-page {
     position: fixed; inset: 0; z-index: 60;
-    background: linear-gradient(168deg, #0e2018 0%, #0a1510 55%, #07100d 100%);
-    overflow-y: auto; -webkit-overflow-scrolling: touch;
-    display: flex; flex-direction: column;
+    background: #0b0e14;
+    overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
     animation: debriefIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .health-page[hidden] { display: none; }
   .health-page.closing { animation: debriefOut 0.22s ease forwards; }
+
+  /* ===== Readiness experience (Today / Sleep / Overview) ===== */
+  .rd-serif { font-family: Georgia, 'Times New Roman', serif; }
+  .rd-hero { position: relative; width: 100%; height: 512px; overflow: hidden; flex-shrink: 0; }
+  .rd-hero.rd-hero-short { height: 300px; }
+  .rd-hero-photo { position: absolute; inset: 0; background: url('assets/readiness-hero.jpg') center 42% / cover no-repeat; }
+  .rd-hero-overlay { position: absolute; inset: 0; background:
+    linear-gradient(180deg, rgba(8,11,16,0.62) 0%, rgba(8,11,16,0.22) 20%, rgba(8,11,16,0.30) 44%, rgba(10,13,17,0.82) 78%, #0b0e14 100%); }
+  .rd-topbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; padding: calc(env(safe-area-inset-top) + 12px) 20px 0; }
+  .rd-topbar .rd-wm { font-family: Georgia, 'Times New Roman', serif; font-size: 18px; letter-spacing: 0.28em; font-weight: 500; padding-left: 0.28em; color: #fff; }
+  .rd-topbar .rd-grp { display: flex; align-items: center; gap: 16px; }
+  .rd-menu { background: none; border: none; padding: 0; color: #fff; cursor: pointer; display: flex; }
+  .rd-rings { position: relative; z-index: 3; display: flex; gap: 20px; padding: 22px 0 0 22px; overflow: hidden; }
+  .rd-rstat { flex: 0 0 auto; width: 60px; display: flex; flex-direction: column; align-items: center; }
+  .rd-rwrap { position: relative; width: 58px; height: 58px; }
+  .rd-rwrap > svg { width: 58px; height: 58px; transform: rotate(-90deg); }
+  .rd-rcrown { position: absolute; top: 9px; left: 0; right: 0; display: flex; justify-content: center; }
+  .rd-rnum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; color: #fff; padding-top: 9px; }
+  .rd-rlabel { margin-top: 7px; font-size: 10.5px; color: rgba(255,255,255,0.72); white-space: nowrap; }
+  .rd-arc { position: relative; z-index: 3; margin-top: 6px; height: 150px; }
+  .rd-arc .rd-arc-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .rd-arc .rd-flame { position: absolute; left: 0; right: 0; bottom: 42px; display: flex; justify-content: center; }
+  .rd-arc .rd-endlabel { position: absolute; right: 62px; top: 46px; font-size: 10px; color: rgba(255,255,255,0.75); transform: rotate(24deg); letter-spacing: 0.04em; }
+  .rd-steps { position: relative; z-index: 3; text-align: center; margin-top: 2px; padding: 0 24px; }
+  .rd-kicker { font-size: 11px; letter-spacing: 0.22em; color: rgba(255,255,255,0.72); font-weight: 600; }
+  .rd-big { font-size: 46px; font-weight: 700; letter-spacing: -0.02em; margin-top: 8px; color: #fff; }
+  .rd-head { font-family: Georgia, 'Times New Roman', serif; font-size: 27px; font-weight: 500; margin-top: 6px; color: #fff; }
+  .rd-body { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.62); margin: 8px auto 0; max-width: 300px; overflow-wrap: break-word; }
+  .rd-learn { display: inline-block; margin-top: 16px; background: rgba(244,244,240,0.92); color: #16110c; font-size: 13px; font-weight: 600; padding: 9px 20px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; }
+  .rd-content { position: relative; padding: 4px 18px calc(env(safe-area-inset-bottom) + 118px); }
+  .rd-card { display: flex; align-items: center; gap: 13px; background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 14px 16px; margin-top: 10px; }
+  .rd-card .rd-cicon { width: 34px; height: 34px; border-radius: 50%; background: rgba(150,120,220,0.16); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .rd-card .rd-cbody { flex: 1; min-width: 0; }
+  .rd-card .rd-ctitle { font-size: 14.5px; font-weight: 700; color: #fff; }
+  .rd-card .rd-ctime { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #9b8cff; margin-top: 3px; }
+  .rd-card .rd-cchev { color: rgba(255,255,255,0.4); flex: 0 0 auto; }
+  .rd-sec { padding: 16px 4px 0; }
+  .rd-sec .rd-sh { font-family: Georgia, 'Times New Roman', serif; font-size: 25px; font-weight: 500; color: #fff; }
+  .rd-sec .rd-sp { font-size: 13px; line-height: 1.55; color: rgba(255,255,255,0.55); margin-top: 8px; overflow-wrap: break-word; }
+  .rd-tiles { display: flex; gap: 11px; padding: 0 4px; margin-top: 6px; }
+  .rd-tile { flex: 1; background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 15px 16px; }
+  .rd-tile-ic { color: #8ea6d6; margin-bottom: 8px; }
+  .rd-tile-val { font-size: 25px; font-weight: 800; color: #fff; }
+  .rd-tile-lbl { font-size: 11.5px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .rd-ovhead { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 500; padding: 6px 6px 0; color: #fff; }
+  .rd-ovgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; padding: 14px 6px 0; }
+  .rd-ovcard { background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 14px 16px; }
+  .rd-ovtop { display: flex; align-items: center; justify-content: space-between; }
+  .rd-ovlbl { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+  .rd-ovtrend { font-size: 12px; font-weight: 800; }
+  .rd-ovtrend.up { color: #4fd39b; } .rd-ovtrend.down { color: #ff8080; } .rd-ovtrend.flat { color: rgba(255,255,255,0.4); }
+  .rd-ovval { font-size: 30px; font-weight: 800; color: #fff; margin-top: 8px; line-height: 1; }
+  .rd-ovunit { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.5); margin-left: 3px; }
+  .rd-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 18px); z-index: 20; display: flex; align-items: center; gap: 26px; background: rgba(35,39,45,0.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 30px; padding: 11px 22px; box-shadow: 0 12px 34px rgba(0,0,0,0.5); }
+  .rd-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; color: rgba(255,255,255,0.55); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+  .rd-tab.active { color: #fff; }
+  .rd-tab span { font-size: 10px; font-weight: 600; }
+  .rd-fab { width: 40px; height: 40px; border-radius: 50%; background: #2c333e; display: flex; align-items: center; justify-content: center; color: #fff; margin-left: 6px; border: none; cursor: pointer; }
+  .rd-fab.spin { animation: rdspin 0.8s linear infinite; }
+  @keyframes rdspin { to { transform: rotate(360deg); } }
   .hp-back-row { display: flex; align-items: center; gap: 0.8rem; padding: calc(env(safe-area-inset-top) + 0.8rem) 1.1rem 0; flex-shrink: 0; }
   .hp-stat-bar { display: flex; justify-content: space-around; padding: 0.9rem 1rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
   .hp-stat { text-align: center; }
@@ -1175,11 +1234,7 @@
   <div id="debriefContent"></div>
 </div>
 
-<div class="health-page" id="healthPage" hidden>
-  <div class="hp-back-row">
-    <button class="detail-back" id="healthBack" aria-label="Back">‹</button>
-    <div class="detail-title">Readiness</div>
-  </div>
+<div class="health-page rd-page" id="healthPage" hidden>
   <div id="healthPageContent"></div>
 </div>
 
@@ -3062,134 +3117,177 @@ function hpMetricRow(iconSvg, iconBg, name, pillHtml, valStr, unit, barPct, barC
   </div>`;
 }
 
+// ---- Readiness experience (Today / Sleep / Overview) ----
+let healthTab = 'today';
+const RD_CROWN = '<svg width="13" height="9" viewBox="0 0 24 18" fill="rgba(255,255,255,0.95)"><path d="M2 16 L2 5 L8 9 L12 2 L16 9 L22 5 L22 16 Z"/></svg>';
+const RD_HEART = '<svg width="12" height="11" viewBox="0 0 24 24" fill="rgba(255,255,255,0.95)"><path d="M12 21C10.5 19.7 5 15.6 5 10.5A4.5 4.5 0 0 1 12 6.9 4.5 4.5 0 0 1 19 10.5C19 15.6 13.5 19.7 12 21z"/></svg>';
+const RD_MENU = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>';
+const RD_SHARE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+const RD_TARGET_IC = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8" fill="#fff" stroke="none"/></svg>';
+const RD_FLAME = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3c1 3 4 4.5 4 8a4 4 0 0 1-8 0c0-1.2.4-2 1-2.8C9 10 9 12 10 13c-.3-2 1-3.5 2-4.5.6 1 .5 2 0 3 1-.3 1.6-1.4 1.6-2.6C15.4 6.5 13.5 4.8 12 3z"/></svg>';
+const RD_MOON = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.7" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z"/></svg>';
+const RD_WAVE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b79cff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-6 10-6 10 6 10 6"/><path d="M4 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 4-1.5"/></svg>';
+const RD_BED = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z"/></svg>';
+const RD_CLOCK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8ea6d6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const RD_CHEV = '<svg class="rd-cchev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+const RD_NAV_SUN = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>';
+const RD_NAV_MOON = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 6.5 6.5 0 1 0 20 14.5z"/></svg>';
+const RD_NAV_GRID = '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>';
+const RD_PLUS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>';
+const RD_ARC = '<svg class="rd-arc-svg" viewBox="0 0 402 150" fill="none"><path d="M36 118 Q 150 44 250 60" stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 7"/><path d="M36 118 Q 138 52 214 60" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/><circle cx="214" cy="60" r="3.4" fill="#fff"/></svg>';
+
+function rdFmtDuration(hrs) {
+  if (hrs == null || !isFinite(hrs)) return '—';
+  const H = Math.floor(hrs), M = Math.round((hrs - H) * 60);
+  return M === 60 ? `${H + 1}h 00m` : `${H}h ${String(M).padStart(2, '0')}m`;
+}
+// Recommended bedtime = fixed wake target (06:45) minus recommended duration (8h).
+function rdRecommended() {
+  const wakeMin = 6 * 60 + 45, durMin = 8 * 60;
+  const to12 = (mins) => {
+    mins = ((mins % 1440) + 1440) % 1440;
+    const h = Math.floor(mins / 60), m = mins % 60, ampm = h >= 12 ? 'PM' : 'AM';
+    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    return { s: `${h12}:${String(m).padStart(2, '0')} ${ampm}`, short: `${h12}:${String(m).padStart(2, '0')}` };
+  };
+  const bed = to12(wakeMin - durMin);
+  const wind = to12(wakeMin - durMin - 30);
+  return { bedtime: bed.s, duration: '8h 00m', windDown: wind.short };
+}
+function rdDesc(rec) {
+  return rec >= 67
+    ? 'Your recovery is trending up and your body is primed for a higher training load today, so lean into it and keep an eye on strain.'
+    : rec >= 34
+    ? "You're in a moderate state of readiness. Pace yourself through the day and prioritize your most important tasks."
+    : 'Your body is asking for rest. Focus on light activities and give yourself time to recover and recharge.';
+}
+function rdRing(val, display, label, icon) {
+  const R = 26, C = 2 * Math.PI * R;
+  const v = (val == null || !isFinite(val)) ? null : Math.max(0, Math.min(100, val));
+  const off = v == null ? C : C * (1 - v / 100);
+  const prog = v == null ? '' : `<circle cx="29" cy="29" r="${R}" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>`;
+  return `<div class="rd-rstat"><div class="rd-rwrap">
+    <svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${R}" stroke="rgba(255,255,255,0.22)" stroke-width="3" fill="none"/>${prog}</svg>
+    <div class="rd-rcrown">${icon === 'heart' ? RD_HEART : RD_CROWN}</div><div class="rd-rnum">${escapeHtml(String(display))}</div></div>
+    <div class="rd-rlabel">${escapeHtml(label)}</div></div>`;
+}
+function rdRingsHtml(h) {
+  const rhr = h.restingHeartRate != null ? Math.round(h.restingHeartRate) : null;
+  const activity = h.activity != null ? h.activity
+    : (h.steps != null && h.moveGoal) ? Math.round(h.steps / h.moveGoal * 100) : null;
+  const hrFill = rhr != null ? Math.max(4, Math.min(100, 100 - ((rhr - 40) / 60) * 100)) : null;
+  return `<div class="rd-rings">
+    ${rdRing(h.recovery, h.recovery != null ? h.recovery : '–', 'Readiness', 'crown')}
+    ${rdRing(h.sleep, h.sleep != null ? Math.round(h.sleep) : '–', 'Sleep', 'crown')}
+    ${rdRing(activity, activity != null ? activity : '–', 'Activity', 'crown')}
+    ${rdRing(hrFill, rhr != null ? rhr : '–', 'Heart rate', 'heart')}
+    ${rdRing(h.strain, h.strain != null ? h.strain : '–', 'Strain', 'crown')}
+  </div>`;
+}
+function rdHeroTop() {
+  return `<div class="rd-topbar">
+    <button class="rd-menu" id="healthBack" aria-label="Back">${RD_MENU}</button>
+    <div class="rd-wm">MORNING</div>
+    <div class="rd-grp">${RD_SHARE}${RD_TARGET_IC}</div>
+  </div>`;
+}
+function rdTodayMiddle(h) {
+  const goal = h.moveGoal || 15000;
+  const steps = h.steps != null ? h.steps : null;
+  const pct = steps != null ? steps / goal * 100 : null;
+  const head = steps == null ? recoveryHeadline(h.recovery)
+    : pct >= 100 ? 'Goal complete' : pct >= 60 ? 'Making progress' : 'Getting started';
+  const body = steps == null
+    ? 'Connect Apple Health to track your steps and move goal here.'
+    : "Today's activity goal is above baseline as your readiness is optimal.";
+  return `<div class="rd-arc">${RD_ARC}<div class="rd-endlabel">${escapeHtml(goal.toLocaleString())}</div><div class="rd-flame">${RD_FLAME}</div></div>
+    <div class="rd-steps">
+      <div class="rd-kicker">STEPS PROGRESS</div>
+      <div class="rd-big">${escapeHtml(steps != null ? steps.toLocaleString() : '—')}</div>
+      <div class="rd-head">${escapeHtml(head)}</div>
+      <div class="rd-body">${escapeHtml(body)}</div>
+      <button class="rd-learn" data-rdtab="overview">Learn more</button>
+    </div>`;
+}
+function rdSleepMiddle(h) {
+  const score = h.sleep;
+  const head = score == null ? 'Sleep' : score >= 75 ? 'Well rested' : score >= 40 ? 'Decent night' : 'Short night';
+  const body = h.sleepHours != null
+    ? `You slept ${Math.round((h.sleepHours / 8) * 100)}% of your 8 hour target. Keeping a consistent schedule protects tomorrow's recovery.`
+    : 'Connect your sleep data to see last night here.';
+  return `<div class="rd-arc">${RD_ARC}<div class="rd-endlabel">8h</div><div class="rd-flame">${RD_MOON}</div></div>
+    <div class="rd-steps">
+      <div class="rd-kicker">SLEEP LAST NIGHT</div>
+      <div class="rd-big">${escapeHtml(rdFmtDuration(h.sleepHours))}</div>
+      <div class="rd-head">${escapeHtml(head)}</div>
+      <div class="rd-body">${escapeHtml(body)}</div>
+    </div>`;
+}
+function rdTodayContent(h) {
+  const t = recoveryTrend();
+  const trendTxt = t
+    ? (t.delta > 0 ? `Up ${t.delta} from yesterday` : t.delta < 0 ? `Down ${Math.abs(t.delta)} from yesterday` : 'Holding steady')
+    : 'Updated just now';
+  return `<div class="rd-card">
+      <div class="rd-cicon">${RD_WAVE}</div>
+      <div class="rd-cbody"><div class="rd-ctitle">Recovery Trend</div><div class="rd-ctime">${escapeHtml(trendTxt.toUpperCase())}</div></div>
+      ${RD_CHEV}
+    </div>
+    <div class="rd-sec"><div class="rd-sh">${escapeHtml(recoveryHeadline(h.recovery))}</div><div class="rd-sp">${escapeHtml(rdDesc(h.recovery))}</div></div>`;
+}
+function rdSleepContent(h) {
+  const r = rdRecommended();
+  const insight = h.sleepHours != null
+    ? `You slept ${rdFmtDuration(h.sleepHours)} last night. Aiming for lights out around ${r.bedtime} should keep tomorrow's readiness high.`
+    : "Track a few nights and we'll tailor your bedtime to hit your target consistently.";
+  return `<div class="rd-tiles">
+      <div class="rd-tile"><div class="rd-tile-ic">${RD_BED}</div><div class="rd-tile-val">${escapeHtml(r.bedtime)}</div><div class="rd-tile-lbl">Recommended bedtime</div></div>
+      <div class="rd-tile"><div class="rd-tile-ic">${RD_CLOCK}</div><div class="rd-tile-val">${escapeHtml(r.duration)}</div><div class="rd-tile-lbl">Recommended sleep</div></div>
+    </div>
+    <div class="rd-sec"><div class="rd-sh">Wind down by ${escapeHtml(r.windDown)}</div><div class="rd-sp">${escapeHtml(insight)}</div></div>`;
+}
+function rdOvCard(lbl, val, unit, delta) {
+  let trend = '';
+  if (delta != null && delta !== 0) trend = `<span class="rd-ovtrend ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '▲' : '▼'}${Math.abs(delta)}</span>`;
+  return `<div class="rd-ovcard"><div class="rd-ovtop"><span class="rd-ovlbl">${escapeHtml(lbl)}</span>${trend}</div><div class="rd-ovval">${escapeHtml(String(val))}${unit ? `<span class="rd-ovunit">${unit}</span>` : ''}</div></div>`;
+}
+function rdOverviewContent(h) {
+  const t = recoveryTrend();
+  const cards = [
+    rdOvCard('Readiness', h.recovery != null ? h.recovery : '—', '', t ? t.delta : null),
+    rdOvCard('Sleep', h.sleepHours != null ? rdFmtDuration(h.sleepHours) : (h.sleep != null ? Math.round(h.sleep) : '—'), '', null),
+    rdOvCard('Steps', h.steps != null ? h.steps.toLocaleString() : '—', '', null),
+    rdOvCard('Strain', h.strain != null ? h.strain : '—', '', null),
+    rdOvCard('HRV', h.hrv != null ? Math.round(h.hrv) : '—', 'ms', null),
+    rdOvCard('Resting HR', h.restingHeartRate != null ? Math.round(h.restingHeartRate) : '—', 'bpm', null),
+  ];
+  return `<div class="rd-ovhead">Today's metrics</div><div class="rd-ovgrid">${cards.join('')}</div>`;
+}
+function rdNavHtml() {
+  const tabs = [['today', 'Today', RD_NAV_SUN], ['sleep', 'Sleep', RD_NAV_MOON], ['overview', 'Overview', RD_NAV_GRID]];
+  return `<div class="rd-nav">
+    ${tabs.map(([id, lab, ic]) => `<button class="rd-tab${healthTab === id ? ' active' : ''}" data-rdtab="${id}">${ic}<span>${lab}</span></button>`).join('')}
+    <button class="rd-fab" id="rdFab" aria-label="Refresh">${RD_PLUS}</button>
+  </div>`;
+}
 function healthPageHtml() {
   const h = overview.health;
   const rec = h ? h.recovery : null;
-  const sleep = h ? h.sleep : null;
-  const strain = h ? h.strain : null;
-  const hrv = h && h.hrv != null ? Math.round(h.hrv) : null;
-
-  if (rec == null) {
-    return `<div style="padding:2.5rem 1.5rem;text-align:center">
-      <div style="font-size:3rem;margin-bottom:1rem">🌿</div>
-      <div style="font-size:1.15rem;font-weight:700;margin-bottom:0.75rem">No recovery data yet</div>
-      <div style="font-size:0.88rem;line-height:1.6;color:rgba(255,255,255,0.55);margin-bottom:2rem">Enter your Recovery % from Athlytic — saved on-device, no setup needed.</div>
-      <div class="hp-footer"><button class="hp-update-btn" data-set-recovery>Enter today's recovery</button></div>
-    </div>`;
+  if (!h || rec == null) {
+    return `<div class="rd-hero rd-hero-short"><div class="rd-hero-photo"></div><div class="rd-hero-overlay"></div>${rdHeroTop()}</div>
+      <div class="rd-content"><div style="text-align:center;padding:2.5rem 1rem 1rem">
+        <div style="font-size:1.15rem;font-weight:700;margin-bottom:0.6rem;color:#fff">No recovery data yet</div>
+        <div style="font-size:0.88rem;line-height:1.6;color:rgba(255,255,255,0.55);margin-bottom:1.5rem">Enter your Recovery % from Athlytic — saved on-device, no setup needed.</div>
+        <button class="rd-learn" data-set-recovery>Enter today's recovery</button>
+      </div></div>${rdNavHtml()}`;
   }
-
-  const recColor = rec >= 67 ? '#34c98a' : rec >= 34 ? '#ffb347' : '#ff6b6b';
-  const t = recoveryTrend();
-  const target = targetStrainRange(rec);
-
-  // 4-tab number row
-  const tabDefs = [
-    { val: String(rec), lbl: 'Readiness' },
-    sleep != null ? { val: `${Math.round(sleep * 10) / 10}`, lbl: 'Sleep' } : null,
-    strain != null ? { val: String(strain), lbl: 'Strain' } : null,
-    hrv != null ? { val: String(hrv), lbl: 'HRV' } : null,
-  ].filter(Boolean).slice(0, 4);
-  const tabRowHtml = `<div class="hp-tab-row">
-    ${tabDefs.map((td, i) => `<button class="hp-tab${i === 0 ? ' active' : ''}" data-hp-tab="${i}">
-      <span class="hp-tab-val">${escapeHtml(td.val)}</span>
-      <span class="hp-tab-lbl">${escapeHtml(td.lbl)}</span>
-    </button>`).join('')}
-  </div>`;
-
-  // ---- Tab 0: Mountain hero overview ----
-  const descText = rec >= 67
-    ? `A great score has boosted your readiness. If there are challenging tasks on your list, today could be the day to tackle them.`
-    : rec >= 34
-    ? `You're in a moderate state of readiness. Pace yourself through the day and prioritize your most important tasks.`
-    : `Your body is asking for rest. Focus on light activities and give yourself time to recover and recharge.`;
-
-  // Mountain range SVG silhouette
-  const glowStop = rec >= 67 ? 'rgba(52,201,138,0.25)' : rec >= 34 ? 'rgba(255,179,71,0.2)' : 'rgba(255,107,107,0.2)';
-  const mountainSvg = `<svg style="position:absolute;bottom:0;left:0;width:100%;height:auto;display:block" viewBox="0 0 390 200" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-    <defs><radialGradient id="hpGlow" cx="38%" cy="20%" r="55%"><stop offset="0%" stop-color="${glowStop}"/><stop offset="100%" stop-color="transparent" stop-opacity="0"/></radialGradient></defs>
-    <rect width="390" height="200" fill="url(#hpGlow)"/>
-    <path d="M0,200 L0,125 L45,85 L95,108 L145,55 L200,95 L245,72 L295,102 L330,80 L375,98 L390,92 L390,200 Z" fill="rgba(8,22,17,0.75)"/>
-    <path d="M0,200 L0,155 L55,118 L95,138 L138,90 L175,122 L218,104 L262,128 L305,112 L348,130 L390,118 L390,200 Z" fill="rgba(5,13,10,0.96)"/>
-    <path d="M138,90 L124,114 L152,114 Z" fill="rgba(255,255,255,0.6)"/>
-    <path d="M138,90 L131,104 L145,104 Z" fill="rgba(255,255,255,0.82)"/>
-  </svg>`;
-
-  const sleepBadge = sleep != null
-    ? (sleep >= 75 ? ['GOOD', 'green'] : sleep >= 40 ? ['ADEQUATE', 'orange'] : ['SHORT', 'red'])
-    : null;
-
-  const tab0Html = `<div class="hp-tab-panel" id="hpPanel0">
-    <div class="hp-mountain-wrap">
-      <div class="hp-mountain-sky"></div>
-      ${mountainSvg}
-      <div class="hp-mountain-overlay">
-        <div class="hp-big-score" style="color:${recColor}">${rec}</div>
-        <div class="hp-score-cat">Readiness</div>
-        <div class="hp-motivation">${escapeHtml(recoveryHeadline(rec))}</div>
-        <p class="hp-hero-desc">${escapeHtml(descText)}</p>
-        <button class="hp-learn-btn" data-hp-tab-goto="1">Learn more</button>
-      </div>
-    </div>
-    ${sleepBadge ? `<div class="hp-secondary-row">
-      <span style="font-size:1.1rem">🌙</span>
-      <span class="hp-secondary-name">Sleep</span>
-      <span class="hp-secondary-badge hp-pill-${sleepBadge[1]}">${sleepBadge[0]}</span>
-    </div>` : ''}
-    ${t ? `<div class="hp-secondary-row" style="border-top:none;padding-top:0">
-      <span style="font-size:0.82rem;color:rgba(255,255,255,0.4)">${t.delta > 0 ? '↑' : t.delta < 0 ? '↓' : '→'} ${t.delta !== 0 ? Math.abs(t.delta) + ' pts from ' + t.previousScore + ' yesterday' : 'Holding steady from yesterday'}</span>
-    </div>` : ''}
-  </div>`;
-
-  // ---- Tab 1: Vitals metric rows ----
-  const SVG_HEART = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-  const SVG_MOON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-  const SVG_CLOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
-  const SVG_ZAP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
-  const SVG_WAVE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
-  const SVG_TARGET = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
-
-  const rows = [];
-  const recPill = rec >= 80 ? hpPill('OPTIMAL', 'green') : rec >= 67 ? hpPill('GOOD', 'green') : rec >= 34 ? hpPill('MODERATE', 'orange') : hpPill('NEEDS CARE', 'red');
-  rows.push(hpMetricRow(SVG_HEART, 'rgba(52,201,138,0.18)', 'Readiness', recPill, rec, null, rec, recColor));
-
-  if (sleep != null) {
-    const sc = sleep >= 67 ? '#34c98a' : sleep >= 40 ? '#ffb347' : '#ff6b6b';
-    rows.push(hpMetricRow(SVG_MOON, 'rgba(100,130,255,0.18)', 'Sleep', sleep >= 75 ? hpPill('GOOD', 'green') : sleep >= 40 ? hpPill('ADEQUATE', 'orange') : hpPill('SHORT', 'red'), `${Math.round(sleep * 10) / 10}%`, null, sleep, sc));
-  }
-  if (h.sleepHours != null) {
-    rows.push(hpMetricRow(SVG_CLOCK, 'rgba(100,130,255,0.12)', 'Sleep Duration', hpPill('DURATION', 'blue'), `${Math.round(h.sleepHours * 10) / 10}`, 'hrs', Math.min(100, (h.sleepHours / 9) * 100), '#7fa8ff'));
-  }
-  if (strain != null) {
-    const sc = strain >= 67 ? '#ff6b6b' : strain >= 34 ? '#ffb347' : '#5fd39b';
-    rows.push(hpMetricRow(SVG_ZAP, 'rgba(255,159,67,0.18)', 'Strain', strain >= 67 ? hpPill('HIGH', 'red') : strain >= 34 ? hpPill('MODERATE', 'orange') : hpPill('LIGHT', 'green'), strain, null, strain, sc));
-  }
-  if (hrv != null) {
-    rows.push(hpMetricRow(SVG_WAVE, 'rgba(61,123,255,0.18)', 'HRV', hpPill('HEART RATE VAR', 'blue'), hrv, 'ms', Math.min(100, (hrv / 120) * 100), '#7fa8ff'));
-  }
-  if (h.restingHeartRate != null) {
-    const rhr = Math.round(h.restingHeartRate);
-    rows.push(hpMetricRow(SVG_HEART, 'rgba(255,80,100,0.18)', 'Resting HR', hpPill('HEART RATE', 'blue'), rhr, 'bpm', Math.max(0, 100 - ((rhr - 40) / 60) * 100), '#ff8080'));
-  }
-  if (target) {
-    rows.push(hpMetricRow(SVG_TARGET, 'rgba(255,200,50,0.15)', 'Target Strain', hpPill('RECOMMENDED', 'orange'), `${target.lo}–${target.hi}`, null, null, null));
-  }
-
-  const hist = recoveryHistory().slice(0, 7).reverse();
-  const chartHtml = hist.length >= 2
-    ? `<div class="hp-chart"><div class="hp-chart-hdr">7-Day Recovery Trend</div>
-        <div class="recov-chart">${hist.map((d) => {
-          const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
-          const fill = d.score >= 67 ? 'linear-gradient(#5fd39b,#34c98a)' : d.score >= 34 ? 'linear-gradient(#ffcc70,#ff9f43)' : 'linear-gradient(#ff9a9a,#ff6b6b)';
-          return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%;background:${fill}"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
-        }).join('')}</div></div>` : '';
-
-  const tab1Html = `<div class="hp-tab-panel" id="hpPanel1" hidden>
-    <div class="hp-metrics" style="padding-top:0.75rem">${rows.join('')}</div>
-    ${chartHtml}
-    <div class="hp-footer"><button class="hp-update-btn" data-set-recovery>Update recovery</button></div>
-  </div>`;
-
-  return `${tabRowHtml}${tab0Html}${tab1Html}`;
+  const short = healthTab === 'overview';
+  const middle = short ? '' : (healthTab === 'sleep' ? rdSleepMiddle(h) : rdTodayMiddle(h));
+  const hero = `<div class="rd-hero${short ? ' rd-hero-short' : ''}"><div class="rd-hero-photo"></div><div class="rd-hero-overlay"></div>${rdHeroTop()}${rdRingsHtml(h)}${middle}</div>`;
+  const content = healthTab === 'sleep' ? rdSleepContent(h)
+    : healthTab === 'overview' ? rdOverviewContent(h)
+    : rdTodayContent(h);
+  return `${hero}<div class="rd-content">${content}</div>${rdNavHtml()}`;
 }
 
 let healthOpen = false;
@@ -3198,6 +3296,7 @@ function renderHealthPage() {
   if (el) el.innerHTML = healthPageHtml();
 }
 function openHealth() {
+  healthTab = 'today';
   renderHealthPage();
   const page = document.getElementById('healthPage');
   page.classList.remove('closing');
@@ -3207,9 +3306,12 @@ function openHealth() {
   document.body.style.overflow = 'hidden';
   history.pushState({ health: true }, '');
 }
-function hpSwitchTab(idx) {
-  document.querySelectorAll('#healthPage .hp-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-  document.querySelectorAll('#healthPage .hp-tab-panel').forEach((p, i) => { p.hidden = i !== idx; });
+function switchHealthTab(tab) {
+  if (tab === healthTab) return;
+  healthTab = tab;
+  renderHealthPage();
+  const page = document.getElementById('healthPage');
+  if (page) page.scrollTop = 0;
 }
 function closeHealth() {
   const page = document.getElementById('healthPage');
@@ -3644,12 +3746,17 @@ document.getElementById('newsPageContent').addEventListener('click', (e) => {
   if (newsTab === 'later' && !newsSearching) document.getElementById('newsPageContent').innerHTML = newsSavedHtml();
 });
 document.getElementById('navHealth').addEventListener('click', () => openHealth());
-document.getElementById('healthBack').addEventListener('click', () => { if (healthOpen) history.back(); });
 document.getElementById('healthPage').addEventListener('click', (e) => {
-  const tab = e.target.closest('[data-hp-tab]');
-  if (tab && !tab.closest('[data-hp-tab-goto]')) { hpSwitchTab(parseInt(tab.getAttribute('data-hp-tab'))); return; }
-  const goto = e.target.closest('[data-hp-tab-goto]');
-  if (goto) { hpSwitchTab(parseInt(goto.getAttribute('data-hp-tab-goto'))); return; }
+  const back = e.target.closest('#healthBack');
+  if (back) { if (healthOpen) history.back(); return; }
+  const tab = e.target.closest('[data-rdtab]');
+  if (tab) { switchHealthTab(tab.getAttribute('data-rdtab')); return; }
+  const fab = e.target.closest('#rdFab');
+  if (fab) {
+    fab.classList.add('spin');
+    Promise.resolve(fetchHealth()).finally(() => { const f = document.getElementById('rdFab'); if (f) f.classList.remove('spin'); });
+    return;
+  }
 });
 document.getElementById('navInbox').addEventListener('click', () => openDetail('inbox'));
 

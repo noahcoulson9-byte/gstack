@@ -1,5 +1,5 @@
-const CACHE_NAME = 'morning-dew-v45';
-const ASSETS = ['./', './index.html', './manifest.json', './offline.html', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE_NAME = 'morning-dew-v46';
+const ASSETS = ['./', './index.html', './manifest.json', './offline.html', './icons/icon-192.png', './icons/icon-512.png', './assets/readiness-hero.jpg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
