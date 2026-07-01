@@ -897,7 +897,7 @@
   .db-email-from { font-size: 0.82rem; font-weight: 700; flex-shrink: 0; max-width: 42%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .db-email-subj { font-size: 0.82rem; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; min-width: 0; }
 
-  .nd-readiness { display: flex; align-items: center; gap: 0.85rem; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; padding: 0.7rem 0.9rem; cursor: pointer; }
+  .nd-readiness { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; padding: 0.5rem 0.6rem; cursor: pointer; }
   .nd-recov-wrap { position: relative; width: 4.8rem; height: 4.8rem; flex-shrink: 0; }
   .nd-recov-wrap svg { width: 100%; height: 100%; display: block; }
   .nd-recov-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
@@ -1113,8 +1113,7 @@
     </div>
     <div class="nd-split-col">
       <section class="nd-readiness" data-detail="health" id="healthCard">
-        <div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
-          <div class="nd-recov-sub">Connecting your Apple Watch…</div></div>
+        <div class="nd-mini-rings" style="opacity:0.35"></div>
       </section>
       <section class="nd-ol" data-detail="inbox" id="inboxCard">
         <div class="nd-ol-empty">Loading…</div>
@@ -2964,20 +2963,12 @@ function renderHealth() {
   const h = overview.health;
   const rec = h ? h.recovery : null;
   if (rec == null) {
-    card.innerHTML = `<div class="nd-recov-body"><div class="nd-recov-title"><b>Readiness</b><span class="nd-tag">Athlytic</span></div>
-      <div class="nd-recov-sub">Tap to enter today's recovery →</div></div>${ND_CHEV_MUTED}`;
+    card.innerHTML = `<div class="nd-mini-rings">${miniRingHtml(null, 'gRecovery', 'Recovery')}${miniRingHtml(null, 'gSleep', 'Sleep')}${miniRingHtml(null, 'gStrain', 'Strain')}</div>`;
     return;
   }
-  const src = (h && h.source) ? h.source : 'Athlytic';
-  const t = recoveryTrend();
-  const chip = trendChip(t);
-  const chipHtml = chip ? `<span class="nd-trend ${t.delta > 0 ? 'up' : 'down'}">${chip}</span>` : '';
   const target = targetStrainRange(rec);
   const strainRing = miniRingHtml(h.strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target));
-  card.innerHTML = `<div class="nd-readiness-triad">
-    <div class="nd-readiness-triad-head"><b>Readiness</b><span style="margin-left:auto;display:flex;align-items:center;gap:0.4rem"><span class="nd-tag">${escapeHtml(src)}</span>${chipHtml}</span></div>
-    <div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${strainRing}</div>
-  </div>`;
+  card.innerHTML = `<div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${strainRing}</div>`;
 }
 
 // ---- Oura-style Health page helpers ----
