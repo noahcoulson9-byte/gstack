@@ -793,6 +793,25 @@
   .nd-hero-headline { font-size: 1.3rem; font-weight: 800; line-height: 1.16; letter-spacing: -0.01em; margin-top: 0.35rem; }
   .nd-hero-preview { font-size: 0.88rem; color: var(--muted); line-height: 1.35; margin-top: 0.35rem; }
   .nd-hero-cta { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.55rem; font-size: 0.88rem; font-weight: 700; color: var(--home-accent); cursor: pointer; }
+  .nd-hero { cursor: pointer; }
+  .nd-hero-glance { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem 0.7rem; margin-top: 0.65rem; }
+  .nd-glance-item { display: flex; flex-direction: column; gap: 0.1rem; }
+  .nd-glance-val { font-size: 1.1rem; font-weight: 800; line-height: 1.1; }
+  .nd-glance-lbl { font-size: 0.67rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+
+  .debrief-day-hdr { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--home-accent); margin: 1rem 0 0.35rem; padding: 0 0.25rem; }
+  .db-ev-row { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.42rem 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .db-ev-row:last-child { border-bottom: none; }
+  .db-ev-time { font-size: 0.75rem; font-weight: 700; color: var(--home-accent); min-width: 3.2rem; padding-top: 0.05rem; flex-shrink: 0; }
+  .db-ev-title { font-size: 0.88rem; line-height: 1.3; }
+  .db-health-row { display: flex; gap: 0.6rem; margin-top: 0.15rem; }
+  .db-health-stat { flex: 1; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 0.55rem 0.35rem; text-align: center; }
+  .db-health-val { font-size: 1.2rem; font-weight: 800; }
+  .db-health-lbl { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 0.1rem; }
+  .db-email-row { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.42rem 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .db-email-row:last-child { border-bottom: none; }
+  .db-email-from { font-size: 0.82rem; font-weight: 700; flex-shrink: 0; max-width: 42%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .db-email-subj { font-size: 0.82rem; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; min-width: 0; }
 
   .nd-readiness { display: flex; align-items: center; gap: 0.85rem; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 20px; padding: 0.7rem 0.9rem; cursor: pointer; }
   .nd-recov-wrap { position: relative; width: 4.8rem; height: 4.8rem; flex-shrink: 0; }
@@ -957,8 +976,8 @@
 
   <div class="nd-hero-wrap">
     <div class="nd-hero-glow"></div>
-    <section class="nd-hero" id="overviewCard">
-      <div class="nd-hero-label">Your brief</div>
+    <section class="nd-hero" id="overviewCard" data-detail="brief">
+      <div class="nd-hero-label">Today at a glance</div>
       <div class="nd-hero-preview">Building your overview…</div>
     </section>
   </div>
@@ -997,7 +1016,7 @@
 <div class="debrief-page" id="debriefPage" hidden>
   <div class="detail-header">
     <button class="detail-back" id="debriefBack" data-debrief-back aria-label="Back">‹</button>
-    <div class="detail-title">Your brief</div>
+    <div class="detail-title">Daily Debrief</div>
     <button class="detail-back debrief-refresh-btn" data-debrief-refresh aria-label="Refresh">⟳</button>
   </div>
   <div id="debriefContent"></div>
@@ -1426,20 +1445,29 @@ async function enablePush() {
 const ND_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
 const ND_CHEV_MUTED = '<span class="nd-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
 
-// Short "what's today" line for the brief-card fallback before the AI brief lands.
+// 4-up stat grid shown on the hero card — weather, next event, recovery, inbox.
 function glancePreviewHtml() {
-  const parts = [];
-  if (overview.weather) parts.push(`${overview.weather.temp}° ${overview.weather.label.toLowerCase()}`);
+  const items = [];
+  if (overview.weather) {
+    items.push({ val: `${overview.weather.temp}°`, lbl: overview.weather.label });
+  }
   if (overview.calendar) {
     const evs = todaysEvents();
     const now = new Date();
     const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
-    if (next) parts.push(`next: ${next.summary}${next.allDay ? '' : ' at ' + fmtClock(next.start)}`);
-    else parts.push('calendar clear');
+    if (next) items.push({ val: next.allDay ? 'All day' : fmtClock(next.start), lbl: next.summary });
+    else items.push({ val: '—', lbl: 'Clear today' });
   }
-  const urgent = overview.emailData ? overview.emailData.urgent.length : 0;
-  if (urgent) parts.push(`${urgent} urgent email${urgent > 1 ? 's' : ''}`);
-  return `<div class="nd-hero-preview">${parts.length ? escapeHtml(parts.join('  ·  ')) : 'Building your overview…'}</div>`;
+  const h = overview.health;
+  if (h && h.recovery != null) items.push({ val: `${h.recovery}%`, lbl: 'Recovery' });
+  if (overview.emailData) {
+    const u = overview.emailData.urgent.length;
+    items.push({ val: u ? String(u) : '0', lbl: u ? `Urgent email${u > 1 ? 's' : ''}` : 'Inbox clear' });
+  }
+  if (!items.length) return `<div class="nd-hero-preview">Building your overview…</div>`;
+  return `<div class="nd-hero-glance">${items.map(({ val, lbl }) =>
+    `<div class="nd-glance-item"><div class="nd-glance-val">${escapeHtml(String(val))}</div><div class="nd-glance-lbl">${escapeHtml(String(lbl))}</div></div>`
+  ).join('')}</div>`;
 }
 
 function renderOverview() {
@@ -1450,18 +1478,24 @@ function renderOverview() {
   if (hour >= 17 && !isReviewedToday()) {
     card.innerHTML = `<div class="nd-hero-label">Wrap up</div>
       <div class="nd-hero-headline">Review your day</div>
-      <div class="nd-hero-preview">2 minutes to close out today and keep your streak alive.</div>
+      ${glancePreviewHtml()}
       <div class="nd-hero-cta" data-detail="review">Start review ${ND_CHEV}</div>`;
     return;
   }
   if (overview.brief) {
+    const opener = typeof overview.brief === 'object' && overview.brief.opener
+      ? `<div class="nd-hero-preview">${escapeHtml(overview.brief.opener)}</div>` : '';
     card.innerHTML = `<div class="nd-hero-label">Your brief</div>
       <div class="nd-hero-headline">${escapeHtml(briefHeadline(overview.brief))}</div>
-      <div class="nd-hero-cta" data-detail="brief">Read full plan ${ND_CHEV}</div>`;
+      ${opener}
+      ${glancePreviewHtml()}
+      <div class="nd-hero-cta">Daily debrief ${ND_CHEV}</div>`;
     return;
   }
   if (overview.briefFetching) {
-    card.innerHTML = `<div class="nd-hero-label">Your brief</div><div class="nd-hero-preview">Writing your morning brief…</div>`;
+    card.innerHTML = `<div class="nd-hero-label">Your brief</div>
+      ${glancePreviewHtml()}
+      <div class="nd-hero-preview" style="margin-top:0.3rem;font-size:0.8rem">Writing your brief…</div>`;
     return;
   }
   card.innerHTML = `<div class="nd-hero-label">Today at a glance</div>${glancePreviewHtml()}`;
@@ -2233,32 +2267,89 @@ function debriefTomorrowHtml(t) {
     <div class="debrief-section-detail"><div>${mdToHtml(t.detail || '')}</div></div>
   </section>`;
 }
+function debriefTodayDataHtml() {
+  const parts = [];
+  const todayEvs = todaysEvents();
+  if (todayEvs.length) {
+    const rows = todayEvs.map((ev) => {
+      const t = ev.allDay ? 'All day' : fmtClock(ev.start);
+      return `<div class="db-ev-row"><span class="db-ev-time">${escapeHtml(t)}</span><span class="db-ev-title">${escapeHtml(ev.summary || '')}</span></div>`;
+    }).join('');
+    parts.push(`<section class="glass insight-card"><div class="insight-head">Schedule</div>${rows}</section>`);
+  }
+  if (overview.emailData && overview.emailData.urgent.length) {
+    const rows = overview.emailData.urgent.slice(0, 6).map((m) =>
+      `<div class="db-email-row"><span class="db-email-from">${escapeHtml(senderName(m.from))}</span><span class="db-email-subj">${escapeHtml(m.subject || '')}</span></div>`
+    ).join('');
+    parts.push(`<section class="glass insight-card"><div class="insight-head">Urgent inbox (${overview.emailData.urgent.length})</div>${rows}</section>`);
+  }
+  const h = overview.health;
+  if (h && h.recovery != null) {
+    const recColor = h.recovery >= 67 ? 'var(--ok)' : h.recovery >= 34 ? 'var(--bar-orange)' : 'var(--danger)';
+    const sleepStr = h.sleepHours != null ? `${h.sleepHours}h` : (h.sleep != null ? `${h.sleep}%` : '—');
+    parts.push(`<section class="glass insight-card"><div class="insight-head">Readiness</div>
+      <div class="db-health-row">
+        <div class="db-health-stat"><div class="db-health-val" style="color:${recColor}">${h.recovery}%</div><div class="db-health-lbl">Recovery</div></div>
+        <div class="db-health-stat"><div class="db-health-val">${sleepStr}</div><div class="db-health-lbl">Sleep</div></div>
+        <div class="db-health-stat"><div class="db-health-val" style="color:var(--bar-orange)">${h.strain != null ? h.strain : '—'}</div><div class="db-health-lbl">Strain</div></div>
+      </div></section>`);
+  }
+  return parts.join('');
+}
+
+function debriefTomorrowSectionHtml(b) {
+  const parts = [];
+  const tomorrowEvs = (overview.calendar || [])
+    .filter((e) => e.start && isTomorrow(e.start))
+    .sort((a, c) => (a.allDay ? 0 : new Date(a.start)) - (c.allDay ? 0 : new Date(c.start)));
+  if (tomorrowEvs.length) {
+    const rows = tomorrowEvs.map((ev) => {
+      const t = ev.allDay ? 'All day' : fmtClock(ev.start);
+      return `<div class="db-ev-row"><span class="db-ev-time">${escapeHtml(t)}</span><span class="db-ev-title">${escapeHtml(ev.summary || '')}</span></div>`;
+    }).join('');
+    parts.push(`<section class="glass insight-card"><div class="insight-head">Tomorrow's Schedule</div>${rows}</section>`);
+  }
+  if (b && b.tomorrow !== undefined) parts.push(debriefTomorrowHtml(b.tomorrow));
+  if (!parts.length) parts.push(`<section class="glass insight-card"><div class="empty-state">Nothing lined up yet — check back later.</div></section>`);
+  return parts.join('');
+}
+
 function debriefBodyHtml() {
   if (overview.briefConfigured === false) {
     return `<section class="glass insight-card"><div class="placeholder-state">The AI brief needs <code>ANTHROPIC_API_KEY</code> set on the server. Once it's set you'll get a written, time-blocked plan here each morning.</div></section>`;
   }
   if (overview.briefFetching && !overview.brief) {
-    return `<section class="glass insight-card"><div class="loading-state">✨ Writing your morning brief…</div></section>`;
+    return `<div class="debrief-day-hdr">Today</div>
+      <section class="glass insight-card"><div class="loading-state">✨ Writing your morning brief…</div></section>
+      ${debriefTodayDataHtml()}
+      <div class="debrief-day-hdr">Tomorrow</div>
+      ${debriefTomorrowSectionHtml(null)}`;
   }
   if (!overview.brief) {
-    return `<section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div><div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>Generate brief</button></div></section>
+    return `<div class="debrief-day-hdr">Today</div>
+      <section class="glass insight-card"><div class="empty-state">No brief yet${overview.briefError ? ' — ' + escapeHtml(overview.briefError) : ''}.</div>
+        <div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>Generate brief</button></div></section>
+      ${debriefTodayDataHtml()}
+      <div class="debrief-day-hdr">Tomorrow</div>
+      ${debriefTomorrowSectionHtml(null)}
       <div class="brief-actions">${pushButtonHtml()}</div>`;
   }
   const b = overview.brief;
-  let body;
+  let todayBrief = '';
   if (overview.briefStructured && typeof b === 'object' && Array.isArray(b.sections)) {
-    body = `<section class="glass insight-card brief-card">
+    todayBrief = `<section class="glass insight-card brief-card">
         <div class="brief-h" style="margin-top:0">${escapeHtml(b.headline || '')}</div>
         <p class="brief-p">${escapeHtml(b.opener || '')}</p>
       </section>
-      ${b.sections.map((s, i) => debriefSectionHtml(s, i)).join('')}
-      ${debriefTomorrowHtml(b.tomorrow)}`;
+      ${b.sections.map((s, i) => debriefSectionHtml(s, i)).join('')}`;
   } else {
-    // Legacy flat-markdown brief, or a server-side JSON-parse fallback — no
-    // progressive disclosure available, render it as one scrollable card.
-    body = `<section class="glass insight-card brief-card">${mdToHtml(typeof b === 'string' ? b : JSON.stringify(b))}</section>`;
+    todayBrief = `<section class="glass insight-card brief-card">${mdToHtml(typeof b === 'string' ? b : JSON.stringify(b))}</section>`;
   }
-  return `${body}
+  return `<div class="debrief-day-hdr">Today</div>
+    ${todayBrief}
+    ${debriefTodayDataHtml()}
+    <div class="debrief-day-hdr">Tomorrow</div>
+    ${debriefTomorrowSectionHtml(b)}
     <div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>↻ Regenerate</button></div>
     <div class="brief-actions">${pushButtonHtml()}</div>`;
 }
