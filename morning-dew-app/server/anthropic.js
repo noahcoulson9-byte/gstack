@@ -3,7 +3,7 @@
 // browser. Mirrors the style of gmail.js / outlook.js.
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
-const BRIEF_TIMEOUT_MS = 40000;
+const BRIEF_TIMEOUT_MS = 90000;
 
 const SYSTEM_PROMPT = `You are Morning Dew, a sharp, warm personal chief-of-staff who
 writes the user's morning brief. You receive their full day as JSON: local time and
@@ -167,6 +167,9 @@ async function generateBrief(context) {
     // The model didn't return well-formed structured JSON — degrade gracefully
     // to the legacy flat-string contract instead of erroring the whole brief.
     return { configured: true, structured: false, brief: raw };
+  } catch (err) {
+    if (err && err.name === 'AbortError') return { configured: true, error: 'Brief timed out — try again in a moment.' };
+    throw err;
   } finally {
     clearTimeout(timer);
   }
