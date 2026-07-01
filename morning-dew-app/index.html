@@ -3173,14 +3173,24 @@ let _newsCacheAt = 0;
 async function fetchNews() {
   if (_newsCache && Date.now() - _newsCacheAt < 5 * 60 * 1000) return _newsCache;
   try {
-    const res = await fetch(`${API_BASE}/api/news`);
-    if (!res.ok) throw new Error('fetch failed');
+    // Fetch BBC RSS client-side via rss2json.com (CORS-enabled, free, no key needed)
+    const url = 'https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent('https://feeds.bbci.co.uk/news/rss.xml');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`rss2json ${res.status}`);
     const data = await res.json();
-    _newsCache = data;
+    if (data.status !== 'ok') throw new Error(data.message || 'feed error');
+    const articles = (data.items || []).map(item => ({
+      title: (item.title || '').replace(/<[^>]+>/g, '').trim(),
+      link: item.link || '',
+      description: (item.description || '').replace(/<[^>]+>/g, '').trim(),
+      pubDate: item.pubDate || '',
+      thumbnail: item.thumbnail || (item.enclosure && item.enclosure.link) || '',
+    }));
+    _newsCache = { articles };
     _newsCacheAt = Date.now();
-    return data;
-  } catch {
-    return { articles: [] };
+    return _newsCache;
+  } catch (err) {
+    return { articles: [], error: String(err.message || err) };
   }
 }
 function newsTimeAgo(pubDate) {
