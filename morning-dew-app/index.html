@@ -2303,7 +2303,7 @@ function debriefTodayDataHtml() {
   const h = overview.health;
   if (h && h.recovery != null) {
     const recColor = h.recovery >= 67 ? 'var(--ok)' : h.recovery >= 34 ? 'var(--bar-orange)' : 'var(--danger)';
-    const sleepStr = h.sleepHours != null ? `${h.sleepHours}h` : (h.sleep != null ? `${h.sleep}%` : '—');
+    const sleepStr = h.sleepHours != null ? `${Math.round(h.sleepHours * 10) / 10}h` : (h.sleep != null ? `${Math.round(h.sleep * 10) / 10}%` : '—');
     parts.push(`<section class="glass insight-card"><div class="insight-head">Readiness</div>
       <div class="db-health-row">
         <div class="db-health-stat"><div class="db-health-val" style="color:${recColor}">${h.recovery}%</div><div class="db-health-lbl">Recovery</div></div>
@@ -2886,7 +2886,7 @@ function healthDetailHtml() {
   const chipData = [];
   if (h.hrv != null) chipData.push({ val: `${Math.round(h.hrv)}ms`, lbl: 'HRV' });
   if (h.restingHeartRate != null) chipData.push({ val: Math.round(h.restingHeartRate), lbl: 'Resting HR' });
-  if (h.sleepHours != null) chipData.push({ val: `${h.sleepHours}h`, lbl: 'Sleep' });
+  if (h.sleepHours != null) chipData.push({ val: `${Math.round(h.sleepHours * 10) / 10}h`, lbl: 'Sleep' });
   if (h.activeEnergy != null) chipData.push({ val: `${Math.round(h.activeEnergy)} kcal`, lbl: 'Active' });
   if (h.exerciseMinutes != null) chipData.push({ val: `${Math.round(h.exerciseMinutes)} min`, lbl: 'Exercise' });
   const chipsHtml = chipData.length
@@ -2922,7 +2922,7 @@ function healthDetailHtml() {
     </section>
     ${(sleep != null || strain != null) ? `<div class="hd-dual">
       ${sleep != null ? `<section class="glass insight-card hd-dual-card">
-        <div class="hd-dual-val">${sleep}%</div>
+        <div class="hd-dual-val">${Math.round(sleep * 10) / 10}%</div>
         <div class="hd-dual-lbl">Sleep</div>
         <div class="hd-dual-word">${escapeHtml(sleepWord(sleep))}</div>
       </section>` : ''}
