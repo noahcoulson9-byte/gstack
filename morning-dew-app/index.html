@@ -1006,39 +1006,42 @@
     padding-top: 0.5rem;
   }
 
-  /* ---- News page (Apple News dark style) ---- */
-  .news-page { position: fixed; inset: 0; z-index: 60; background: #0a0a0a; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; animation: debriefIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+  /* ---- News page (Apple News light style) ---- */
+  .news-page { position: fixed; inset: 0; z-index: 60; background: #fff; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; animation: debriefIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); color: #000; }
   .news-page[hidden] { display: none; }
   .news-page.closing { animation: debriefOut 0.22s ease forwards; }
-  .news-hdr { position: sticky; top: 0; z-index: 2; background: rgba(10,10,10,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: calc(env(safe-area-inset-top) + 0.8rem) 1.2rem 0.7rem; display: flex; align-items: center; gap: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
-  .news-back { background: none; border: none; color: #3D7BFF; font-size: 1.5rem; padding: 0; cursor: pointer; line-height: 1; font-family: inherit; }
-  .news-hdr-brand { flex: 1; }
-  .news-breaking-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #ff3b30; }
-  .news-hdr-title { font-size: 1rem; font-weight: 800; color: #fff; }
-  .news-hero-card { margin: 0.9rem; border-radius: 18px; overflow: hidden; background: #161616; display: block; text-decoration: none; }
-  .news-hero-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #222; }
-  .news-hero-body { padding: 0.85rem 1rem 1rem; }
-  .news-hero-badge { display: inline-block; background: #bb1919; color: #fff; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; margin-bottom: 0.5rem; }
-  .news-hero-title { font-size: 1.18rem; font-weight: 800; color: #fff; line-height: 1.28; margin: 0; }
-  .news-hero-desc { font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-top: 0.4rem; line-height: 1.45; }
-  .news-hero-time { font-size: 0.7rem; color: rgba(255,255,255,0.38); margin-top: 0.4rem; }
-  .news-section-hdr { padding: 0.6rem 1rem 0.4rem; }
-  .news-section-title { font-size: 1rem; font-weight: 700; color: #fff; }
-  .news-top-scroll { display: flex; gap: 0.7rem; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 1rem 0.5rem; scrollbar-width: none; }
+  .news-hdr { position: sticky; top: 0; z-index: 2; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: calc(env(safe-area-inset-top) + 0.4rem) 1rem 0.8rem; border-bottom: 0.5px solid #d1d1d6; }
+  .news-hdr-top { margin-bottom: 0.3rem; }
+  .news-back { background: none; border: none; color: #ff3b30; font-size: 0.88rem; font-weight: 600; padding: 0; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 0.25rem; }
+  .news-hdr-date { font-size: 0.72rem; color: #8e8e93; font-weight: 500; margin-bottom: 0.08rem; }
+  .news-hdr-headline { font-size: 2rem; font-weight: 800; color: #000; letter-spacing: -0.03em; line-height: 1.08; }
+  .news-hero { display: block; text-decoration: none; background: #fff; border-bottom: 0.5px solid #d1d1d6; }
+  .news-hero-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #f2f2f7; }
+  .news-hero-body { padding: 0.7rem 1rem 0.9rem; }
+  .news-hero-badge { display: inline-block; background: #052962; color: #fff; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border-radius: 3px; margin-bottom: 0.45rem; }
+  .news-hero-title { font-size: 1.22rem; font-weight: 800; color: #000; line-height: 1.25; margin: 0 0 0.3rem; letter-spacing: -0.02em; }
+  .news-hero-time { font-size: 0.7rem; color: #8e8e93; }
+  .news-section-row { display: flex; align-items: baseline; justify-content: space-between; padding: 0.75rem 1rem 0.5rem; border-bottom: 0.5px solid #d1d1d6; }
+  .news-section-title { font-size: 1.1rem; font-weight: 800; color: #000; }
+  .news-section-more { font-size: 0.82rem; color: #ff3b30; font-weight: 600; text-decoration: none; }
+  .news-top-scroll { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 0.5px solid #d1d1d6; }
   .news-top-scroll::-webkit-scrollbar { display: none; }
-  .news-top-card { flex-shrink: 0; width: 148px; background: #161616; border-radius: 14px; overflow: hidden; display: block; text-decoration: none; }
-  .news-top-img { width: 100%; height: 88px; object-fit: cover; display: block; background: #222; }
-  .news-top-body { padding: 0.45rem 0.55rem 0.6rem; }
-  .news-top-title { font-size: 0.77rem; font-weight: 700; color: #fff; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .news-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0.7rem 0 0; }
+  .news-top-card { flex-shrink: 0; width: 44vw; max-width: 185px; display: block; text-decoration: none; border-right: 0.5px solid #d1d1d6; }
+  .news-top-card:last-child { border-right: none; }
+  .news-top-img-wrap { position: relative; width: 100%; height: 108px; overflow: hidden; }
+  .news-top-img { width: 100%; height: 100%; object-fit: cover; display: block; background: #f2f2f7; }
+  .news-top-badge { position: absolute; bottom: 0.4rem; left: 0.4rem; background: #052962; color: #fff; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.1rem 0.35rem; border-radius: 2px; }
+  .news-top-body { padding: 0.5rem 0.6rem 0.65rem; }
+  .news-top-title { font-size: 0.78rem; font-weight: 700; color: #000; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-top-time { font-size: 0.65rem; color: #8e8e93; margin-top: 0.25rem; }
   .news-list { display: flex; flex-direction: column; padding-bottom: calc(env(safe-area-inset-bottom) + 5rem); }
-  .news-list-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.8rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); text-decoration: none; }
-  .news-list-thumb { width: 80px; height: 58px; flex-shrink: 0; border-radius: 8px; object-fit: cover; background: #222; display: block; }
+  .news-list-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.85rem 1rem; border-bottom: 0.5px solid #e5e5ea; text-decoration: none; }
   .news-list-body { flex: 1; min-width: 0; }
-  .news-list-badge { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #bb1919; margin-bottom: 0.22rem; }
-  .news-list-title { font-size: 0.86rem; font-weight: 700; color: #fff; line-height: 1.3; }
-  .news-list-time { font-size: 0.68rem; color: rgba(255,255,255,0.38); margin-top: 0.22rem; }
-  .news-empty { text-align: center; padding: 3rem 1.5rem; color: rgba(255,255,255,0.45); font-size: 0.9rem; }
+  .news-list-pub { font-size: 0.64rem; font-weight: 800; color: #8e8e93; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .news-list-title { font-size: 0.9rem; font-weight: 700; color: #000; line-height: 1.3; }
+  .news-list-time { font-size: 0.66rem; color: #8e8e93; margin-top: 0.22rem; }
+  .news-list-thumb { width: 80px; height: 70px; flex-shrink: 0; border-radius: 6px; object-fit: cover; background: #f2f2f7; display: block; }
+  .news-empty { text-align: center; padding: 3rem 1.5rem; color: #8e8e93; font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -1149,11 +1152,14 @@
 
 <div class="news-page" id="newsPage" hidden>
   <header class="news-hdr">
-    <button class="news-back" id="newsBack" aria-label="Back">‹</button>
-    <div class="news-hdr-brand">
-      <div class="news-breaking-label">Latest News</div>
-      <div class="news-hdr-title" id="newsHdrTitle">The Guardian</div>
+    <div class="news-hdr-top">
+      <button class="news-back" id="newsBack" aria-label="Back">
+        <svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M7 1L1 6.5L7 12" stroke="#ff3b30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back
+      </button>
     </div>
+    <div class="news-hdr-date" id="newsHdrDate"></div>
+    <div class="news-hdr-headline">Breaking News</div>
   </header>
   <div id="newsPageContent"><div class="news-empty">Loading…</div></div>
 </div>
@@ -3198,26 +3204,31 @@ function newsTimeAgo(pubDate) {
 function newsPageHtml(data) {
   const articles = (data && data.articles) || [];
   if (!articles.length) return `<div class="news-empty">${data && data.error ? escapeHtml('Could not load: ' + data.error) : 'No news available right now.'}</div>`;
-  const src = escapeHtml((data && data.source) || 'News');
+  const src = (data && data.source) || 'News';
+  const srcUpper = src.toUpperCase();
   const hero = articles[0];
   const tops = articles.slice(1, 6);
   const list = articles.slice(6);
+
   const heroImg = hero.thumbnail
     ? `<img class="news-hero-img" src="${escapeHtml(hero.thumbnail)}" alt="" loading="lazy">`
-    : '<div class="news-hero-img" style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.15);font-size:2.5rem;background:#161616;">📰</div>';
+    : '<div class="news-hero-img" style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:2.5rem;background:#f2f2f7">📰</div>';
+
   const topsHtml = tops.map(a => {
     const img = a.thumbnail
       ? `<img class="news-top-img" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
-      : '<div class="news-top-img" style="display:flex;align-items:center;justify-content:center;background:#222;font-size:1.4rem;">📰</div>';
-    return `<a class="news-top-card" href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${img}<div class="news-top-body"><div class="news-top-title">${escapeHtml(a.title)}</div></div></a>`;
+      : '<div class="news-top-img" style="display:flex;align-items:center;justify-content:center;background:#f2f2f7;font-size:1.4rem">📰</div>';
+    return `<a class="news-top-card" href="${escapeHtml(a.link)}" target="_blank" rel="noopener"><div class="news-top-img-wrap">${img}<span class="news-top-badge">${escapeHtml(srcUpper)}</span></div><div class="news-top-body"><div class="news-top-title">${escapeHtml(a.title)}</div><div class="news-top-time">${newsTimeAgo(a.pubDate)}</div></div></a>`;
   }).join('');
+
   const listHtml = list.map(a => {
     const img = a.thumbnail
       ? `<img class="news-list-thumb" src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy">`
-      : '<div class="news-list-thumb" style="display:flex;align-items:center;justify-content:center;background:#222;border-radius:8px;font-size:1.3rem;">📰</div>';
-    return `<a class="news-list-row" href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${img}<div class="news-list-body"><div class="news-list-badge">${src}</div><div class="news-list-title">${escapeHtml(a.title)}</div><div class="news-list-time">${newsTimeAgo(a.pubDate)}</div></div></a>`;
+      : '<div class="news-list-thumb" style="display:flex;align-items:center;justify-content:center;background:#f2f2f7;border-radius:6px;font-size:1.3rem">📰</div>';
+    return `<a class="news-list-row" href="${escapeHtml(a.link)}" target="_blank" rel="noopener"><div class="news-list-body"><div class="news-list-pub">${escapeHtml(src)}</div><div class="news-list-title">${escapeHtml(a.title)}</div><div class="news-list-time">${newsTimeAgo(a.pubDate)}</div></div>${img}</a>`;
   }).join('');
-  return `<a class="news-hero-card" href="${escapeHtml(hero.link)}" target="_blank" rel="noopener">${heroImg}<div class="news-hero-body"><div class="news-hero-badge">${src}</div><h2 class="news-hero-title">${escapeHtml(hero.title)}</h2>${hero.description ? `<p class="news-hero-desc">${escapeHtml(hero.description)}</p>` : ''}<div class="news-hero-time">${newsTimeAgo(hero.pubDate)}</div></div></a><div class="news-section-hdr"><div class="news-section-title">Top Stories</div></div><div class="news-top-scroll">${topsHtml}</div><div class="news-divider"></div><div class="news-list">${listHtml}</div>`;
+
+  return `<a class="news-hero" href="${escapeHtml(hero.link)}" target="_blank" rel="noopener">${heroImg}<div class="news-hero-body"><div class="news-hero-badge">${escapeHtml(srcUpper)}</div><h2 class="news-hero-title">${escapeHtml(hero.title)}</h2><div class="news-hero-time">${newsTimeAgo(hero.pubDate)}</div></div></a><div class="news-section-row"><span class="news-section-title">Top Stories</span><span class="news-section-more">See All ›</span></div><div class="news-top-scroll">${topsHtml}</div><div class="news-list">${listHtml}</div>`;
 }
 function openNews() {
   const page = document.getElementById('newsPage');
@@ -3228,11 +3239,12 @@ function openNews() {
   document.getElementById('navNews').classList.add('active');
   document.body.style.overflow = 'hidden';
   history.pushState({ news: true }, '');
+  const dateEl = document.getElementById('newsHdrDate');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   document.getElementById('newsPageContent').innerHTML = '<div class="news-empty">Loading…</div>';
   fetchNews().then(data => {
     if (!newsOpen) return;
     document.getElementById('newsPageContent').innerHTML = newsPageHtml(data);
-    if (data.source) document.getElementById('newsHdrTitle').textContent = data.source;
   });
 }
 function closeNews() {
