@@ -3195,7 +3195,7 @@ function newsTimeAgo(pubDate) {
 }
 function newsPageHtml(data) {
   const articles = (data && data.articles) || [];
-  if (!articles.length) return '<div class="news-empty">No news available right now.</div>';
+  if (!articles.length) return `<div class="news-empty">${data && data.error ? escapeHtml('Could not load: ' + data.error) : 'No news available right now.'}</div>`;
   const hero = articles[0];
   const tops = articles.slice(1, 6);
   const list = articles.slice(6);
