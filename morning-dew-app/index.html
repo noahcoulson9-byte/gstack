@@ -291,6 +291,29 @@
   .hp-update-btn { width: 100%; padding: 0.8rem; border-radius: 14px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit; }
   .hp-update-btn:active { background: rgba(255,255,255,0.13); }
 
+  /* Oura-style top tab row */
+  .hp-tab-row { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+  .hp-tab { flex: 1; padding: 0.7rem 0.25rem 0.55rem; text-align: center; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: rgba(255,255,255,0.38); transition: color 0.15s, border-color 0.15s; font-family: inherit; }
+  .hp-tab.active { color: #fff; border-bottom-color: #34c98a; }
+  .hp-tab-val { display: block; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+  .hp-tab-lbl { display: block; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 0.1rem; }
+  .hp-tab-panel { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .hp-tab-panel[hidden] { display: none; }
+
+  /* Mountain scenic hero (Tab 0) */
+  .hp-mountain-wrap { position: relative; height: 340px; overflow: hidden; flex-shrink: 0; }
+  .hp-mountain-sky { position: absolute; inset: 0; background: linear-gradient(175deg, #0b3d2e 0%, #082a1e 45%, #04150e 100%); }
+  .hp-mountain-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem 1.5rem 2.5rem; }
+  .hp-big-score { font-size: 5.5rem; font-weight: 200; letter-spacing: -0.04em; line-height: 1; }
+  .hp-score-cat { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-top: 0.45rem; }
+  .hp-motivation { font-size: 1.7rem; font-weight: 700; margin-top: 0.35rem; }
+  .hp-hero-desc { font-size: 0.85rem; line-height: 1.55; color: rgba(255,255,255,0.6); margin-top: 0.65rem; text-align: center; max-width: 290px; }
+  .hp-learn-btn { margin-top: 1rem; padding: 0.52rem 1.6rem; border-radius: 20px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22); color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .hp-learn-btn:active { background: rgba(255,255,255,0.22); }
+  .hp-secondary-row { display: flex; align-items: center; padding: 0.85rem 1.1rem; border-top: 1px solid rgba(255,255,255,0.08); gap: 0.6rem; }
+  .hp-secondary-name { font-size: 0.88rem; font-weight: 600; }
+  .hp-secondary-badge { margin-left: auto; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.18rem 0.6rem; border-radius: 20px; }
+
   .tile-icon { font-size: 1.7rem; line-height: 1; }
   .tile-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
   .tile-value { font-size: 1.55rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
@@ -2943,6 +2966,9 @@ function hpMetricRow(iconSvg, iconBg, name, pillHtml, valStr, unit, barPct, barC
 function healthPageHtml() {
   const h = overview.health;
   const rec = h ? h.recovery : null;
+  const sleep = h ? h.sleep : null;
+  const strain = h ? h.strain : null;
+  const hrv = h && h.hrv != null ? Math.round(h.hrv) : null;
 
   if (rec == null) {
     return `<div style="padding:2.5rem 1.5rem;text-align:center">
@@ -2953,36 +2979,69 @@ function healthPageHtml() {
     </div>`;
   }
 
-  const sleep = h.sleep;
-  const strain = h.strain;
+  const recColor = rec >= 67 ? '#34c98a' : rec >= 34 ? '#ffb347' : '#ff6b6b';
   const t = recoveryTrend();
   const target = targetStrainRange(rec);
-  const recColor = rec >= 67 ? '#34c98a' : rec >= 34 ? '#ffb347' : '#ff6b6b';
-  const recGlow = rec >= 67 ? 'rgba(52,201,138,0.15)' : rec >= 34 ? 'rgba(255,179,71,0.12)' : 'rgba(255,107,107,0.12)';
 
-  // Top stat bar
-  const statItems = [
-    { val: String(rec), lbl: 'Recovery' },
+  // 4-tab number row
+  const tabDefs = [
+    { val: String(rec), lbl: 'Readiness' },
     sleep != null ? { val: `${Math.round(sleep * 10) / 10}`, lbl: 'Sleep' } : null,
     strain != null ? { val: String(strain), lbl: 'Strain' } : null,
-    h.hrv != null ? { val: String(Math.round(h.hrv)), lbl: 'HRV' } : null,
+    hrv != null ? { val: String(hrv), lbl: 'HRV' } : null,
   ].filter(Boolean).slice(0, 4);
-  const statBarHtml = `<div class="hp-stat-bar">${statItems.map(({ val, lbl }) =>
-    `<div class="hp-stat"><div class="hp-stat-val">${escapeHtml(val)}</div><div class="hp-stat-lbl">${escapeHtml(lbl)}</div></div>`
-  ).join('')}</div>`;
-
-  const trendStr = t && t.delta !== 0
-    ? `${t.delta > 0 ? '↑' : '↓'} ${Math.abs(t.delta)} pts from ${t.previousScore} yesterday`
-    : t ? 'Holding steady from yesterday' : '';
-
-  const heroHtml = `<div class="hp-hero">
-    <div class="hp-hero-glow" style="background:radial-gradient(ellipse, ${recGlow} 0%, transparent 70%)"></div>
-    <div class="hp-hero-num" style="color:${recColor}">${rec}</div>
-    <div class="hp-hero-cat">Readiness</div>
-    <div class="hp-hero-headline">${escapeHtml(recoveryHeadline(rec))}</div>
-    ${trendStr ? `<div class="hp-hero-trend">${escapeHtml(trendStr)}</div>` : ''}
+  const tabRowHtml = `<div class="hp-tab-row">
+    ${tabDefs.map((td, i) => `<button class="hp-tab${i === 0 ? ' active' : ''}" data-hp-tab="${i}">
+      <span class="hp-tab-val">${escapeHtml(td.val)}</span>
+      <span class="hp-tab-lbl">${escapeHtml(td.lbl)}</span>
+    </button>`).join('')}
   </div>`;
 
+  // ---- Tab 0: Mountain hero overview ----
+  const descText = rec >= 67
+    ? `A great score has boosted your readiness. If there are challenging tasks on your list, today could be the day to tackle them.`
+    : rec >= 34
+    ? `You're in a moderate state of readiness. Pace yourself through the day and prioritize your most important tasks.`
+    : `Your body is asking for rest. Focus on light activities and give yourself time to recover and recharge.`;
+
+  // Mountain range SVG silhouette
+  const glowStop = rec >= 67 ? 'rgba(52,201,138,0.25)' : rec >= 34 ? 'rgba(255,179,71,0.2)' : 'rgba(255,107,107,0.2)';
+  const mountainSvg = `<svg style="position:absolute;bottom:0;left:0;width:100%;height:auto;display:block" viewBox="0 0 390 200" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="hpGlow" cx="38%" cy="20%" r="55%"><stop offset="0%" stop-color="${glowStop}"/><stop offset="100%" stop-color="transparent" stop-opacity="0"/></radialGradient></defs>
+    <rect width="390" height="200" fill="url(#hpGlow)"/>
+    <path d="M0,200 L0,125 L45,85 L95,108 L145,55 L200,95 L245,72 L295,102 L330,80 L375,98 L390,92 L390,200 Z" fill="rgba(8,22,17,0.75)"/>
+    <path d="M0,200 L0,155 L55,118 L95,138 L138,90 L175,122 L218,104 L262,128 L305,112 L348,130 L390,118 L390,200 Z" fill="rgba(5,13,10,0.96)"/>
+    <path d="M138,90 L124,114 L152,114 Z" fill="rgba(255,255,255,0.6)"/>
+    <path d="M138,90 L131,104 L145,104 Z" fill="rgba(255,255,255,0.82)"/>
+  </svg>`;
+
+  const sleepBadge = sleep != null
+    ? (sleep >= 75 ? ['GOOD', 'green'] : sleep >= 40 ? ['ADEQUATE', 'orange'] : ['SHORT', 'red'])
+    : null;
+
+  const tab0Html = `<div class="hp-tab-panel" id="hpPanel0">
+    <div class="hp-mountain-wrap">
+      <div class="hp-mountain-sky"></div>
+      ${mountainSvg}
+      <div class="hp-mountain-overlay">
+        <div class="hp-big-score" style="color:${recColor}">${rec}</div>
+        <div class="hp-score-cat">Readiness</div>
+        <div class="hp-motivation">${escapeHtml(recoveryHeadline(rec))}</div>
+        <p class="hp-hero-desc">${escapeHtml(descText)}</p>
+        <button class="hp-learn-btn" data-hp-tab-goto="1">Learn more</button>
+      </div>
+    </div>
+    ${sleepBadge ? `<div class="hp-secondary-row">
+      <span style="font-size:1.1rem">🌙</span>
+      <span class="hp-secondary-name">Sleep</span>
+      <span class="hp-secondary-badge hp-pill-${sleepBadge[1]}">${sleepBadge[0]}</span>
+    </div>` : ''}
+    ${t ? `<div class="hp-secondary-row" style="border-top:none;padding-top:0">
+      <span style="font-size:0.82rem;color:rgba(255,255,255,0.4)">${t.delta > 0 ? '↑' : t.delta < 0 ? '↓' : '→'} ${t.delta !== 0 ? Math.abs(t.delta) + ' pts from ' + t.previousScore + ' yesterday' : 'Holding steady from yesterday'}</span>
+    </div>` : ''}
+  </div>`;
+
+  // ---- Tab 1: Vitals metric rows ----
   const SVG_HEART = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   const SVG_MOON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   const SVG_CLOCK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
@@ -2991,62 +3050,47 @@ function healthPageHtml() {
   const SVG_TARGET = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
 
   const rows = [];
-
-  // Readiness row
   const recPill = rec >= 80 ? hpPill('OPTIMAL', 'green') : rec >= 67 ? hpPill('GOOD', 'green') : rec >= 34 ? hpPill('MODERATE', 'orange') : hpPill('NEEDS CARE', 'red');
   rows.push(hpMetricRow(SVG_HEART, 'rgba(52,201,138,0.18)', 'Readiness', recPill, rec, null, rec, recColor));
 
-  // Sleep score
   if (sleep != null) {
-    const sleepColor = sleep >= 67 ? '#34c98a' : sleep >= 40 ? '#ffb347' : '#ff6b6b';
-    const sleepPill = sleep >= 75 ? hpPill('GOOD', 'green') : sleep >= 40 ? hpPill('ADEQUATE', 'orange') : hpPill('SHORT', 'red');
-    rows.push(hpMetricRow(SVG_MOON, 'rgba(100,130,255,0.18)', 'Sleep', sleepPill, `${Math.round(sleep * 10) / 10}%`, null, sleep, sleepColor));
+    const sc = sleep >= 67 ? '#34c98a' : sleep >= 40 ? '#ffb347' : '#ff6b6b';
+    rows.push(hpMetricRow(SVG_MOON, 'rgba(100,130,255,0.18)', 'Sleep', sleep >= 75 ? hpPill('GOOD', 'green') : sleep >= 40 ? hpPill('ADEQUATE', 'orange') : hpPill('SHORT', 'red'), `${Math.round(sleep * 10) / 10}%`, null, sleep, sc));
   }
-
-  // Sleep hours
   if (h.sleepHours != null) {
     rows.push(hpMetricRow(SVG_CLOCK, 'rgba(100,130,255,0.12)', 'Sleep Duration', hpPill('DURATION', 'blue'), `${Math.round(h.sleepHours * 10) / 10}`, 'hrs', Math.min(100, (h.sleepHours / 9) * 100), '#7fa8ff'));
   }
-
-  // Strain
   if (strain != null) {
-    const strainColor = strain >= 67 ? '#ff6b6b' : strain >= 34 ? '#ffb347' : '#5fd39b';
-    const strainPill = strain >= 67 ? hpPill('HIGH', 'red') : strain >= 34 ? hpPill('MODERATE', 'orange') : hpPill('LIGHT', 'green');
-    rows.push(hpMetricRow(SVG_ZAP, 'rgba(255,159,67,0.18)', 'Strain', strainPill, strain, null, strain, strainColor));
+    const sc = strain >= 67 ? '#ff6b6b' : strain >= 34 ? '#ffb347' : '#5fd39b';
+    rows.push(hpMetricRow(SVG_ZAP, 'rgba(255,159,67,0.18)', 'Strain', strain >= 67 ? hpPill('HIGH', 'red') : strain >= 34 ? hpPill('MODERATE', 'orange') : hpPill('LIGHT', 'green'), strain, null, strain, sc));
   }
-
-  // HRV
-  if (h.hrv != null) {
-    rows.push(hpMetricRow(SVG_WAVE, 'rgba(61,123,255,0.18)', 'HRV', hpPill('HEART RATE VAR', 'blue'), Math.round(h.hrv), 'ms', Math.min(100, (h.hrv / 120) * 100), '#7fa8ff'));
+  if (hrv != null) {
+    rows.push(hpMetricRow(SVG_WAVE, 'rgba(61,123,255,0.18)', 'HRV', hpPill('HEART RATE VAR', 'blue'), hrv, 'ms', Math.min(100, (hrv / 120) * 100), '#7fa8ff'));
   }
-
-  // Resting HR
   if (h.restingHeartRate != null) {
     const rhr = Math.round(h.restingHeartRate);
     rows.push(hpMetricRow(SVG_HEART, 'rgba(255,80,100,0.18)', 'Resting HR', hpPill('HEART RATE', 'blue'), rhr, 'bpm', Math.max(0, 100 - ((rhr - 40) / 60) * 100), '#ff8080'));
   }
-
-  // Target strain
   if (target) {
     rows.push(hpMetricRow(SVG_TARGET, 'rgba(255,200,50,0.15)', 'Target Strain', hpPill('RECOMMENDED', 'orange'), `${target.lo}–${target.hi}`, null, null, null));
   }
 
-  // 7-day chart
   const hist = recoveryHistory().slice(0, 7).reverse();
   const chartHtml = hist.length >= 2
-    ? `<div class="hp-chart">
-        <div class="hp-chart-hdr">7-Day Recovery Trend</div>
+    ? `<div class="hp-chart"><div class="hp-chart-hdr">7-Day Recovery Trend</div>
         <div class="recov-chart">${hist.map((d) => {
           const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
           const fill = d.score >= 67 ? 'linear-gradient(#5fd39b,#34c98a)' : d.score >= 34 ? 'linear-gradient(#ffcc70,#ff9f43)' : 'linear-gradient(#ff9a9a,#ff6b6b)';
           return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%;background:${fill}"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
-        }).join('')}</div>
-      </div>` : '';
+        }).join('')}</div></div>` : '';
 
-  return `${statBarHtml}${heroHtml}
-    <div class="hp-metrics">${rows.join('')}</div>
+  const tab1Html = `<div class="hp-tab-panel" id="hpPanel1" hidden>
+    <div class="hp-metrics" style="padding-top:0.75rem">${rows.join('')}</div>
     ${chartHtml}
-    <div class="hp-footer"><button class="hp-update-btn" data-set-recovery>Update recovery</button></div>`;
+    <div class="hp-footer"><button class="hp-update-btn" data-set-recovery>Update recovery</button></div>
+  </div>`;
+
+  return `${tabRowHtml}${tab0Html}${tab1Html}`;
 }
 
 let healthOpen = false;
@@ -3063,6 +3107,10 @@ function openHealth() {
   healthOpen = true;
   document.body.style.overflow = 'hidden';
   history.pushState({ health: true }, '');
+}
+function hpSwitchTab(idx) {
+  document.querySelectorAll('#healthPage .hp-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('#healthPage .hp-tab-panel').forEach((p, i) => { p.hidden = i !== idx; });
 }
 function closeHealth() {
   const page = document.getElementById('healthPage');
@@ -3266,6 +3314,12 @@ document.getElementById('navHome').addEventListener('click', () => {
 });
 document.getElementById('navHealth').addEventListener('click', () => openHealth());
 document.getElementById('healthBack').addEventListener('click', () => { if (healthOpen) history.back(); });
+document.getElementById('healthPage').addEventListener('click', (e) => {
+  const tab = e.target.closest('[data-hp-tab]');
+  if (tab && !tab.closest('[data-hp-tab-goto]')) { hpSwitchTab(parseInt(tab.getAttribute('data-hp-tab'))); return; }
+  const goto = e.target.closest('[data-hp-tab-goto]');
+  if (goto) { hpSwitchTab(parseInt(goto.getAttribute('data-hp-tab-goto'))); return; }
+});
 document.getElementById('navInbox').addEventListener('click', () => openDetail('inbox'));
 
 // ---------- Pull to refresh ----------
