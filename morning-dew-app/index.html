@@ -3037,16 +3037,34 @@ function detailRingHtml(val, grad, label, underlay = '', overlay = '') {
 // trend, even though the server only keeps the latest snapshot. Keyed by local
 // date; today's value is overwritten with the latest, capped at 30 days.
 const HEALTH_HIST_KEY = 'morningDewHealthHist';
-function recordRecoveryHistory(rec) {
-  if (rec == null || !Number.isFinite(Number(rec))) return;
+// Each day's entry used to be a bare recovery number; it's now an object
+// ({ rec, sleepHours, strain }) so the sleep-recommendation engine can see
+// recent nights' sleep duration too. Both shapes are read transparently —
+// existing on-device history from before this change still works.
+function recordHealthHistory(h) {
+  if (!h) return;
   const hist = lsGet(HEALTH_HIST_KEY, {});
-  hist[localDateStr(new Date())] = Math.round(Number(rec));
+  const date = localDateStr(new Date());
+  const prev = hist[date];
+  const entry = (prev && typeof prev === 'object') ? Object.assign({}, prev) : (typeof prev === 'number' ? { rec: prev } : {});
+  if (h.recovery != null && Number.isFinite(Number(h.recovery))) entry.rec = Math.round(Number(h.recovery));
+  if (h.sleepHours != null && Number.isFinite(Number(h.sleepHours))) entry.sleepHours = Number(h.sleepHours);
+  if (h.strain != null && Number.isFinite(Number(h.strain))) entry.strain = Number(h.strain);
+  hist[date] = entry;
   for (const d of Object.keys(hist).sort().slice(0, -30)) delete hist[d];
   lsSet(HEALTH_HIST_KEY, hist);
 }
 function recoveryHistory() {
   const hist = lsGet(HEALTH_HIST_KEY, {});
-  return Object.keys(hist).sort().reverse().map((d) => ({ date: d, score: hist[d] }));
+  return Object.keys(hist).sort().reverse()
+    .map((d) => ({ date: d, score: typeof hist[d] === 'number' ? hist[d] : hist[d].rec }))
+    .filter((e) => e.score != null);
+}
+function sleepHistory() {
+  const hist = lsGet(HEALTH_HIST_KEY, {});
+  return Object.keys(hist).sort().reverse()
+    .map((d) => ({ date: d, hours: (hist[d] && typeof hist[d] === 'object') ? hist[d].sleepHours : null }))
+    .filter((e) => e.hours != null);
 }
 function recoveryTrend() {
   const h = recoveryHistory();
@@ -3063,7 +3081,7 @@ async function fetchHealth() {
     const res = await fetchWithTimeout(apiUrl('/api/health'));
     const data = await res.json();
     overview.healthConfigured = data.configured;
-    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); recordRecoveryHistory(data.data.recovery); }
+    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); recordHealthHistory(data.data); }
     else if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
   } catch {
     if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
@@ -3141,18 +3159,47 @@ function rdFmtDuration(hrs) {
   const H = Math.floor(hrs), M = Math.round((hrs - H) * 60);
   return M === 60 ? `${H + 1}h 00m` : `${H}h ${String(M).padStart(2, '0')}m`;
 }
-// Recommended bedtime = fixed wake target (06:45) minus recommended duration (8h).
-function rdRecommended() {
-  const wakeMin = 6 * 60 + 45, durMin = 8 * 60;
+// Recommended sleep target adapts to real metrics instead of a flat 8h:
+//  - sleep debt: average of the last 5 nights with logged sleepHours vs an 8h
+//    baseline; half the deficit is added back tonight (capped +1.5h), since
+//    debt is repaid gradually rather than all at once
+//  - low recovery (<50, the house "Take it steady"/"Rest up" bucket) adds up
+//    to +0.5h — the body needs more downtime to rebound
+//  - high recovery (>=80, "Go get 'em") trims -0.25h back toward baseline
+//  - high strain (>=67, the house "HIGH" bucket) adds +0.25h for extra repair
+// Result is clamped to 7h-9.5h and rounded to the nearest 15 minutes.
+// Bedtime is then back-computed from a fixed 6:45 AM wake target.
+function rdSleepDebtHours() {
+  const nights = sleepHistory().slice(0, 5);
+  if (!nights.length) return 0;
+  const avg = nights.reduce((s, n) => s + n.hours, 0) / nights.length;
+  return Math.max(0, 8 - avg);
+}
+function rdTargetSleepHours(h) {
+  const debt = rdSleepDebtHours();
+  let target = 8 + Math.min(1.5, debt * 0.5);
+  if (h.recovery != null) {
+    if (h.recovery < 50) target += 0.5;
+    else if (h.recovery >= 80) target -= 0.25;
+  }
+  if (h.strain != null && h.strain >= 67) target += 0.25;
+  target = Math.max(7, Math.min(9.5, target));
+  return Math.round(target * 4) / 4; // nearest 15 min
+}
+function rdRecommended(h) {
+  const target = rdTargetSleepHours(h);
+  const debt = rdSleepDebtHours();
+  const durMin = Math.round(target * 60);
+  const wakeMin = 6 * 60 + 45;
   const to12 = (mins) => {
     mins = ((mins % 1440) + 1440) % 1440;
-    const h = Math.floor(mins / 60), m = mins % 60, ampm = h >= 12 ? 'PM' : 'AM';
-    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    const hh = Math.floor(mins / 60), m = mins % 60, ampm = hh >= 12 ? 'PM' : 'AM';
+    let h12 = hh % 12; if (h12 === 0) h12 = 12;
     return { s: `${h12}:${String(m).padStart(2, '0')} ${ampm}`, short: `${h12}:${String(m).padStart(2, '0')}` };
   };
   const bed = to12(wakeMin - durMin);
   const wind = to12(wakeMin - durMin - 30);
-  return { bedtime: bed.s, duration: '8h 00m', windDown: wind.short };
+  return { bedtime: bed.s, duration: rdFmtDuration(target), windDown: wind.short, targetHours: target, debtHours: debt };
 }
 function rdDesc(rec) {
   return rec >= 67
@@ -3209,13 +3256,15 @@ function rdTodayMiddle(h) {
       <button class="rd-learn" data-rdtab="overview">Learn more</button>
     </div>`;
 }
-function rdSleepMiddle(h) {
+function rdSleepMiddle(h, rec) {
   const score = h.sleep;
   const head = score == null ? 'Sleep' : score >= 75 ? 'Well rested' : score >= 40 ? 'Decent night' : 'Short night';
+  const targetHours = rec ? rec.targetHours : 8;
+  const targetLabel = `${targetHours}h`;
   const body = h.sleepHours != null
-    ? `You slept ${Math.round((h.sleepHours / 8) * 100)}% of your 8 hour target. Keeping a consistent schedule protects tomorrow's recovery.`
+    ? `You slept ${Math.round((h.sleepHours / targetHours) * 100)}% of your ${targetLabel} target. Keeping a consistent schedule protects tomorrow's recovery.`
     : 'Connect your sleep data to see last night here.';
-  return `<div class="rd-arc">${RD_ARC}<div class="rd-endlabel">8h</div><div class="rd-flame">${RD_MOON}</div></div>
+  return `<div class="rd-arc">${RD_ARC}<div class="rd-endlabel">${escapeHtml(targetLabel)}</div><div class="rd-flame">${RD_MOON}</div></div>
     <div class="rd-steps">
       <div class="rd-kicker">SLEEP LAST NIGHT</div>
       <div class="rd-big">${escapeHtml(rdFmtDuration(h.sleepHours))}</div>
@@ -3235,11 +3284,18 @@ function rdTodayContent(h) {
     </div>
     <div class="rd-sec"><div class="rd-sh">${escapeHtml(recoveryHeadline(h.recovery))}</div><div class="rd-sp">${escapeHtml(rdDesc(h.recovery))}</div></div>`;
 }
-function rdSleepContent(h) {
-  const r = rdRecommended();
-  const insight = h.sleepHours != null
-    ? `You slept ${rdFmtDuration(h.sleepHours)} last night. Aiming for lights out around ${r.bedtime} should keep tomorrow's readiness high.`
-    : "Track a few nights and we'll tailor your bedtime to hit your target consistently.";
+function rdSleepContent(h, recArg) {
+  const r = recArg || rdRecommended(h);
+  let insight;
+  if (h.sleepHours == null) {
+    insight = "Track a few nights and we'll tailor your bedtime to hit your target consistently.";
+  } else if (r.debtHours > 0.25) {
+    insight = `You've been averaging under target this week, so tonight's goal is bumped to ${r.duration} to help you catch up. Aim for lights out around ${r.bedtime}.`;
+  } else if (h.recovery != null && h.recovery < 50) {
+    insight = `Your recovery is running low, so tonight's target is ${r.duration} to give your body extra time to rebound. Aim for lights out around ${r.bedtime}.`;
+  } else {
+    insight = `You slept ${rdFmtDuration(h.sleepHours)} last night. Aiming for lights out around ${r.bedtime} should keep tomorrow's readiness high.`;
+  }
   return `<div class="rd-tiles">
       <div class="rd-tile"><div class="rd-tile-ic">${RD_BED}</div><div class="rd-tile-val">${escapeHtml(r.bedtime)}</div><div class="rd-tile-lbl">Recommended bedtime</div></div>
       <div class="rd-tile"><div class="rd-tile-ic">${RD_CLOCK}</div><div class="rd-tile-val">${escapeHtml(r.duration)}</div><div class="rd-tile-lbl">Recommended sleep</div></div>
@@ -3282,9 +3338,10 @@ function healthPageHtml() {
       </div></div>${rdNavHtml()}`;
   }
   const short = healthTab === 'overview';
-  const middle = short ? '' : (healthTab === 'sleep' ? rdSleepMiddle(h) : rdTodayMiddle(h));
+  const sleepRec = healthTab === 'sleep' ? rdRecommended(h) : null;
+  const middle = short ? '' : (healthTab === 'sleep' ? rdSleepMiddle(h, sleepRec) : rdTodayMiddle(h));
   const hero = `<div class="rd-hero${short ? ' rd-hero-short' : ''}"><div class="rd-hero-photo"></div><div class="rd-hero-overlay"></div>${rdHeroTop()}${rdRingsHtml(h)}${middle}</div>`;
-  const content = healthTab === 'sleep' ? rdSleepContent(h)
+  const content = healthTab === 'sleep' ? rdSleepContent(h, sleepRec)
     : healthTab === 'overview' ? rdOverviewContent(h)
     : rdTodayContent(h);
   return `${hero}<div class="rd-content">${content}</div>${rdNavHtml()}`;
@@ -3634,7 +3691,7 @@ function setRecoveryManual() {
   const data = Object.assign({}, overview.health, { recovery: rec, source: 'Manual', updatedAt: new Date().toISOString() });
   overview.health = data;
   lsSet(HEALTH_CACHE_KEY, data);
-  recordRecoveryHistory(rec);
+  recordHealthHistory(data);
   if (overview.healthConfigured === undefined) overview.healthConfigured = true;
   renderHealth();
   if (healthOpen) renderHealthPage();
