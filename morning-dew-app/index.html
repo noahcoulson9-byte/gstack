@@ -3253,15 +3253,22 @@ function rdNextWakeIso(wakeMinutes) {
 }
 function rdAlarmShortcutUrl(wakeMinutes) {
   const iso = rdNextWakeIso(wakeMinutes);
-  // ephemeral=1 asks Shortcuts to run without switching the visible app to
-  // Shortcuts. It's Apple's own lever for this — there's no way for the web
-  // app itself to suppress the switch. Some iOS versions may still flash a
-  // brief system confirmation for actions like Set Alarm; that's outside
-  // what any web code can control.
-  return `shortcuts://run-shortcut?name=${encodeURIComponent(RD_ALARM_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(iso)}&ephemeral=1`;
+  // Two separate levers, both real Shortcuts/x-callback-url features — but
+  // neither is a guarantee, since Shortcuts is the process that actually has
+  // to run and touch Clock's alarm data:
+  //  - ephemeral=1 asks Shortcuts to run without opening its own full UI.
+  //  - x-success/x-cancel/x-error point back at this page's own URL, so as
+  //    soon as the Shortcut finishes (however it finishes), iOS is told to
+  //    return here instead of leaving you sitting in Shortcuts. Note this
+  //    returns via Safari showing this page — if Morning Dew was opened from
+  //    its home-screen icon rather than from Safari, iOS decides whether
+  //    that lands back in the installed app's own window or in a Safari
+  //    tab, not this app's code.
+  const returnUrl = encodeURIComponent(location.href);
+  return `shortcuts://run-shortcut?name=${encodeURIComponent(RD_ALARM_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(iso)}&ephemeral=1&x-success=${returnUrl}&x-cancel=${returnUrl}&x-error=${returnUrl}`;
 }
 function rdAlarmSetupHelp() {
-  alert(`One-time setup (about 2 minutes):\n\n1. Open the Shortcuts app.\n2. Tap + to create a new shortcut.\n3. Name it exactly: "${RD_ALARM_SHORTCUT_NAME}"\n4. Add the action "Get Dates from Input" (search "date").\n5. Add the action "Set Alarm" below it — tap its Time field and choose the date variable from step 4.\n6. Save.\n\nAfter that, tapping "Set Alarm" here creates a real Clock alarm for your chosen wake time, and stays in this app instead of switching to Shortcuts (a brief system flash is still possible on some iOS versions — that's Apple's Shortcuts runtime, not something a website can suppress). If you have a paired Apple Watch, the alarm shows up there automatically too — that sync is built into iOS, nothing extra to set up.`);
+  alert(`One-time setup (about 2 minutes):\n\n1. Open the Shortcuts app.\n2. Tap + to create a new shortcut.\n3. Name it exactly: "${RD_ALARM_SHORTCUT_NAME}"\n4. Add the action "Get Dates from Input" (search "date").\n5. Add the action "Set Alarm" below it — tap its Time field and choose the date variable from step 4.\n6. Save.\n\nAfter that, tapping "Set Alarm" here creates a real Clock alarm for your chosen wake time. It briefly switches to Shortcuts to run (that part is required — Shortcuts has to be the active app to create the alarm, and there's no way for a website to do that invisibly), then should return you here automatically right after. If you have a paired Apple Watch, the alarm shows up there automatically too — that sync is built into iOS, nothing extra to set up.`);
 }
 function rdDesc(rec) {
   return rec >= 67
