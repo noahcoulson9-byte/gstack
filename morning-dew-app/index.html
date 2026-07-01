@@ -230,6 +230,23 @@
   .health-detail-rings .hring-wrap { width: 6.6rem; height: 6.6rem; }
   .health-detail-rings .hring-val { font-size: 1.55rem; }
   .health-foot-note { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+  /* Redesigned health detail page */
+  .hd-hero { text-align: center; padding: 1.6rem 1rem 1.4rem; }
+  .hd-hero-score { font-size: 4.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+  .hd-hero-word { font-size: 1.05rem; font-weight: 700; margin-top: 0.3rem; }
+  .hd-hero-trend { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; }
+  .hd-dual { display: flex; gap: 0.65rem; }
+  .hd-dual-card { flex: 1; padding: 1rem 0.9rem; text-align: center; }
+  .hd-dual-val { font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+  .hd-dual-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-top: 0.25rem; }
+  .hd-dual-word { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+  .hd-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .hd-chip { flex: 1; min-width: 4.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 14px; padding: 0.6rem 0.65rem; }
+  .hd-chip-val { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; }
+  .hd-chip-lbl { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 0.12rem; }
+  .hd-target-row { display: flex; justify-content: space-between; align-items: center; }
+  .hd-target-band { font-size: 1.2rem; font-weight: 800; color: var(--bar-orange); }
+  .hd-chart-hdr { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.6rem; }
   .tile-icon { font-size: 1.7rem; line-height: 1; }
   .tile-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
   .tile-value { font-size: 1.55rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
@@ -2844,52 +2861,87 @@ function renderHealth() {
 function healthDetailHtml() {
   const h = overview.health;
   const rec = h ? h.recovery : null;
-  const setBtn = `<button class="brief-refresh" data-set-recovery style="margin-top:1rem">${rec == null ? "Enter today's recovery" : 'Update recovery'}</button>`;
+  const setBtn = `<section class="glass insight-card"><div class="brief-actions"><button class="brief-refresh" data-set-recovery>${rec == null ? "Enter today's recovery" : 'Update recovery'}</button></div></section>`;
+
   if (rec == null) {
-    return `<div class="health-foot-note">No recovery yet. Tap below and type today's number from Athlytic — it saves on this device, no setup needed.<br><br>
-      <span style="opacity:0.75">Optional: a one-time iOS Shortcut can push it automatically each morning instead.</span></div>${setBtn}`;
+    return `<section class="glass insight-card">
+      <div class="health-empty"><b>No recovery data yet.</b><br><br>
+        Tap below and enter today's Recovery % from Athlytic — saved on device, no setup needed.<br><br>
+        <span style="opacity:0.7">Optional: a one-time iOS Shortcut can push it automatically each morning.</span>
+      </div></section>${setBtn}`;
   }
+
   const sleep = h.sleep;
   const strain = h.strain;
-  const bits = [];
-  if (h.source) bits.push(`${escapeHtml(h.source)}`);
-  if (h.updatedAt) bits.push(`updated ${fmtAgo(new Date(h.updatedAt).getTime())}`);
-  const m = [];
-  if (h.hrv != null) m.push(`HRV ${Math.round(h.hrv)}ms`);
-  if (h.restingHeartRate != null) m.push(`resting HR ${Math.round(h.restingHeartRate)}`);
-  if (h.sleepHours != null) m.push(`${h.sleepHours}h sleep`);
-  if (h.activeEnergy != null) m.push(`${Math.round(h.activeEnergy)} kcal active`);
-  if (h.exerciseMinutes != null) m.push(`${Math.round(h.exerciseMinutes)} active min`);
-  const metricsLine = (h.computed && m.length)
-    ? `<div class="health-foot-note" style="margin-top:0.5rem;opacity:0.8">Computed from ${m.join(' · ')}${h.calibrating ? ' · calibrating, sharpens as your baseline builds' : ''}.</div>`
-    : '';
-  // Raw Health Auto Export metric names from the last sync, so a blank Sleep/
-  // Strain ring is diagnosable at a glance instead of guessing what the
-  // automation actually sent.
-  const rawNames = Array.isArray(h.rawMetricNames) ? h.rawMetricNames : null;
-  const rawNamesLine = rawNames && rawNames.length
-    ? `<div class="health-foot-note" style="margin-top:0.35rem;opacity:0.55;font-size:0.8em">Last sync sent: ${rawNames.map(escapeHtml).join(', ')}.</div>`
-    : '';
-  const target = targetStrainRange(rec);
-  const targetLine = target
-    ? `<div class="health-foot-note" style="margin-top:0.35rem">Target Strain: ${target.lo}–${target.hi}. ${targetStrainCompare(strain, target)}</div>`
-    : '';
   const t = recoveryTrend();
-  const momentum = t && t.delta !== 0 ? ` ${t.delta > 0 ? 'Up' : 'Down'} ${Math.abs(t.delta)} from ${t.previousScore} last reading.` : '';
-  const sleepBit = sleep != null ? ` ${sleepWord(sleep)}.` : '';
-  const strainBit = strain != null ? ` ${strainWord(strain)}.` : '';
+  const target = targetStrainRange(rec);
+
+  const recColor = rec >= 67 ? 'var(--ok)' : rec >= 34 ? 'var(--bar-orange)' : 'var(--danger)';
+  const trendStr = t && t.delta !== 0
+    ? `${t.delta > 0 ? '↑' : '↓'} ${Math.abs(t.delta)} pts from ${t.previousScore} last reading`
+    : t ? 'Holding steady' : '';
+  const sourceStr = [h.source ? escapeHtml(h.source) : null, h.updatedAt ? `updated ${fmtAgo(new Date(h.updatedAt).getTime())}` : null].filter(Boolean).join(' · ');
+
+  // Secondary metric chips (HRV, resting HR, sleep hours, active energy, exercise)
+  const chipData = [];
+  if (h.hrv != null) chipData.push({ val: `${Math.round(h.hrv)}ms`, lbl: 'HRV' });
+  if (h.restingHeartRate != null) chipData.push({ val: Math.round(h.restingHeartRate), lbl: 'Resting HR' });
+  if (h.sleepHours != null) chipData.push({ val: `${h.sleepHours}h`, lbl: 'Sleep' });
+  if (h.activeEnergy != null) chipData.push({ val: `${Math.round(h.activeEnergy)} kcal`, lbl: 'Active' });
+  if (h.exerciseMinutes != null) chipData.push({ val: `${Math.round(h.exerciseMinutes)} min`, lbl: 'Exercise' });
+  const chipsHtml = chipData.length
+    ? `<section class="glass insight-card"><div class="hd-chips">${chipData.map(({ val, lbl }) =>
+        `<div class="hd-chip"><div class="hd-chip-val">${escapeHtml(String(val))}</div><div class="hd-chip-lbl">${escapeHtml(lbl)}</div></div>`
+      ).join('')}</div></section>` : '';
+
+  // 7-day trend chart with per-bar colour coding
   const hist = recoveryHistory().slice(0, 7).reverse();
-  const chart = hist.length >= 2 ? `<div class="recov-chart">${hist.map((d) => {
-    const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
-    return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
-  }).join('')}</div>` : '';
-  return `<div class="health-detail-rings">
-      ${detailRingHtml(rec, 'gRecovery', 'Recovery')}
-      ${detailRingHtml(sleep, 'gSleep', 'Sleep')}
-      ${detailRingHtml(strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target))}
-    </div>
-    ${chart}
-    <div class="health-foot-note">${recoveryWord(rec)}.${sleepBit}${strainBit}${momentum}${bits.length ? ' ' + bits.join(' · ') + '.' : ''}</div>${targetLine}${metricsLine}${rawNamesLine}${setBtn}`;
+  const chartHtml = hist.length >= 2
+    ? `<section class="glass insight-card"><div class="hd-chart-hdr">7-Day Recovery</div>
+        <div class="recov-chart">${hist.map((d) => {
+          const lbl = new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
+          const fill = d.score >= 67 ? 'linear-gradient(#5fd39b,#34c98a)' : d.score >= 34 ? 'linear-gradient(#ffcc70,#ff9f43)' : 'linear-gradient(#ff9a9a,#ff6b6b)';
+          return `<div class="col"><div class="bar"><div class="fill" style="height:${Math.max(4, d.score)}%;background:${fill}"></div></div><span class="d">${lbl}</span><span class="v">${d.score}</span></div>`;
+        }).join('')}</div>
+      </section>` : '';
+
+  // Calibration / raw metric names (diagnostic footer)
+  const rawNames = Array.isArray(h.rawMetricNames) && h.rawMetricNames.length ? h.rawMetricNames : null;
+  const footerNote = [
+    h.computed && chipData.length ? `Computed from ${chipData.map((c) => `${c.val} ${c.lbl}`).join(' · ')}` : null,
+    h.calibrating ? 'Calibrating — sharpens as your baseline builds' : null,
+    rawNames ? `Last sync: ${rawNames.map(escapeHtml).join(', ')}` : null,
+  ].filter(Boolean);
+
+  return `
+    <section class="glass insight-card hd-hero">
+      <div class="hd-hero-score" style="color:${recColor}">${rec}%</div>
+      <div class="hd-hero-word">${escapeHtml(recoveryWord(rec))}</div>
+      ${trendStr ? `<div class="hd-hero-trend">${escapeHtml(trendStr)}</div>` : ''}
+      ${sourceStr ? `<div class="hd-hero-trend" style="margin-top:0.1rem;font-size:0.72rem">${sourceStr}</div>` : ''}
+    </section>
+    ${(sleep != null || strain != null) ? `<div class="hd-dual">
+      ${sleep != null ? `<section class="glass insight-card hd-dual-card">
+        <div class="hd-dual-val">${sleep}%</div>
+        <div class="hd-dual-lbl">Sleep</div>
+        <div class="hd-dual-word">${escapeHtml(sleepWord(sleep))}</div>
+      </section>` : ''}
+      ${strain != null ? `<section class="glass insight-card hd-dual-card">
+        <div class="hd-dual-val" style="color:var(--bar-orange)">${strain}</div>
+        <div class="hd-dual-lbl">Strain</div>
+        <div class="hd-dual-word">${escapeHtml(strainWord(strain))}</div>
+      </section>` : ''}
+    </div>` : ''}
+    ${chipsHtml}
+    ${target ? `<section class="glass insight-card">
+      <div class="hd-target-row">
+        <div><div class="hd-chip-lbl">Target Strain</div><div class="hd-target-band">${target.lo}–${target.hi}</div></div>
+        <div style="font-size:0.82rem;color:var(--muted);text-align:right;max-width:55%">${escapeHtml(targetStrainCompare(strain, target))}</div>
+      </div>
+    </section>` : ''}
+    ${chartHtml}
+    ${footerNote.length ? `<section class="glass insight-card"><div class="health-foot-note" style="opacity:0.65;font-size:0.76rem">${footerNote.map(escapeHtml).join('<br>')}</div></section>` : ''}
+    ${setBtn}`;
 }
 
 // Manual entry — type today's recovery from Athlytic; saved on-device (no
