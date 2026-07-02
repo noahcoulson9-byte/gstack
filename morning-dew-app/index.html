@@ -1144,6 +1144,45 @@
   .news-saved-empty-icon svg { width: 2.6rem; height: 2.6rem; }
   .news-saved-empty-title { font-size: 1.05rem; font-weight: 800; color: #000; margin-bottom: 0.35rem; }
   .news-saved-empty-sub { font-size: 0.85rem; line-height: 1.4; max-width: 17rem; }
+
+  /* ---- System monitoring: section fallbacks + status sheet ---- */
+  .md-fallback { text-align: center; padding: 2rem 1.2rem; color: var(--muted); font-size: 0.88rem; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; }
+  .md-retry { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--text); font-family: inherit; font-size: 0.82rem; font-weight: 700; padding: 0.5rem 1.2rem; border-radius: 999px; cursor: pointer; }
+  .updated-label { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .md-status-sheet { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 460px; max-height: 72vh; overflow-y: auto; z-index: 90; background: rgba(18,20,28,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 22px 22px 0 0; padding: 1rem 1.1rem calc(env(safe-area-inset-bottom) + 1rem); }
+  .md-status-sheet[hidden] { display: none; }
+  .md-sheet-hdr { display: flex; align-items: center; justify-content: space-between; font-size: 1.05rem; }
+  .md-sheet-close { background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 0.2rem 0.4rem; }
+  .md-sheet-sec { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0.9rem 0 0.4rem; }
+  .md-src-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.32rem 0; font-size: 0.84rem; flex-wrap: wrap; }
+  .md-src-when { color: var(--muted); font-size: 0.76rem; }
+  .md-src-err { flex-basis: 100%; color: #ffb347; font-size: 0.72rem; padding-left: 1.1rem; }
+  .md-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .md-dot.ok { background: #34c98a; } .md-dot.warn { background: #ffb347; }
+  .md-dot.bad { background: #ff6b6b; } .md-dot.idle { background: rgba(255,255,255,0.25); }
+  .md-log-scroll { max-height: 200px; overflow-y: auto; }
+  .md-log-row { font-size: 0.74rem; color: rgba(255,255,255,0.75); padding: 0.24rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); line-height: 1.4; }
+  .md-log-empty { font-size: 0.8rem; color: var(--muted); padding: 0.3rem 0; }
+  .md-lvl { display: inline-block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border-radius: 5px; padding: 0.05rem 0.35rem; margin-right: 0.35rem; }
+  .md-lvl.error { background: rgba(255,107,107,0.2); color: #ff9a9a; }
+  .md-lvl.warn { background: rgba(255,179,71,0.18); color: #ffcc70; }
+  .md-lvl.info { background: rgba(255,255,255,0.08); color: var(--muted); }
+  .md-log-src { color: var(--muted); font-weight: 700; }
+  .md-log-when { color: rgba(255,255,255,0.35); font-size: 0.66rem; margin-left: 0.3rem; }
+  .md-sheet-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
+  .md-sheet-btn { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text); font-family: inherit; font-size: 0.8rem; font-weight: 700; padding: 0.55rem 0; border-radius: 12px; cursor: pointer; }
+
+  /* ---- Accuracy layer: why-panel + feedback ---- */
+  .why-card details { border-top: 1px solid rgba(255,255,255,0.07); }
+  .why-card summary { cursor: pointer; font-size: 0.8rem; font-weight: 700; color: var(--muted); padding: 0.6rem 0; list-style: none; }
+  .why-card summary::-webkit-details-marker { display: none; }
+  .why-row { font-size: 0.78rem; color: rgba(255,255,255,0.68); padding: 0.22rem 0; line-height: 1.45; }
+  .why-row b { color: rgba(255,255,255,0.85); }
+  .why-conf { color: var(--muted); font-size: 0.7rem; }
+  .fb-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.7rem; flex-wrap: wrap; }
+  .fb-lbl { font-size: 0.76rem; color: var(--muted); }
+  .fb-btn { background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border); color: var(--text); font-family: inherit; font-size: 0.76rem; font-weight: 700; padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
+  .fb-btn.sel { background: rgba(85,153,255,0.22); border-color: rgba(85,153,255,0.5); }
 </style>
 </head>
 <body>
@@ -1167,6 +1206,7 @@
 </nav>
 
 <div class="ptr-spinner" id="ptrSpinner" aria-hidden="true">↻</div>
+<div class="md-status-sheet" id="statusSheet" hidden></div>
 
 <div class="blob blob-a"></div>
 <div class="blob blob-b"></div>
@@ -1629,6 +1669,10 @@ function briefContext() {
     tasks,
     email,
     tomorrow,
+    // Calibration block: this user's own logged patterns, recent
+    // prediction-vs-actual outcomes, and explicit corrections. The server
+    // prompt tells the model to weight these over generic heuristics.
+    personal: personalContext(),
   };
 }
 async function fetchBrief(force) {
@@ -1641,9 +1685,10 @@ async function fetchBrief(force) {
   if (overview.weatherReached === undefined || overview.calendarReached === undefined || overview.healthConfigured === undefined) return;
   overview.briefFetching = true;
   if (debriefOpen) renderDebriefPage();
+  const ctx = briefContext();
   try {
     const res = await fetchWithTimeout(apiUrl('/api/brief'), {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(briefContext()),
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(ctx),
     }, 100000);
     const data = await res.json();
     if (data.configured === false) { overview.briefConfigured = false; }
@@ -1651,6 +1696,7 @@ async function fetchBrief(force) {
       overview.brief = data.brief;
       overview.briefStructured = !!data.structured;
       overview.briefConfigured = true;
+      recordBriefInsight(ctx, data.brief);
       const healthNow = overview.health || lsGet(HEALTH_CACHE_KEY, null);
       lsSet(BRIEF_KEY, {
         date: localDateStr(new Date()),
@@ -1910,10 +1956,12 @@ async function loadWeather() {
     renderHome();
     fetchBrief();
     if (currentDetail === 'weather') openDetail('weather');
+    return true;
   } catch (err) {
     overview.weatherReached = false;
     renderHome();
     if (currentDetail === 'weather') openDetail('weather');
+    return false;
   }
 }
 
@@ -2613,12 +2661,66 @@ function debriefBodyHtml() {
   }
   return `<div class="debrief-day-hdr">Today</div>
     ${todayBrief}
+    ${debriefWhyHtml(b)}
     ${debriefTodayDataHtml()}
     <div class="debrief-day-hdr">Tomorrow</div>
     ${debriefTomorrowSectionHtml(b)}
     <div class="brief-actions"><button class="brief-refresh" data-debrief-refresh>↻ Regenerate</button></div>
     <div class="brief-actions">${pushButtonHtml()}</div>`;
 }
+// Transparency + feedback: shows exactly which data points and personal
+// patterns this brief was generated from (the snapshot stored at generation
+// time, so it stays accurate even after data refreshes), plus a lightweight
+// accuracy rating that feeds back into the calibration context.
+function debriefWhyHtml(brief) {
+  const entry = todaysBriefEntry();
+  const basis = (brief && typeof brief === 'object' && Array.isArray(brief.basis) && brief.basis.length)
+    ? brief.basis
+    : (entry && entry.inputs && entry.inputs.basis) || [];
+  const personal = (entry && entry.inputs && entry.inputs.personal) || null;
+  const patterns = personal ? (personal.patterns || []) : storedPatterns();
+  const accuracy = personal ? (personal.accuracy || []) : [];
+  const inputs = entry && entry.inputs ? entry.inputs : null;
+  const fb = entry && entry.feedback;
+  const rows = [];
+  if (inputs) {
+    const bits = [];
+    if (inputs.recovery != null) bits.push(`recovery ${inputs.recovery}`);
+    if (inputs.sleepHours != null) bits.push(`${Math.round(inputs.sleepHours * 10) / 10}h sleep`);
+    if (inputs.strain != null) bits.push(`strain ${inputs.strain}`);
+    bits.push(`${inputs.events} event${inputs.events === 1 ? '' : 's'}`);
+    rows.push(`<div class="why-row"><b>Data in:</b> ${escapeHtml(bits.join(' · '))}</div>`);
+  }
+  basis.forEach((s) => rows.push(`<div class="why-row"><b>Drew on:</b> ${escapeHtml(String(s))}</div>`));
+  patterns.forEach((p) => rows.push(`<div class="why-row"><b>Your pattern:</b> ${escapeHtml(p.statement)} <span class="why-conf">(${p.confidence} confidence)</span></div>`));
+  if (accuracy.length) {
+    const matched = accuracy.filter((a) => a.userFeedback == null || !String(a.userFeedback).startsWith('off')).length;
+    rows.push(`<div class="why-row"><b>Calibration:</b> ${accuracy.length} recent brief${accuracy.length === 1 ? '' : 's'} with next-day outcomes logged${accuracy.length ? `, ${matched} without corrections` : ''}.</div>`);
+  }
+  if (!rows.length) rows.push('<div class="why-row">Built from today\'s live data. Pattern memory fills in as more days get logged.</div>');
+  return `<section class="glass insight-card why-card">
+    <details>
+      <summary>Why this brief · built from your data</summary>
+      ${rows.join('')}
+    </details>
+    <div class="fb-row"><span class="fb-lbl">Was this accurate?</span>
+      <button class="fb-btn${fb && fb.rating === 'good' ? ' sel' : ''}" data-brief-fb="good">👍 Accurate</button>
+      <button class="fb-btn${fb && fb.rating === 'off' ? ' sel' : ''}" data-brief-fb="off">👎 Off the mark</button>
+      ${fb && fb.note ? `<span class="fb-lbl">Noted: “${escapeHtml(fb.note)}”</span>` : ''}
+    </div>
+  </section>`;
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-brief-fb]');
+  if (!btn) return;
+  const rating = btn.getAttribute('data-brief-fb');
+  let note = null;
+  if (rating === 'off') {
+    note = prompt('What was off? (e.g. "recovery read too optimistic", "plan ignored my 3pm meeting")') || null;
+  }
+  if (setBriefFeedback(rating, note)) renderDebriefPage();
+  else alert('No brief logged for today yet — generate the brief first.');
+});
 function renderDebriefPage() {
   const el = document.getElementById('debriefContent');
   if (el) el.innerHTML = debriefBodyHtml();
@@ -3089,20 +3191,187 @@ function trendChip(t) {
   return t.delta > 0 ? `▲${t.delta}` : `▼${Math.abs(t.delta)}`;
 }
 
+// ========== Accuracy layer: outcome log + pattern memory + calibration ==========
+// This is structured memory and a feedback loop around the AI outputs, not the
+// model itself getting smarter: each brief is logged with the data it was built
+// from, next-day actuals get attached when they arrive, personal patterns are
+// derived from the accumulated history, and all of it is fed back into the next
+// generation as context — so outputs get calibrated to real logged trends
+// instead of generic heuristics. Everything lives on-device and is inspectable
+// from the "Why this brief" panel on the debrief page.
+const MD_INSIGHT_KEY = 'morningDewInsightLog';
+const MD_PATTERNS_KEY = 'morningDewPatterns';
+
+function insightLog() { const v = lsGet(MD_INSIGHT_KEY, []); return Array.isArray(v) ? v : []; }
+
+// Chronological day-records from the on-device health history (newest last),
+// tolerating the legacy bare-number entry shape.
+function healthHistEntries() {
+  const hist = lsGet(HEALTH_HIST_KEY, {});
+  return Object.keys(hist).sort().map((d) => {
+    const v = hist[d];
+    return typeof v === 'number'
+      ? { date: d, rec: v, sleepHours: null, strain: null }
+      : { date: d, rec: v.rec ?? null, sleepHours: v.sleepHours ?? null, strain: v.strain ?? null };
+  });
+}
+function nextDayStr(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + 1);
+  return localDateStr(d);
+}
+
+// Snapshot what the brief predicted and exactly what it was built from.
+// One entry per day; regenerating replaces that day's entry. Capped at 60.
+function recordBriefInsight(ctx, brief) {
+  try {
+    const structured = brief && typeof brief === 'object' && Array.isArray(brief.sections);
+    const entry = {
+      date: localDateStr(new Date()),
+      ts: Date.now(),
+      kind: 'brief',
+      predicted: {
+        headline: structured ? (brief.headline || '') : String(brief).slice(0, 100),
+        recBand: ctx.recovery ? ctx.recovery.band : null,
+        targetStrain: ctx.targetStrain || null,
+      },
+      inputs: {
+        recovery: ctx.recovery ? ctx.recovery.score : null,
+        sleepHours: ctx.recovery ? ctx.recovery.sleepHours : null,
+        strain: ctx.strain ? ctx.strain.score : null,
+        events: (ctx.events || []).length,
+        personal: ctx.personal || null,
+        basis: structured && Array.isArray(brief.basis) ? brief.basis.slice(0, 8) : null,
+      },
+      outcome: null,
+      feedback: null,
+    };
+    const log = insightLog().filter((e) => !(e.date === entry.date && e.kind === 'brief'));
+    log.push(entry);
+    while (log.length > 60) log.shift();
+    lsSet(MD_INSIGHT_KEY, log);
+  } catch (err) { mdLog('warn', 'accuracy', `insight record failed: ${err && err.message}`); }
+}
+
+// Attach what ACTUALLY happened: when health data lands for the day after a
+// logged brief, store next-day recovery/sleep against that brief's entry.
+function backfillOutcomes() {
+  try {
+    const log = insightLog();
+    const byDate = {};
+    healthHistEntries().forEach((e) => { byDate[e.date] = e; });
+    let changed = false;
+    for (const entry of log) {
+      if (entry.outcome) continue;
+      const next = byDate[nextDayStr(entry.date)];
+      if (!next || next.rec == null) continue;
+      entry.outcome = {
+        filledAt: Date.now(),
+        nextRecovery: next.rec,
+        nextSleepHours: next.sleepHours,
+        recDelta: entry.inputs && entry.inputs.recovery != null ? next.rec - entry.inputs.recovery : null,
+      };
+      changed = true;
+    }
+    if (changed) lsSet(MD_INSIGHT_KEY, log);
+  } catch (err) { mdLog('warn', 'accuracy', `outcome backfill failed: ${err && err.message}`); }
+}
+
+function mdConfidence(n) { return n >= 8 ? 'high' : n >= 4 ? 'medium' : 'low'; }
+
+// Derive personal patterns from accumulated day-pairs (day D -> day D+1).
+// Pure aggregation over logged data — no assumptions injected.
+function recomputePatterns() {
+  try {
+    const entries = healthHistEntries();
+    const byDate = {};
+    entries.forEach((e) => { byDate[e.date] = e; });
+    const pairs = entries
+      .map((e) => ({ day: e, next: byDate[nextDayStr(e.date)] }))
+      .filter((p) => p.next && p.day.rec != null && p.next.rec != null);
+    const patterns = [];
+    const avgDelta = (subset) => subset.reduce((s, p) => s + (p.next.rec - p.day.rec), 0) / subset.length;
+    const fmt = (v) => `${v >= 0 ? '+' : ''}${Math.round(v)}`;
+    const short = pairs.filter((p) => p.day.sleepHours != null && p.day.sleepHours < 7);
+    if (short.length >= 2) patterns.push({ key: 'short-sleep', n: short.length, confidence: mdConfidence(short.length),
+      statement: `After nights under 7h of sleep, next-day recovery moves ${fmt(avgDelta(short))} on average (${short.length} nights logged)` });
+    const good = pairs.filter((p) => p.day.sleepHours != null && p.day.sleepHours >= 7.5);
+    if (good.length >= 2) patterns.push({ key: 'good-sleep', n: good.length, confidence: mdConfidence(good.length),
+      statement: `After nights of 7.5h+ sleep, next-day recovery moves ${fmt(avgDelta(good))} on average (${good.length} nights logged)` });
+    const hard = pairs.filter((p) => p.day.strain != null && p.day.strain >= 67);
+    if (hard.length >= 2) patterns.push({ key: 'high-strain', n: hard.length, confidence: mdConfidence(hard.length),
+      statement: `After high-strain days (67+), next-day recovery moves ${fmt(avgDelta(hard))} on average (${hard.length} days logged)` });
+    const recent = entries.slice(-7).filter((e) => e.rec != null);
+    if (recent.length >= 3) {
+      const avgRec = Math.round(recent.reduce((s, e) => s + e.rec, 0) / recent.length);
+      const slept = recent.filter((e) => e.sleepHours != null);
+      const avgSleep = slept.length ? Math.round(slept.reduce((s, e) => s + e.sleepHours, 0) / slept.length * 10) / 10 : null;
+      patterns.push({ key: 'baseline-7d', n: recent.length, confidence: mdConfidence(recent.length),
+        statement: `7-day baseline: recovery averages ${avgRec}${avgSleep != null ? `, sleep averages ${avgSleep}h` : ''} (${recent.length} days logged)` });
+    }
+    lsSet(MD_PATTERNS_KEY, { computedAt: Date.now(), patterns });
+  } catch (err) { mdLog('warn', 'accuracy', `pattern recompute failed: ${err && err.message}`); }
+}
+function storedPatterns() { const v = lsGet(MD_PATTERNS_KEY, null); return (v && Array.isArray(v.patterns)) ? v.patterns : []; }
+
+// The calibration block handed to the brief generator: personal patterns,
+// how recent reads matched next-day actuals, and any explicit corrections.
+function personalContext() {
+  const withOutcome = insightLog().filter((e) => e.outcome).slice(-5);
+  const accuracy = withOutcome.map((e) => ({
+    date: e.date,
+    briefReadRecoveryAs: e.predicted ? e.predicted.recBand : null,
+    recoveryThatDay: e.inputs ? e.inputs.recovery : null,
+    nextDayRecovery: e.outcome.nextRecovery,
+    changeByNextDay: e.outcome.recDelta,
+    userFeedback: e.feedback ? `${e.feedback.rating}${e.feedback.note ? ': ' + e.feedback.note : ''}` : null,
+  }));
+  const corrections = insightLog()
+    .filter((e) => e.feedback && e.feedback.rating === 'off' && e.feedback.note)
+    .slice(-5)
+    .map((e) => ({ date: e.date, correction: e.feedback.note }));
+  return { patterns: storedPatterns(), accuracy, corrections };
+}
+
+// User feedback on today's brief — stored on the entry AND fed back into
+// future context via personalContext(), not just recorded and ignored.
+function setBriefFeedback(rating, note) {
+  const log = insightLog();
+  const today = localDateStr(new Date());
+  const entry = log.find((e) => e.date === today && e.kind === 'brief');
+  if (!entry) return false;
+  entry.feedback = { rating, note: note || null, ts: Date.now() };
+  lsSet(MD_INSIGHT_KEY, log);
+  mdLog('info', 'accuracy', `feedback recorded: ${rating}${note ? ' — ' + note : ''}`);
+  return true;
+}
+function todaysBriefEntry() {
+  return insightLog().find((e) => e.date === localDateStr(new Date()) && e.kind === 'brief') || null;
+}
+
 async function fetchHealth() {
+  let ok = true;
   try {
     const res = await fetchWithTimeout(apiUrl('/api/health'));
     const data = await res.json();
     overview.healthConfigured = data.configured;
-    if (data.data) { overview.health = data.data; lsSet(HEALTH_CACHE_KEY, data.data); recordHealthHistory(data.data); }
+    if (data.data) {
+      overview.health = data.data;
+      lsSet(HEALTH_CACHE_KEY, data.data);
+      recordHealthHistory(data.data);
+      backfillOutcomes();
+      recomputePatterns();
+    }
     else if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
   } catch {
+    ok = false;
     if (overview.health === undefined) overview.health = lsGet(HEALTH_CACHE_KEY, null);
     if (overview.healthConfigured === undefined) overview.healthConfigured = false;
   }
   renderHealth();
   if (healthOpen) renderHealthPage();
   fetchBrief();
+  return ok;
 }
 
 function renderHealth() {
@@ -3776,15 +4045,100 @@ function setRecoveryManual() {
   fetchBrief(true);
 }
 
-// ---------- Refresh orchestration ----------
-let lastUpdated = 0;
+// ---------- Central system log (in-app, inspectable) ----------
+// Ring buffer in localStorage so sync/validation/render problems are reviewable
+// from the status sheet (tap the "Updated Xm ago" label), not only in devtools.
+const MD_SYSLOG_KEY = 'morningDewSysLog';
+function mdLog(level, source, message, extra) {
+  try {
+    const log = lsGet(MD_SYSLOG_KEY, []);
+    log.push({ ts: Date.now(), level, source, message: String(message).slice(0, 300), extra: extra || null });
+    while (log.length > 200) log.shift();
+    lsSet(MD_SYSLOG_KEY, log);
+  } catch { /* quota — logging must never break the app */ }
+  const fn = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
+  console[fn](`[md:${source}]`, message, extra || '');
+}
+function mdSysLog() { return lsGet(MD_SYSLOG_KEY, []); }
 
-// Runs an /api loader and, if it failed (couldn't reach the backend — likely a
-// Render cold start), retries once after a delay long enough to cover the wake.
-function withColdStartRetry(loadFn, delayMs = 10000) {
-  Promise.resolve(loadFn()).then((ok) => {
-    if (ok === false) setTimeout(loadFn, delayMs);
-  });
+// ---------- Sync engine ----------
+// One registry drives everything: the 10-minute interval, load/focus syncs,
+// manual refreshes, per-source freshness skips, stagger, validation and the
+// status sheet. Each source syncs independently — one failure never blocks
+// the others. setInterval is throttled/suspended in background tabs and
+// suspended PWAs, so the visibilitychange/pageshow handlers below are the
+// real "resume" trigger; the interval covers the app sitting open.
+let lastUpdated = 0;
+const SYNC_INTERVAL_MS = 10 * 60 * 1000;  // full cycle cadence
+const SYNC_FRESH_MS = 2 * 60 * 1000;      // skip sources refreshed this recently (focus/interval overlap)
+const SYNC_STAGGER_MS = 250;              // spacing between parallel call STARTS (rate-limit kindness)
+const SYNC_RETRY_MS = 12000;              // one quiet follow-up for failures (covers Render cold starts)
+const SYNC_STALE_STREAK = 2;              // failures in a row before we surface a warning
+
+const SYNC_SOURCES = {
+  weather:   { label: 'Weather',   run: () => loadWeather(),   validate: () => validateWeather() },
+  calendar:  { label: 'Calendar',  run: () => loadCalendar(),  validate: () => validateCalendar() },
+  reminders: { label: 'Reminders', run: () => loadReminders(), validate: () => validateReminders() },
+  email:     { label: 'Email',     run: () => loadEmail(),     validate: () => validateEmail() },
+  health:    { label: 'Readiness', run: () => fetchHealth(),   validate: () => validateHealth() },
+};
+const syncState = {}; // name -> { lastSuccess, lastAttempt, failStreak, lastError }
+function srcState(name) {
+  return syncState[name] || (syncState[name] = { lastSuccess: 0, lastAttempt: 0, failStreak: 0, lastError: null });
+}
+
+async function syncSource(name, force) {
+  const src = SYNC_SOURCES[name];
+  const st = srcState(name);
+  if (!force && Date.now() - st.lastSuccess < SYNC_FRESH_MS) return 'fresh';
+  st.lastAttempt = Date.now();
+  try {
+    const ok = await src.run();
+    if (ok === false) throw new Error('source unreachable');
+    st.lastSuccess = Date.now();
+    st.failStreak = 0;
+    const problem = src.validate ? src.validate() : null;
+    if (problem) { st.lastError = problem; mdLog('warn', name, `validation: ${problem}`); }
+    else st.lastError = null;
+    return 'ok';
+  } catch (err) {
+    st.failStreak++;
+    st.lastError = String((err && err.message) || err);
+    // Single blips are routine (see the retry pass below) — only log loudly
+    // once a source is actually trending broken.
+    mdLog(st.failStreak >= SYNC_STALE_STREAK ? 'error' : 'info', name, `sync failed (streak ${st.failStreak}): ${st.lastError}`);
+    return 'fail';
+  }
+}
+
+let _syncRunning = false;
+async function refreshAll(opts = {}) {
+  if (_syncRunning) return;
+  _syncRunning = true;
+  try {
+    renderUpdated();
+    // Wake the backend a beat early so the /api calls land on a warm container.
+    fetchWithTimeout(apiUrl('/')).catch(() => {});
+    const names = Object.keys(SYNC_SOURCES).filter((n) => !opts.only || opts.only.includes(n));
+    const runs = [];
+    for (const name of names) {
+      runs.push(syncSource(name, opts.force));
+      // Stagger the STARTS, not the completion — calls still run in parallel.
+      await new Promise((r) => setTimeout(r, SYNC_STAGGER_MS));
+    }
+    const results = await Promise.all(runs);
+    if (results.includes('ok') || (results.includes('fresh') && !lastUpdated)) lastUpdated = Date.now();
+    const failed = names.filter((_, i) => results[i] === 'fail');
+    // One quiet follow-up pass for just the failed sources: transient network
+    // blips and Render cold starts self-resolve here without ever surfacing.
+    if (failed.length && !opts.isRetry) {
+      setTimeout(() => refreshAll({ only: failed, force: true, isRetry: true }), SYNC_RETRY_MS);
+    }
+  } finally {
+    _syncRunning = false;
+    renderUpdated();
+    selfCheck();
+  }
 }
 
 function fmtAgo(ts) {
@@ -3798,23 +4152,181 @@ function fmtAgo(ts) {
   return `${h}h ago`;
 }
 
+// Sources that look genuinely broken: repeated consecutive failures, or a
+// previously-working source that hasn't succeeded across multiple cycles.
+function staleSources() {
+  return Object.keys(SYNC_SOURCES).filter((n) => {
+    const st = srcState(n);
+    if (st.failStreak >= SYNC_STALE_STREAK) return true;
+    return !!st.lastSuccess && Date.now() - st.lastSuccess > SYNC_INTERVAL_MS * 2.5;
+  });
+}
+
 function renderUpdated() {
   const el = document.getElementById('updatedLabel');
   if (!el) return;
-  el.textContent = lastUpdated ? `Updated ${fmtAgo(lastUpdated)}` : 'Updating…';
+  const stale = staleSources();
+  const base = lastUpdated ? `Updated ${fmtAgo(lastUpdated)}` : 'Updating…';
+  el.textContent = stale.length
+    ? `${base} · ⚠︎ ${stale.map((n) => SYNC_SOURCES[n].label).join(', ')} behind`
+    : base;
 }
 
-function refreshAll() {
-  lastUpdated = Date.now();
-  renderUpdated();
-  // Wake the backend a beat early so the /api calls land on a warm container.
-  fetchWithTimeout(apiUrl('/')).catch(() => {});
-  loadWeather();
-  withColdStartRetry(loadCalendar);
-  withColdStartRetry(loadReminders);
-  withColdStartRetry(loadEmail);
-  fetchHealth();
+// ---------- Data integrity validation ----------
+// Shape/range checks run after every successful sync so anomalous data gets
+// flagged and logged instead of silently rendering broken. Returning null
+// means healthy; "not configured" is a setup state, not an anomaly.
+function validateWeather() {
+  if (overview.weatherReached === false) return null; // fetch failure, already tracked
+  const w = overview.weather;
+  if (!w) return 'weather payload empty after successful fetch';
+  if (!Number.isFinite(w.temp) || w.temp < -60 || w.temp > 60) return `implausible temperature: ${w.temp}`;
+  if (!w.label) return 'missing conditions label';
+  return null;
 }
+function validateCalendar() {
+  if (!overview.calendarConfigured) return null;
+  if (!Array.isArray(overview.calendar)) return 'calendar is not a list';
+  for (const e of overview.calendar.slice(0, 25)) {
+    if (!e || typeof e.summary !== 'string') return 'event missing title';
+    if (e.start && isNaN(new Date(e.start).getTime())) return `event "${e.summary}" has invalid start date`;
+  }
+  return null;
+}
+function validateReminders() {
+  if (!overview.remindersConfigured) return null;
+  if (!Array.isArray(overview.reminders)) return 'reminders is not a list';
+  return null;
+}
+function validateEmail() {
+  if (overview.emailConfigured === false) return null;
+  const e = overview.email;
+  if (!e) return null; // still loading is fine
+  if (!Number.isFinite(e.urgent) || e.urgent < 0) return `implausible urgent count: ${e.urgent}`;
+  return null;
+}
+function validateHealth() {
+  const h = overview.health;
+  if (!h || h.recovery == null) return null; // no data yet is a setup state
+  if (h.recovery < 0 || h.recovery > 100) return `recovery out of range: ${h.recovery}`;
+  if (h.sleep != null && (h.sleep < 0 || h.sleep > 100)) return `sleep score out of range: ${h.sleep}`;
+  if (h.strain != null && (h.strain < 0 || h.strain > 100)) return `strain out of range: ${h.strain}`;
+  if (h.sleepHours != null && (h.sleepHours < 0 || h.sleepHours > 16)) return `implausible sleep hours: ${h.sleepHours}`;
+  if (h.restingHeartRate != null && (h.restingHeartRate < 25 || h.restingHeartRate > 130)) return `implausible resting HR: ${h.restingHeartRate}`;
+  if (h.hrv != null && (h.hrv < 3 || h.hrv > 350)) return `implausible HRV: ${h.hrv}`;
+  return null;
+}
+
+// ---------- Self-check: "is anything blank/broken?" ----------
+// A lightweight sanity pass after each sync cycle — not a test suite, just
+// catches empty/dead critical sections before the user does. Issues must
+// persist across two consecutive passes before they surface in the status
+// sheet (quiet by default; transient states self-resolve).
+let _selfCheckPrev = [];
+let _selfCheckConfirmed = [];
+function selfCheck() {
+  try {
+    const issues = [];
+    const empty = (id) => { const el = document.getElementById(id); return !el || !el.innerHTML.trim(); };
+    if (empty('greetLine')) issues.push('greeting is blank');
+    if (overview.weatherReached && empty('weatherCard')) issues.push('weather card is blank');
+    if (empty('scheduleCard')) issues.push('schedule card is blank');
+    if (empty('healthCard')) issues.push('readiness card is blank');
+    if (empty('inboxCard')) issues.push('inbox card is blank');
+    if (healthOpen && empty('healthPageContent')) issues.push('readiness page is blank while open');
+    if (debriefOpen && empty('debriefContent')) issues.push('debrief page is blank while open');
+    _selfCheckConfirmed = issues.filter((i) => _selfCheckPrev.includes(i));
+    _selfCheckConfirmed.forEach((i) => mdLog('warn', 'selfcheck', i));
+    _selfCheckPrev = issues;
+  } catch (err) {
+    mdLog('warn', 'selfcheck', `self-check itself failed: ${err && err.message}`);
+  }
+}
+
+// ---------- Render error boundaries ----------
+// Wraps the big render entry points so one broken section logs + shows a
+// retry chip (when it owns a host element) instead of an exception blanking
+// or freezing the whole app. Top-level function declarations are window
+// properties inside this single inline script, so wrap-by-name works.
+const MD_BOUNDARIES = {
+  renderHealthPage: 'healthPageContent',
+  renderDebriefPage: 'debriefContent',
+  renderNewsContent: 'newsPageContent',
+  renderHome: null,
+  renderOverview: null,
+  renderToday: null,
+  renderHealth: null,
+};
+function installRenderBoundaries() {
+  Object.entries(MD_BOUNDARIES).forEach(([fnName, hostId]) => {
+    const orig = window[fnName];
+    if (typeof orig !== 'function') { mdLog('warn', 'boundary', `no function named ${fnName} to wrap`); return; }
+    window[fnName] = function (...args) {
+      try { return orig.apply(this, args); }
+      catch (err) {
+        mdLog('error', 'render', `${fnName} crashed: ${err && err.message}`, { stack: err && err.stack ? String(err.stack).slice(0, 400) : null });
+        if (hostId) {
+          const host = document.getElementById(hostId);
+          if (host) host.innerHTML = `<div class="md-fallback">This section hit a snag — the rest of the app is fine.
+            <button class="md-retry" data-md-retry="${fnName}">Retry</button></div>`;
+        }
+      }
+    };
+  });
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-md-retry]');
+  if (!btn) return;
+  const fnName = btn.getAttribute('data-md-retry');
+  if (!(fnName in MD_BOUNDARIES)) return; // whitelist — never call arbitrary names
+  refreshAll({ force: true });
+  const fn = window[fnName];
+  if (typeof fn === 'function') fn();
+});
+
+// ---------- Status sheet (tap the "Updated Xm ago" label) ----------
+let statusSheetOpen = false;
+function statusSheetHtml() {
+  const dot = (cls) => `<span class="md-dot ${cls}"></span>`;
+  const rows = Object.keys(SYNC_SOURCES).map((n) => {
+    const st = srcState(n);
+    const stale = staleSources().includes(n);
+    const cls = stale ? 'bad' : st.lastError ? 'warn' : st.lastSuccess ? 'ok' : 'idle';
+    const when = st.lastSuccess ? fmtAgo(st.lastSuccess) : 'never';
+    return `<div class="md-src-row">${dot(cls)}<b>${SYNC_SOURCES[n].label}</b>
+      <span class="md-src-when">synced ${when}</span>
+      ${st.lastError ? `<span class="md-src-err">${escapeHtml(st.lastError)}</span>` : ''}</div>`;
+  }).join('');
+  const checks = _selfCheckConfirmed.length
+    ? _selfCheckConfirmed.map((i) => `<div class="md-log-row"><span class="md-lvl warn">check</span>${escapeHtml(i)}</div>`).join('')
+    : '<div class="md-log-empty">All key sections have live data.</div>';
+  const log = mdSysLog().slice(-30).reverse().map((e) =>
+    `<div class="md-log-row"><span class="md-lvl ${e.level}">${e.level}</span>
+      <span class="md-log-src">${escapeHtml(e.source)}</span> ${escapeHtml(e.message)}
+      <span class="md-log-when">${fmtAgo(e.ts)}</span></div>`).join('')
+    || '<div class="md-log-empty">No warnings or errors logged.</div>';
+  return `<div class="md-sheet-hdr"><b>System status</b><button class="md-sheet-close" data-status-close>✕</button></div>
+    <div class="md-sheet-sec">Sources</div>${rows}
+    <div class="md-sheet-sec">Self-check</div>${checks}
+    <div class="md-sheet-sec">Recent log</div><div class="md-log-scroll">${log}</div>
+    <div class="md-sheet-actions">
+      <button class="md-sheet-btn" data-status-refresh>Force full sync</button>
+      <button class="md-sheet-btn" data-status-clearlog>Clear log</button>
+    </div>`;
+}
+function toggleStatusSheet(open) {
+  statusSheetOpen = open != null ? open : !statusSheetOpen;
+  const el = document.getElementById('statusSheet');
+  if (!el) return;
+  if (statusSheetOpen) { el.innerHTML = statusSheetHtml(); el.hidden = false; }
+  else el.hidden = true;
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#updatedLabel')) { toggleStatusSheet(true); return; }
+  if (e.target.closest('[data-status-close]')) { toggleStatusSheet(false); return; }
+  if (e.target.closest('[data-status-refresh]')) { refreshAll({ force: true }).then(() => { if (statusSheetOpen) toggleStatusSheet(true); }); return; }
+  if (e.target.closest('[data-status-clearlog]')) { lsSet(MD_SYSLOG_KEY, []); toggleStatusSheet(true); return; }
+});
 
 // ---------- Controls ----------
 function openServerSetting() {
@@ -3825,7 +4337,7 @@ function openServerSetting() {
   if (trimmed) localStorage.setItem(API_BASE_KEY, trimmed);
   else localStorage.removeItem(API_BASE_KEY);
   updateServerBtnLabel();
-  refreshAll();
+  refreshAll({ force: true });
 }
 
 document.getElementById('settingsBtn').addEventListener('click', openServerSetting);
@@ -3856,7 +4368,7 @@ document.getElementById('pageRefreshBtn').addEventListener('click', (e) => {
   // reflow so the animation restarts on every tap
   void e.currentTarget.offsetWidth;
   e.currentTarget.classList.add('spinning');
-  refreshAll();
+  refreshAll({ force: true });
 });
 
 document.getElementById('navNews').addEventListener('click', () => openNews());
@@ -3933,7 +4445,7 @@ document.getElementById('navInbox').addEventListener('click', () => openDetail('
     if (dy > THRESHOLD && window.scrollY <= 0) {
       spinner.classList.add('active');
       spinner.style.opacity = '1';
-      refreshAll();
+      refreshAll({ force: true });
       setTimeout(() => {
         spinner.classList.remove('active');
         spinner.style.opacity = '0';
@@ -3972,18 +4484,17 @@ document.getElementById('navInbox').addEventListener('click', () => openDetail('
 })();
 
 // ---------- Refresh on open / focus ----------
-// Re-fetch when the installed PWA is brought back to the foreground after being
-// idle, so it's fresh the moment it's opened each morning without a manual tap.
-const STALE_MS = 5 * 60 * 1000;
+// Re-fetch whenever the installed PWA (or tab) is brought back to the
+// foreground — the per-source 2-minute freshness gate in syncSource makes
+// this safe to fire liberally, so quick app-switches don't re-hit the APIs.
 function maybeRefreshOnVisible() {
-  if (document.visibilityState === 'visible' && Date.now() - lastUpdated > STALE_MS) {
-    refreshAll();
-  }
+  if (document.visibilityState === 'visible') refreshAll();
 }
 document.addEventListener('visibilitychange', maybeRefreshOnVisible);
 window.addEventListener('pageshow', maybeRefreshOnVisible);
 
 // ---------- Boot ----------
+installRenderBoundaries();
 renderGreeting();
 applyTheme(); // hour-based theme immediately; weather refines it with is_day
 // Seed a cached brief (if today's is stored) so the hero card is instant.
@@ -3996,6 +4507,9 @@ refreshAll();
 // full-screen page instead of the home dashboard.
 if (location.hash === '#/debrief') openDebrief();
 setInterval(renderUpdated, 30000);
+// The 10-minute full-cycle tick. Suspended by the OS while backgrounded —
+// maybeRefreshOnVisible covers the wake — so this only fires while open.
+setInterval(() => refreshAll(), SYNC_INTERVAL_MS);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
