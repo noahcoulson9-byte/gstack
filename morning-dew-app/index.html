@@ -289,7 +289,7 @@
   .rd-head { font-family: Georgia, 'Times New Roman', serif; font-size: 27px; font-weight: 500; margin-top: 6px; color: #fff; }
   .rd-body { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.62); margin: 8px auto 0; max-width: 300px; overflow-wrap: break-word; }
   .rd-learn { display: inline-block; margin-top: 16px; background: rgba(244,244,240,0.92); color: #16110c; font-size: 13px; font-weight: 600; padding: 9px 20px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; }
-  .rd-content { position: relative; padding: 4px 18px calc(env(safe-area-inset-bottom) + 118px); }
+  .rd-content { position: relative; padding: 4px 18px 96px; }
   .rd-card { display: flex; align-items: center; gap: 13px; background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 14px 16px; margin-top: 10px; }
   .rd-card .rd-cicon { width: 34px; height: 34px; border-radius: 50%; background: rgba(150,120,220,0.16); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
   .rd-card .rd-cbody { flex: 1; min-width: 0; }
@@ -320,7 +320,7 @@
   .rd-ovtrend.up { color: #4fd39b; } .rd-ovtrend.down { color: #ff8080; } .rd-ovtrend.flat { color: rgba(255,255,255,0.4); }
   .rd-ovval { font-size: 30px; font-weight: 800; color: #fff; margin-top: 8px; line-height: 1; }
   .rd-ovunit { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.5); margin-left: 3px; }
-  .rd-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 18px); z-index: 20; display: flex; align-items: center; gap: 26px; background: rgba(35,39,45,0.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 30px; padding: 11px 22px; box-shadow: 0 12px 34px rgba(0,0,0,0.5); }
+  .rd-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; z-index: 20; display: flex; align-items: center; gap: 26px; background: rgba(35,39,45,0.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.12); border-radius: 30px 30px 0 0; padding: 11px 22px max(calc(env(safe-area-inset-bottom) - 22px), 10px); box-shadow: 0 12px 34px rgba(0,0,0,0.5); }
   .rd-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; color: rgba(255,255,255,0.55); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
   .rd-tab.active { color: #fff; }
   .rd-tab span { font-size: 10px; font-weight: 600; }
@@ -614,8 +614,11 @@
     display: flex; align-items: center; justify-content: space-around;
     gap: 0.2rem;
     width: min(92vw, 360px);
-    padding: 0.45rem 0.6rem calc(env(safe-area-inset-bottom) + 0.45rem);
-    border-radius: 28px;
+    /* Flush to the very bottom: the safe-area inset used to sit INSIDE the
+       pill as dead space under the icons — trim most of it so the buttons
+       land at the true bottom edge, keeping a small floor for tappability. */
+    padding: 0.45rem 0.6rem max(calc(env(safe-area-inset-bottom) - 22px), 0.4rem);
+    border-radius: 28px 28px 0 0;
     background: rgba(16, 18, 26, 0.72);
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(20px) saturate(160%);
@@ -907,8 +910,8 @@
   /* ===================== New homepage (native-app tiles) ===================== */
   main.home {
     gap: 0.5rem;
-    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.3rem);
-    display: flex; flex-direction: column; padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+    min-height: calc(100dvh - env(safe-area-inset-top) - 0.3rem);
+    display: flex; flex-direction: column; padding-bottom: 5.2rem;
   }
 
   .nd-greet { padding: 0 0.3rem; }
@@ -924,6 +927,12 @@
   .nd-greet-line .accent { color: var(--home-accent); }
   .nd-greet-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
   .nd-greet-date { color: var(--muted); font-size: 0.84rem; font-weight: 600; }
+  /* Compact weather + recovery chips on the meta row (full views one tap away) */
+  .nd-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border); border-radius: 999px; padding: 0.16rem 0.6rem; font-size: 0.76rem; font-weight: 600; color: var(--text); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .nd-chip b { font-weight: 800; }
+  .nd-chip svg { width: 1.1rem; height: 0.95rem; flex-shrink: 0; }
+  .nd-chip-txt { color: var(--muted); max-width: 7.5rem; overflow: hidden; text-overflow: ellipsis; }
+  .nd-chip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
   .nd-day-strip { display: flex; justify-content: space-between; gap: 0.35rem; padding: 0 0.1rem; }
   .nd-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.4rem 0; border-radius: 14px; }
@@ -1131,7 +1140,7 @@
   .news-hero-save.saved { color: #ff5a5f; }
 
   /* Bottom tab bar */
-  .news-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; background: rgba(249,249,249,0.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 0.5px solid #c8c8cd; padding: 0.35rem 0 calc(env(safe-area-inset-bottom) + 0.3rem); }
+  .news-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; background: rgba(249,249,249,0.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 0.5px solid #c8c8cd; padding: 0.35rem 0 max(calc(env(safe-area-inset-bottom) - 22px), 0.3rem); }
   .news-tab { flex: 1; background: none; border: none; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 0.18rem; color: #8e8e93; cursor: pointer; padding: 0.15rem 0; -webkit-tap-highlight-color: transparent; }
   .news-tab-icon { display: flex; align-items: center; justify-content: center; width: 2.6rem; height: 1.75rem; border-radius: 9px; transition: background 0.15s; }
   .news-tab-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.01em; }
@@ -1222,6 +1231,8 @@
           <span class="nd-greet-date" id="dateLabel"></span>
           <span class="streak-chip" id="streakLabel" style="display:none"></span>
           <span class="updated-label" id="updatedLabel">Updating…</span>
+          <span class="nd-chip" data-detail="weather" id="weatherCard">…</span>
+          <span class="nd-chip" data-detail="health" id="healthCard">…</span>
         </div>
       </div>
     </div>
@@ -1247,19 +1258,12 @@
 
   <div class="nd-split">
     <div class="nd-split-col">
-      <section class="nd-wx" data-detail="weather" id="weatherCard">
-        <div class="nd-wx-loc">Weather</div>
-        <div class="nd-wx-msg">Loading…</div>
-      </section>
       <section class="nd-cal" data-detail="schedule" id="scheduleCard">
         <div class="nd-cal-top"><b>Schedule</b><span id="scheduleCardCount"></span></div>
         <div class="nd-cal-body" id="scheduleCardBody"><div class="nd-cal-empty">Loading…</div></div>
       </section>
     </div>
     <div class="nd-split-col">
-      <section class="nd-readiness" data-detail="health" id="healthCard">
-        <div class="nd-mini-rings" style="opacity:0.35"></div>
-      </section>
       <section class="nd-ol" data-detail="inbox" id="inboxCard">
         <div class="nd-ol-empty">Loading…</div>
       </section>
@@ -2944,37 +2948,18 @@ function wxGlyph(code, isDay) {
   return w(cloud);
 }
 
+// Weather lives as a compact tappable chip on the header meta row now (the
+// full forecast is one tap away in the weather detail) so the home grid is
+// pure Schedule + Inbox alongside the debrief hero.
 function renderWeatherCard() {
   const el = document.getElementById('weatherCard');
   if (!el) return;
-  if (overview.weatherReached === false) { el.innerHTML = `<div class="nd-wx-loc">Weather</div><div class="nd-wx-msg">Tap to retry</div>`; return; }
+  if (overview.weatherReached === false) { el.innerHTML = `☁︎ retry`; return; }
   const raw = overview.weatherRaw;
-  if (!raw) { el.innerHTML = `<div class="nd-wx-loc">Weather</div><div class="nd-wx-msg">Loading…</div>`; return; }
-  const cur = raw.current, daily = raw.daily, hourly = raw.hourly;
+  if (!raw) { el.innerHTML = `☁︎ …`; return; }
+  const cur = raw.current;
   const [label] = describeWeather(cur.weather_code);
-  const loc = (overview.locationLabel || 'Weather').replace(/\s*\(location unavailable\)/, '').split(',')[0];
-  const hi = Math.round(daily.temperature_2m_max[0]);
-  const lo = Math.round(daily.temperature_2m_min[0]);
-  let hours = '';
-  if (hourly && hourly.time) {
-    let start = hourly.time.findIndex((t) => new Date(t).getTime() >= Date.now() - 3600000);
-    if (start < 0) start = 0;
-    const cells = [];
-    for (let i = start; i < hourly.time.length && cells.length < 6; i++) {
-      const d = new Date(hourly.time[i]);
-      const hr = cells.length === 0 ? 'Now' : ((d.getHours() % 12) || 12) + (d.getHours() < 12 ? 'am' : 'pm');
-      const t = Math.round(hourly.temperature_2m[i]);
-      const day = d.getHours() >= 6 && d.getHours() < 19;
-      cells.push(`<div class="nd-wx-hour"><span class="t">${hr}</span>${wxGlyph(hourly.weather_code[i], day)}<span class="v">${t}°</span></div>`);
-    }
-    hours = cells.join('');
-  }
-  const arrow = '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>';
-  el.innerHTML = `<div class="nd-wx-top">
-      <div><div class="nd-wx-loc">${escapeHtml(loc)} ${arrow}</div><div class="nd-wx-temp">${Math.round(cur.temperature_2m)}°</div></div>
-      <div class="nd-wx-right">${wxGlyph(cur.weather_code, cur.is_day !== 0)}<div class="nd-wx-cond">${escapeHtml(label)}</div><div class="nd-wx-hl">L:${lo}° H:${hi}°</div></div>
-    </div>
-    <div class="nd-wx-hours">${hours}</div>`;
+  el.innerHTML = `${wxGlyph(cur.weather_code, cur.is_day !== 0)}<b>${Math.round(cur.temperature_2m)}°</b><span class="nd-chip-txt">${escapeHtml(label)}</span>`;
 }
 
 // Scrolls the home schedule panel to the current-time line once per page
@@ -3374,18 +3359,19 @@ async function fetchHealth() {
   return ok;
 }
 
+// Recovery lives as a compact tappable chip on the header meta row now (the
+// full rings experience is one tap away on the readiness page).
 function renderHealth() {
   const card = document.getElementById('healthCard');
   if (!card) return;
   const h = overview.health;
   const rec = h ? h.recovery : null;
   if (rec == null) {
-    card.innerHTML = `<div class="nd-mini-rings">${miniRingHtml(null, 'gRecovery', 'Recovery')}${miniRingHtml(null, 'gSleep', 'Sleep')}${miniRingHtml(null, 'gStrain', 'Strain')}</div>`;
+    card.innerHTML = `<span class="nd-chip-dot" style="background:rgba(255,255,255,0.3)"></span><span class="nd-chip-txt">Recovery —</span>`;
     return;
   }
-  const target = targetStrainRange(rec);
-  const strainRing = miniRingHtml(h.strain, 'gStrain', 'Strain', targetBandSvg(target), targetTicksSvg(target));
-  card.innerHTML = `<div class="nd-mini-rings">${miniRingHtml(rec, 'gRecovery', 'Recovery')}${miniRingHtml(h.sleep, 'gSleep', 'Sleep')}${strainRing}</div>`;
+  const color = rec >= 67 ? '#34c98a' : rec >= 34 ? '#ffb347' : '#ff6b6b';
+  card.innerHTML = `<span class="nd-chip-dot" style="background:${color}"></span><b>${rec}%</b><span class="nd-chip-txt">Recovery</span>`;
 }
 
 // ---- Oura-style Health page helpers ----
