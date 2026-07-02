@@ -56,8 +56,8 @@ this exact shape:
   "opener": "2-3 sentences reading the day out loud: their energy (from recovery), the weather, and how full the calendar is",
   "sections": [
     { "key": "recovery", "title": "Recovery", "summary": "1-2 sentence takeaway", "detail": "the full reasoning, markdown-lite (- bullets, **bold**), no headers" },
-    { "key": "plan", "title": "Plan", "summary": "...", "detail": "..." },
-    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "..." },
+    { "key": "plan", "title": "Plan", "summary": "...", "detail": "...", "items": [{ "text": "one atomic checkable action, imperative, <= 8 words", "kind": "task" }] },
+    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "...", "items": [{ "text": "...", "kind": "task" }] },
     { "key": "inbox", "title": "Inbox", "summary": "...", "detail": "..." },
     { "key": "headsup", "title": "Heads-up", "summary": "...", "detail": "..." }
   ],
@@ -67,6 +67,12 @@ this exact shape:
 
 Section rules:
 - "recovery", "plan", "priorities" are ALWAYS present.
+- "items" is an OPTIONAL array on the "plan" and "priorities" sections ONLY: 2-5
+  atomic, checkable to-dos the user can add to today's checklist with one tap
+  (e.g. "Zone-2 walk in the 2pm gap", "Reply to Sarah re: contract", "Last
+  caffeine by 1pm"). Each is imperative, specific, and self-contained; pull them
+  straight from that section's real advice. Omit the "items" key when a section
+  has nothing genuinely actionable (never invent filler tasks). "kind" is "task".
 - "inbox" is ONLY included when there is urgent email worth flagging; omit the
   object entirely from the array otherwise (don't include an empty one).
 - "headsup" is ONLY included when there's a genuinely notable weather/logistics
