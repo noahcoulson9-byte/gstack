@@ -792,6 +792,32 @@
   .debrief-section.expanded .debrief-section-detail { grid-template-rows: 1fr; opacity: 1; margin-top: 0.75rem; }
   .debrief-tomorrow .debrief-section-title { color: #7dd8ff; }
 
+  /* Tappable brief actions: one-tap "add to today's checklist" rows. */
+  .brief-items { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.7rem; }
+  .brief-item {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    color: var(--text); font-family: inherit; font-size: 0.9rem; font-weight: 600;
+    padding: 0.55rem 0.7rem; border-radius: 12px; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+  }
+  .brief-item:active { background: rgba(255,255,255,0.09); }
+  .brief-item-ico {
+    flex: 0 0 auto; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+    display: grid; place-items: center; font-size: 0.9rem; font-weight: 800;
+    background: rgba(255,178,46,0.16); color: var(--accent);
+  }
+  .brief-item-txt { flex: 1 1 auto; line-height: 1.35; }
+  .brief-item.added { opacity: 0.6; cursor: default; border-color: rgba(255,178,46,0.35); }
+  .brief-item.added .brief-item-ico { background: rgba(255,178,46,0.28); }
+
+  /* Plan-progress bar at the top of the brief: N of M brief tasks done today. */
+  .brief-adherence { margin: 0.2rem 0 1rem; }
+  .brief-adherence-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .brief-adherence-top b { color: var(--text); font-weight: 700; }
+  .brief-adherence-bar { height: 7px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .brief-adherence-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.3s ease; }
+
   .detail-hero { padding: 1.2rem 1.2rem; }
   .metric-big { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
   .metric-sub { color: var(--muted); font-size: 0.92rem; margin-top: 0.35rem; }
@@ -955,6 +981,9 @@
   .nd-hero-headline { font-size: 1.3rem; font-weight: 800; line-height: 1.16; letter-spacing: -0.01em; margin-top: 0.35rem; }
   .nd-hero-preview { font-size: 0.88rem; color: var(--muted); line-height: 1.35; margin-top: 0.35rem; }
   .nd-hero-cta { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.55rem; font-size: 0.88rem; font-weight: 700; color: var(--home-accent); cursor: pointer; }
+  .nd-hero-plan { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--text); }
+  .nd-hero-plan-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: rgba(255,178,46,0.5); box-shadow: 0 0 0 3px rgba(255,178,46,0.12); }
+  .nd-hero-plan-dot.full { background: var(--accent); box-shadow: 0 0 0 3px rgba(255,178,46,0.22); }
   .nd-hero { cursor: pointer; }
   .nd-hero-glance { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem 0.7rem; margin-top: 0.65rem; }
   .nd-glance-item { display: flex; flex-direction: column; gap: 0.1rem; }
@@ -1395,10 +1424,35 @@ function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val));
 const TASKS_KEY = 'morningDewTasks';
 function loadTasks() { return lsGet(TASKS_KEY, []); }
 function saveTasks(t) { lsSet(TASKS_KEY, t); }
-function addTask(title) {
+function addTask(title, source) {
   const t = loadTasks();
-  t.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: title.trim(), done: false, due: localDateStr(new Date()), createdAt: Date.now() });
+  t.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: title.trim(), done: false, due: localDateStr(new Date()), createdAt: Date.now(), source: source || 'user' });
   saveTasks(t);
+}
+// Dedupe brief-suggested items by title so re-tapping never double-adds
+// (matches active or already-done copies).
+function briefTaskExists(title) {
+  const norm = String(title).trim().toLowerCase();
+  return loadTasks().some((t) => (t.title || '').trim().toLowerCase() === norm);
+}
+function addBriefTask(text) {
+  if (!text || briefTaskExists(text)) return false;
+  addTask(text, 'brief');
+  return true;
+}
+// Brief-originated tasks due on a given date (defaults to today) — powers the
+// "N of M plan items done" adherence line and the accuracy-layer signal.
+function briefTasksForDate(dateStr) {
+  const d = dateStr || localDateStr(new Date());
+  return loadTasks().filter((t) => t.source === 'brief' && (t.due || '') === d);
+}
+// Compact "N of M plan items done" chip for the home hero — only when the user
+// has actually added brief items to today's checklist.
+function heroPlanProgressHtml() {
+  const items = briefTasksForDate();
+  if (!items.length) return '';
+  const done = items.filter((t) => t.done).length;
+  return `<div class="nd-hero-plan"><span class="nd-hero-plan-dot${done === items.length ? ' full' : ''}"></span>${done} of ${items.length} plan items done</div>`;
 }
 function mutateTask(id, fn) { const t = loadTasks(); const x = t.find((i) => i.id === id); if (x) fn(x, t); saveTasks(t); }
 function toggleTask(id) { mutateTask(id, (x) => { x.done = !x.done; x.doneAt = x.done ? Date.now() : null; }); }
@@ -1804,6 +1858,7 @@ function renderOverview() {
     card.innerHTML = `<div class="nd-hero-label">Your brief</div>
       <div class="nd-hero-headline">${escapeHtml(briefHeadline(overview.brief))}</div>
       ${opener}
+      ${heroPlanProgressHtml()}
       ${glancePreviewHtml()}
       <div class="nd-hero-cta">Daily debrief ${ND_CHEV}</div>`;
     return;
@@ -2564,10 +2619,32 @@ function tasksDetailHtml() {
 
 // ---- Debrief page: the full-screen AI morning plan, progressive-disclosure ----
 // Each section: a short summary always visible, full AI reasoning behind a tap.
+// "N of M plan items done" — progress on the brief-suggested tasks the user
+// added to today's checklist. Empty when none have been added yet.
+function briefAdherenceHtml() {
+  const items = briefTasksForDate();
+  if (!items.length) return `<div id="briefAdherence"></div>`;
+  const done = items.filter((t) => t.done).length;
+  const pct = Math.round((done / items.length) * 100);
+  return `<div id="briefAdherence" class="brief-adherence">
+    <div class="brief-adherence-top"><span>Plan progress</span><b>${done} of ${items.length} done</b></div>
+    <div class="brief-adherence-bar"><span style="width:${pct}%"></span></div>
+  </div>`;
+}
+function briefItemRowHtml(text) {
+  const added = briefTaskExists(text);
+  return `<button class="brief-item${added ? ' added' : ''}" data-brief-item="${escapeHtml(text)}" ${added ? 'disabled' : ''}>
+    <span class="brief-item-ico">${added ? '✓' : '+'}</span><span class="brief-item-txt">${escapeHtml(text)}</span></button>`;
+}
 function debriefSectionHtml(s, idx) {
+  const items = Array.isArray(s.items) ? s.items.filter((it) => it && it.text) : [];
+  const itemsHtml = items.length
+    ? `<div class="brief-items">${items.map((it) => briefItemRowHtml(it.text)).join('')}</div>`
+    : '';
   return `<section class="glass insight-card debrief-section" data-debrief-section="${idx}">
     <div class="debrief-section-head"><span class="debrief-section-title">${escapeHtml(s.title || '')}</span><span class="debrief-section-chev">${ND_CHEV}</span></div>
     <div class="debrief-section-summary">${escapeHtml(s.summary || '')}</div>
+    ${itemsHtml}
     <div class="debrief-section-detail"><div>${mdToHtml(s.detail || '')}</div></div>
   </section>`;
 }
@@ -2665,6 +2742,7 @@ function debriefBodyHtml() {
   }
   return `<div class="debrief-day-hdr">Today</div>
     ${todayBrief}
+    ${briefAdherenceHtml()}
     ${debriefWhyHtml(b)}
     ${debriefTodayDataHtml()}
     <div class="debrief-day-hdr">Tomorrow</div>
@@ -2877,6 +2955,20 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-task-add-inline]')) { commitTaskInput(); return; }
   if (e.target.closest('[data-debrief-refresh]')) { fetchBrief(true); return; }
   if (e.target.closest('[data-debrief-back]')) { if (debriefOpen) history.back(); return; }
+  const itemBtn = e.target.closest('[data-brief-item]');
+  if (itemBtn) {
+    e.stopPropagation();
+    const text = itemBtn.getAttribute('data-brief-item');
+    if (addBriefTask(text)) {
+      itemBtn.classList.add('added');
+      itemBtn.disabled = true;
+      itemBtn.querySelector('.brief-item-ico').textContent = '✓';
+      renderHome(); // updates the hero's "N of M plan items done" line
+      const adh = document.getElementById('briefAdherence');
+      if (adh) adh.outerHTML = briefAdherenceHtml();
+    }
+    return;
+  }
   const sectionEl = e.target.closest('[data-debrief-section]');
   if (sectionEl) { sectionEl.classList.toggle('expanded'); return; }
   if (e.target.closest('[data-set-recovery]')) { setRecoveryManual(); return; }
@@ -3250,11 +3342,16 @@ function backfillOutcomes() {
       if (entry.outcome) continue;
       const next = byDate[nextDayStr(entry.date)];
       if (!next || next.rec == null) continue;
+      const planItems = briefTasksForDate(entry.date);
       entry.outcome = {
         filledAt: Date.now(),
         nextRecovery: next.rec,
         nextSleepHours: next.sleepHours,
         recDelta: entry.inputs && entry.inputs.recovery != null ? next.rec - entry.inputs.recovery : null,
+        // Plan adherence: how many of that day's brief-suggested tasks the user
+        // actually completed — the "planned vs. did" signal for calibration.
+        planItems: planItems.length,
+        planDone: planItems.filter((t) => t.done).length,
       };
       changed = true;
     }
@@ -3309,6 +3406,8 @@ function personalContext() {
     recoveryThatDay: e.inputs ? e.inputs.recovery : null,
     nextDayRecovery: e.outcome.nextRecovery,
     changeByNextDay: e.outcome.recDelta,
+    planItemsSuggested: (e.outcome.planItems != null) ? e.outcome.planItems : null,
+    planItemsCompleted: (e.outcome.planDone != null) ? e.outcome.planDone : null,
     userFeedback: e.feedback ? `${e.feedback.rating}${e.feedback.note ? ': ' + e.feedback.note : ''}` : null,
   }));
   const corrections = insightLog()
