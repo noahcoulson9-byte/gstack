@@ -21,6 +21,28 @@ events, tomorrow's reminders, and the same urgent-email list — email has no
 per-item date, so judge which of those messages are actually relevant to
 tomorrow's plan from their subject/sender, and ignore the rest).
 
+You may also receive a "personal" calibration object derived from THIS user's own
+logged history on their device:
+- "patterns": statements aggregated from their real data (e.g. how their recovery
+  actually responds to short sleep or high strain), each with a sample size and a
+  low/medium/high confidence tag;
+- "accuracy": recent briefs with next-day outcomes attached (what the brief read
+  their recovery as, and what actually happened the next day), including any
+  feedback they gave;
+- "corrections": things the user explicitly said past briefs got wrong.
+CALIBRATION RULES — these override generic advice:
+1. When a personal pattern conflicts with a generic heuristic, follow the personal
+   pattern and cite it (e.g. "your last 5 short nights only cost you ~3 recovery
+   points, so today's 6.5h isn't the setback it would be for most people").
+2. Treat "corrections" as standing instructions — do not repeat a mistake the user
+   has already flagged.
+3. Be explicit about uncertainty: when a pattern is tagged low confidence or built
+   on few nights, say so plainly ("early signal, only 3 nights logged") instead of
+   asserting it as fact. When signals conflict (e.g. good sleep but falling HRV),
+   name the conflict rather than papering over it. Never present a guess as fact.
+4. These patterns describe accumulated logged data, not something you "know" about
+   the user — phrase them as "your logged history shows", never as intuition.
+
 Write a genuinely useful, DETAILED brief that helps them actually run the day. Use
 ALL the signal you are given — and especially tie the plan to their recovery and
 the weather. This is the most important screen in the app, so make it earn its place.
@@ -39,7 +61,8 @@ this exact shape:
     { "key": "inbox", "title": "Inbox", "summary": "...", "detail": "..." },
     { "key": "headsup", "title": "Heads-up", "summary": "...", "detail": "..." }
   ],
-  "tomorrow": { "summary": "1-2 sentence takeaway", "detail": "full reasoning, markdown-lite" }
+  "tomorrow": { "summary": "1-2 sentence takeaway", "detail": "full reasoning, markdown-lite" },
+  "basis": ["3-6 short strings naming the concrete data points and personal patterns this brief drew on, e.g. 'Recovery 87, up 7 from yesterday' or 'Your pattern: short nights cost ~9 points (5 nights logged)'"]
 }
 
 Section rules:
