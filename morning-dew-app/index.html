@@ -296,6 +296,28 @@
   .trend-entry-card { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
   .trend-entry-arrow { color: var(--muted); font-size: 1.1rem; }
 
+  /* Settings screen */
+  .settings-input {
+    width: 100%; font-family: inherit; font-size: 0.95rem; color: var(--text);
+    background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
+    border-radius: 12px; padding: 0.6rem 0.75rem; margin-top: 0.2rem;
+  }
+  .settings-input::placeholder { color: var(--muted); }
+  .settings-hint { font-size: 0.76rem; color: var(--muted); margin-top: 0.45rem; line-height: 1.4; }
+  .settings-segment { display: flex; gap: 0.5rem; margin-top: 0.3rem; }
+  .settings-seg-btn {
+    flex: 1; font-family: inherit; font-size: 0.92rem; font-weight: 700; color: var(--muted);
+    background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: 12px; padding: 0.55rem 0; cursor: pointer;
+  }
+  .settings-seg-btn.active { color: var(--text); background: rgba(61,123,255,0.2); border-color: rgba(61,123,255,0.5); }
+  .settings-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; font-size: 0.95rem; }
+  .settings-toggle-row + .settings-toggle-row { border-top: 1px solid var(--glass-border); }
+  .settings-toggle-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--home-accent); }
+  .settings-advanced { padding: 1rem 1.1rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 18px; }
+  .settings-advanced summary { cursor: pointer; font-weight: 700; list-style: none; }
+  .settings-advanced summary::-webkit-details-marker { display: none; }
+
   /* ===== Readiness experience (Today / Sleep / Overview) ===== */
   /* Matches the home page's ambient rainbow blob-glow (same .blob/.blob-a/b/c
      elements, rendered once as static siblings in the #healthPage skeleton so
@@ -1334,7 +1356,7 @@
 <main class="home">
   <section class="nd-greet">
     <div class="nd-greet-row">
-      <div class="nd-avatar">N</div>
+      <div class="nd-avatar" id="ndAvatar">N</div>
       <div>
         <h1 class="nd-greet-line" id="greetLine">Good morning, <span class="accent">Noah</span></h1>
         <div class="nd-greet-meta">
@@ -1367,13 +1389,13 @@
   </div>
 
   <div class="nd-split">
-    <div class="nd-split-col">
+    <div class="nd-split-col" id="scheduleCol">
       <section class="nd-cal" data-detail="schedule" id="scheduleCard">
         <div class="nd-cal-top"><b>Schedule</b><span id="scheduleCardCount"></span></div>
         <div class="nd-cal-body" id="scheduleCardBody"><div class="nd-cal-empty">Loading…</div></div>
       </section>
     </div>
-    <div class="nd-split-col">
+    <div class="nd-split-col" id="inboxCol">
       <section class="nd-ol" data-detail="inbox" id="inboxCard">
         <div class="nd-ol-empty">Loading…</div>
       </section>
@@ -1414,6 +1436,17 @@
     <div class="detail-title">Trends</div>
   </div>
   <div id="trendsContent"></div>
+</div>
+
+<div class="trends-page" id="settingsPage" hidden>
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="blob blob-c"></div>
+  <div class="detail-header">
+    <button class="detail-back" id="settingsBack" data-settings-back aria-label="Back">‹</button>
+    <div class="detail-title">Settings</div>
+  </div>
+  <div id="settingsContent"></div>
 </div>
 
 <div class="news-page" id="newsPage" hidden>
@@ -1471,18 +1504,6 @@ function getApiBase() {
 function apiUrl(path) {
   return getApiBase() + path;
 }
-// The backend URL now lives behind the ⚙ gear (see openServerSetting); this
-// reflects the current value into the gear's tooltip/aria-label for at-a-glance
-// confirmation of which server the app is pointed at.
-function updateServerBtnLabel() {
-  const base = getApiBase();
-  const btn = document.getElementById('settingsBtn');
-  if (!btn) return;
-  const label = base ? `Server: ${base.replace(/^https?:\/\//, '')}` : 'Server: not set';
-  btn.title = label;
-  btn.setAttribute('aria-label', label);
-}
-updateServerBtnLabel();
 
 // ---------- AI overview ----------
 // Pure client-side aggregation over data the other cards already fetched —
@@ -1629,7 +1650,7 @@ function renderGlance() {
 
   if (overview.weather) {
     const { label, temp, precip, fallback, nudges } = overview.weather;
-    lines.push(`<div class="overview-line"><span class="icon">🌡️</span><span>${temp}° and ${label.toLowerCase()}, ${precip}% chance of rain${fallback ? ' (showing Brisbane — location unavailable)' : ''}.</span></div>`);
+    lines.push(`<div class="overview-line"><span class="icon">🌡️</span><span>${fmtTemp(temp)} and ${label.toLowerCase()}, ${precip}% chance of rain${fallback ? ' (showing Brisbane — location unavailable)' : ''}.</span></div>`);
     (nudges || []).forEach((n) => {
       lines.push(`<div class="overview-line"><span class="icon">${n.icon}</span><span>${escapeHtml(n.text)}</span></div>`);
     });
@@ -1748,10 +1769,10 @@ function briefContext() {
       if (peak.p >= 30) rainPeak = { chance: peak.p, time: fmtClock(peak.t) };
     }
     weather = {
-      now: `${Math.round(cur.temperature_2m)}° ${describeWeather(cur.weather_code)[0]}`,
-      feelsLike: cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : null,
-      high: daily.temperature_2m_max ? Math.round(daily.temperature_2m_max[0]) : null,
-      low: daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : null,
+      now: `${fmtTemp(cur.temperature_2m, { withUnit: true })} ${describeWeather(cur.weather_code)[0]}`,
+      feelsLike: cur.apparent_temperature != null ? fmtTemp(cur.apparent_temperature, { withUnit: true }) : null,
+      high: daily.temperature_2m_max ? fmtTemp(daily.temperature_2m_max[0], { withUnit: true }) : null,
+      low: daily.temperature_2m_min ? fmtTemp(daily.temperature_2m_min[0], { withUnit: true }) : null,
       rainChanceNow: Math.round(cur.precipitation_probability ?? 0),
       rainPeak,
       uvMax: daily.uv_index_max ? Math.round(daily.uv_index_max[0]) : null,
@@ -1760,7 +1781,7 @@ function briefContext() {
       isDaytime: cur.is_day !== 0,
     };
   } else if (overview.weather) {
-    weather = { now: `${overview.weather.temp}° ${overview.weather.label}`, rainChanceNow: overview.weather.precip };
+    weather = { now: `${fmtTemp(overview.weather.temp, { withUnit: true })} ${overview.weather.label}`, rainChanceNow: overview.weather.precip };
   }
 
   const email = overview.emailData ? {
@@ -1911,7 +1932,7 @@ const ND_CHEV_MUTED = '<span class="nd-chev"><svg width="16" height="16" viewBox
 function glancePreviewHtml() {
   const items = [];
   if (overview.weather) {
-    items.push({ val: `${overview.weather.temp}°`, lbl: overview.weather.label });
+    items.push({ val: fmtTemp(overview.weather.temp), lbl: overview.weather.label });
   }
   if (overview.calendar) {
     const evs = todaysEvents();
@@ -2068,14 +2089,21 @@ async function loadWeather() {
   let { latitude, longitude } = BRISBANE;
   overview.locationLabel = 'Current location';
   let usedFallback = false;
-  try {
-    const pos = await getCurrentPosition();
-    latitude = pos.coords.latitude;
-    longitude = pos.coords.longitude;
-    updateLocationLabel(latitude, longitude);
-  } catch {
-    overview.locationLabel = 'Brisbane, QLD (location unavailable)';
-    usedFallback = true;
+  const home = parseHomeCoords(getSettings().homeCoords);
+  if (home) {
+    latitude = home.lat;
+    longitude = home.lon;
+    overview.locationLabel = 'Home location';
+  } else {
+    try {
+      const pos = await getCurrentPosition();
+      latitude = pos.coords.latitude;
+      longitude = pos.coords.longitude;
+      updateLocationLabel(latitude, longitude);
+    } catch {
+      overview.locationLabel = 'Brisbane, QLD (location unavailable)';
+      usedFallback = true;
+    }
   }
 
   try {
@@ -2155,12 +2183,13 @@ function weatherNudges(cur, hourly, daily) {
     const uv = Math.round(daily.uv_index_max[0] ?? 0);
     if (uv >= 6) out.push({ icon: '🧴', text: `High UV (${uv}) today — wear sunscreen.` });
   }
-  // Temperature extremes today.
+  // Temperature extremes today — thresholds are Celsius (the source scale);
+  // only the displayed text respects the user's chosen unit.
   if (daily && daily.temperature_2m_min) {
-    const lo = Math.round(daily.temperature_2m_min[0]);
-    const hi = Math.round(daily.temperature_2m_max[0]);
-    if (lo <= 10) out.push({ icon: '🧥', text: `Chilly start at ${lo}° — take a layer.` });
-    if (hi >= 32) out.push({ icon: '🥵', text: `Hot day, up to ${hi}° — stay hydrated.` });
+    const loC = daily.temperature_2m_min[0];
+    const hiC = daily.temperature_2m_max[0];
+    if (loC <= 10) out.push({ icon: '🧥', text: `Chilly start at ${fmtTemp(loC)} — take a layer.` });
+    if (hiC >= 32) out.push({ icon: '🥵', text: `Hot day, up to ${fmtTemp(hiC)} — stay hydrated.` });
   }
   return out;
 }
@@ -2179,13 +2208,12 @@ function hourlyHtml(hourly) {
     const isNow = cells.length === 0;
     const label = isNow ? 'Now' : d.toLocaleTimeString(undefined, { hour: 'numeric' });
     const [, icon] = describeWeather(hourly.weather_code[i]);
-    const temp = Math.round(hourly.temperature_2m[i]);
     const rain = Math.round(hourly.precipitation_probability[i] ?? 0);
     cells.push(`
       <div class="hour-cell">
         <span class="hc-time">${escapeHtml(label)}</span>
         <span class="hc-icon">${icon}</span>
-        <span class="hc-temp">${temp}°</span>
+        <span class="hc-temp">${fmtTemp(hourly.temperature_2m[i])}</span>
         <span class="hc-rain">${rain >= 10 ? '💧' + rain + '%' : ''}</span>
       </div>`);
   }
@@ -2213,8 +2241,6 @@ function forecastHtml(daily) {
     const dayLabel = i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' });
     const [, icon] = describeWeather(daily.weather_code[i]);
     const rain = Math.round(daily.precipitation_probability_max[i] ?? 0);
-    const lo = Math.round(lows[i]);
-    const hi = Math.round(highs[i]);
 
     const left = ((lows[i] - weekMin) / span) * 100;
     const width = Math.max(6, ((highs[i] - lows[i]) / span) * 100);
@@ -2226,9 +2252,9 @@ function forecastHtml(daily) {
         <span class="fc-icon">${icon}</span>
         <span class="fc-rain ${rain > 0 ? '' : 'dry'}">${rain > 0 ? '💧' + rain + '%' : '—'}</span>
         <span class="fc-temps">
-          <span class="fc-lo">${lo}°</span>
+          <span class="fc-lo">${fmtTemp(lows[i])}</span>
           <span class="fc-track"><span class="fc-fill" style="${fill}"></span></span>
-          <span class="fc-hi">${hi}°</span>
+          <span class="fc-hi">${fmtTemp(highs[i])}</span>
         </span>
       </div>`;
   });
@@ -2520,7 +2546,7 @@ function weatherDetailHtml() {
   const tips = [];
   tips.push({ ico: '🌤️', text: `Driest day this week is <b>${driest.name}</b> (${driest.rain}% rain) — best for anything outdoors.` });
   if (rainiest.rain >= 50) tips.push({ ico: '☔', text: `Wettest is <b>${rainiest.name}</b> at ${rainiest.rain}% — plan indoor things or carry an umbrella.` });
-  tips.push({ ico: '🌡️', text: `Warmest is <b>${warmest.name}</b> at ${warmest.hi}°.` });
+  tips.push({ ico: '🌡️', text: `Warmest is <b>${warmest.name}</b> at ${fmtTemp(warmest.hi)}.` });
   (overview.weather && overview.weather.nudges || []).forEach((n) => tips.push({ ico: n.icon, text: n.text }));
 
   const rainBars = days.map((d) => barRow(d.name, d.rain, maxRain, d.rain + '%', '#5fb0ff')).join('');
@@ -2528,8 +2554,8 @@ function weatherDetailHtml() {
   const sun = daily.sunrise ? `🌅 ${fmtClock(daily.sunrise[0])}  ·  🌇 ${fmtClock(daily.sunset[0])}` : '';
   return `
     <section class="glass detail-hero">
-      <div class="metric-big">${Math.round(cur.temperature_2m)}°</div>
-      <div class="metric-sub">${escapeHtml(label)} · feels ${Math.round(cur.apparent_temperature)}° · ${escapeHtml(overview.locationLabel || '')}</div>
+      <div class="metric-big">${fmtTemp(cur.temperature_2m)}</div>
+      <div class="metric-sub">${escapeHtml(label)} · feels ${fmtTemp(cur.apparent_temperature)} · ${escapeHtml(overview.locationLabel || '')}</div>
       <div class="metric-row">
         <div class="metric-chip"><div class="k">Rain now</div><div class="v">${Math.round(cur.precipitation_probability ?? 0)}%</div></div>
         <div class="metric-chip"><div class="k">UV</div><div class="v">${Math.round(cur.uv_index ?? 0)}</div></div>
@@ -3025,6 +3051,7 @@ window.addEventListener('popstate', () => {
   if (newsOpen) closeNews();
   if (trendsOpen) closeTrends();
   if (moreOpen) closeMore();
+  if (settingsOpen) closeSettings();
 });
 
 // Re-renders whichever section is open (after a task/brief/review mutation).
@@ -3060,7 +3087,7 @@ document.addEventListener('click', (e) => {
     if (target === 'news') openNews();
     else if (target === 'trends') openTrends();
     else if (target === 'review') openDetail('review');
-    else if (target === 'settings') openServerSetting();
+    else if (target === 'settings') openSettings();
     return;
   }
   const itemBtn = e.target.closest('[data-brief-item]');
@@ -3103,7 +3130,10 @@ function setGreeting() {
   if (!el) return;
   const h = new Date().getHours();
   const word = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  el.innerHTML = `${word}, <span class="accent">Noah</span>`;
+  const name = getSettings().name;
+  el.innerHTML = `${word}, <span class="accent">${escapeHtml(name)}</span>`;
+  const avatar = document.getElementById('ndAvatar');
+  if (avatar) avatar.textContent = (name.trim()[0] || 'N').toUpperCase();
 }
 
 function renderHome() {
@@ -3160,7 +3190,7 @@ function renderWeatherCard() {
   if (!raw) { el.innerHTML = `☁︎ …`; return; }
   const cur = raw.current;
   const [label] = describeWeather(cur.weather_code);
-  el.innerHTML = `${wxGlyph(cur.weather_code, cur.is_day !== 0)}<b>${Math.round(cur.temperature_2m)}°</b><span class="nd-chip-txt">${escapeHtml(label)}</span>`;
+  el.innerHTML = `${wxGlyph(cur.weather_code, cur.is_day !== 0)}<b>${fmtTemp(cur.temperature_2m)}</b><span class="nd-chip-txt">${escapeHtml(label)}</span>`;
 }
 
 // Scrolls the home schedule panel to the current-time line once per page
@@ -3841,11 +3871,178 @@ function closeAllScreens() {
   if (newsOpen) closeNews();
   if (trendsOpen) closeTrends();
   if (moreOpen) closeMore();
+  if (settingsOpen) closeSettings();
 }
 function goHome() {
   closeAllScreens();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// ========== Settings + personalization ==========
+// Single settings store; every field is read through getSettings() so a
+// fresh install (or an existing install before this shipped) with nothing
+// saved yet gets sane defaults and nothing breaks.
+const SETTINGS_KEY = 'morningDewSettings';
+function getSettings() {
+  const s = lsGet(SETTINGS_KEY, {});
+  return {
+    name: (s.name && String(s.name).trim()) || 'Noah',
+    units: s.units === 'f' ? 'f' : 'c',
+    homeCoords: s.homeCoords || '',
+    widgets: {
+      schedule: s.widgets ? s.widgets.schedule !== false : true,
+      inbox: s.widgets ? s.widgets.inbox !== false : true,
+    },
+  };
+}
+function saveSettings(patch) {
+  const cur = lsGet(SETTINGS_KEY, {});
+  lsSet(SETTINGS_KEY, Object.assign({}, cur, patch));
+  return getSettings();
+}
+function tempUnit() { return getSettings().units; }
+// Every temperature display in the app should route through here instead of
+// interpolating a raw Celsius value — the source data (Open-Meteo) is always
+// Celsius; this is the one place that converts for display.
+function fmtTemp(celsius, opts) {
+  if (celsius == null || !Number.isFinite(Number(celsius))) return '—°';
+  const c = Number(celsius);
+  const unit = tempUnit();
+  const v = unit === 'f' ? Math.round(c * 9 / 5 + 32) : Math.round(c);
+  return `${v}°${opts && opts.withUnit ? unit.toUpperCase() : ''}`;
+}
+// "lat,lon" -> {lat,lon}, or null for anything blank/malformed — loadWeather()
+// falls through to device geolocation (then Brisbane) exactly as before when
+// this is null, so leaving it unset changes nothing.
+function parseHomeCoords(str) {
+  if (!str) return null;
+  const m = String(str).trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = Number(m[1]), lon = Number(m[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return { lat, lon };
+}
+function applyWidgetVisibility() {
+  const w = getSettings().widgets;
+  const sc = document.getElementById('scheduleCol');
+  const ic = document.getElementById('inboxCol');
+  if (sc) sc.hidden = !w.schedule;
+  if (ic) ic.hidden = !w.inbox;
+}
+
+function settingsPageHtml() {
+  const s = getSettings();
+  return `
+    <section class="glass insight-card">
+      <div class="insight-head">Your name</div>
+      <input class="settings-input" id="settingsName" type="text" maxlength="40" placeholder="Name" value="${escapeHtml(s.name)}" />
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Temperature units</div>
+      <div class="settings-segment">
+        <button class="settings-seg-btn${s.units === 'c' ? ' active' : ''}" data-settings-units="c">°C</button>
+        <button class="settings-seg-btn${s.units === 'f' ? ' active' : ''}" data-settings-units="f">°F</button>
+      </div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Home location</div>
+      <input class="settings-input" id="settingsHomeCoords" type="text" placeholder="e.g. 40.7128,-74.0060" value="${escapeHtml(s.homeCoords)}" />
+      <div class="settings-hint">When set, weather uses this location instead of asking for your device's location. Leave blank to keep using device location (falls back to Brisbane if that's unavailable).</div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Home widgets</div>
+      <div class="settings-toggle-row"><span>Schedule</span><input type="checkbox" id="settingsWidgetSchedule" ${s.widgets.schedule ? 'checked' : ''} /></div>
+      <div class="settings-toggle-row"><span>Inbox</span><input type="checkbox" id="settingsWidgetInbox" ${s.widgets.inbox ? 'checked' : ''} /></div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Wake time</div>
+      <input class="rd-wake-input" id="settingsWakeInput" type="time" value="${escapeHtml(rdWakeTimeStr())}" />
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Notifications</div>
+      ${pushButtonHtml()}
+    </section>
+    <details class="settings-advanced">
+      <summary>Advanced</summary>
+      <div class="settings-hint" style="margin-top:0.6rem">Backend URL — leave blank to use this same site.</div>
+      <input class="settings-input" id="settingsBackendUrl" type="text" placeholder="https://morning-dew-backend.onrender.com" value="${escapeHtml(getApiBase())}" />
+      <div class="brief-actions"><button class="brief-refresh" data-settings-save-backend>Save backend URL</button></div>
+    </details>
+  `;
+}
+function renderSettingsPage() {
+  const el = document.getElementById('settingsContent');
+  if (el) el.innerHTML = settingsPageHtml();
+}
+
+let settingsOpen = false;
+function openSettings() {
+  renderSettingsPage();
+  const page = document.getElementById('settingsPage');
+  page.classList.remove('closing');
+  page.hidden = false;
+  page.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  const wasOpen = settingsOpen;
+  settingsOpen = true;
+  if (!wasOpen) history.pushState({ settings: true }, '');
+}
+function closeSettings() {
+  if (!settingsOpen) return;
+  settingsOpen = false;
+  const page = document.getElementById('settingsPage');
+  page.classList.add('closing');
+  document.body.style.overflow = '';
+  setTimeout(() => { page.hidden = true; page.classList.remove('closing'); }, 220);
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-settings-back]')) { if (settingsOpen) history.back(); return; }
+  const unitsBtn = e.target.closest('[data-settings-units]');
+  if (unitsBtn) {
+    saveSettings({ units: unitsBtn.getAttribute('data-settings-units') });
+    renderSettingsPage();
+    renderHome();
+    if (currentDetail === 'weather') openDetail('weather');
+    if (trendsOpen) renderTrendsPage();
+    return;
+  }
+  if (e.target.closest('[data-settings-save-backend]')) {
+    const input = document.getElementById('settingsBackendUrl');
+    const next = (input ? input.value : '').trim();
+    if (next) localStorage.setItem(API_BASE_KEY, next);
+    else localStorage.removeItem(API_BASE_KEY);
+    refreshAll({ force: true });
+    return;
+  }
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'settingsName') {
+    const name = e.target.value.trim();
+    saveSettings({ name: name || 'Noah' });
+    setGreeting();
+    return;
+  }
+  if (e.target.id === 'settingsHomeCoords') {
+    saveSettings({ homeCoords: e.target.value.trim() });
+    refreshAll({ force: true });
+    return;
+  }
+  if (e.target.id === 'settingsWidgetSchedule' || e.target.id === 'settingsWidgetInbox') {
+    const s = getSettings();
+    saveSettings({ widgets: {
+      schedule: e.target.id === 'settingsWidgetSchedule' ? e.target.checked : s.widgets.schedule,
+      inbox: e.target.id === 'settingsWidgetInbox' ? e.target.checked : s.widgets.inbox,
+    } });
+    applyWidgetVisibility();
+    return;
+  }
+  if (e.target.id === 'settingsWakeInput') {
+    rdSetWakeTime(e.target.value);
+    if (healthOpen && healthTab === 'sleep') renderHealthPage();
+    return;
+  }
+});
 
 async function fetchHealth() {
   let ok = true;
@@ -4831,18 +5028,6 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-status-clearlog]')) { lsSet(MD_SYSLOG_KEY, []); toggleStatusSheet(true); return; }
 });
 
-// ---------- Controls ----------
-function openServerSetting() {
-  const current = getApiBase();
-  const next = prompt('Backend URL (e.g. https://morning-dew-backend.onrender.com)\nLeave blank to use this same site.', current);
-  if (next === null) return;
-  const trimmed = next.trim();
-  if (trimmed) localStorage.setItem(API_BASE_KEY, trimmed);
-  else localStorage.removeItem(API_BASE_KEY);
-  updateServerBtnLabel();
-  refreshAll({ force: true });
-}
-
 // ---------- Detail-screen wiring ----------
 document.addEventListener('click', (e) => {
   const trigger = e.target.closest('[data-detail]');
@@ -4858,7 +5043,7 @@ document.addEventListener('click', (e) => {
 // Route the back button and Escape through history so the pushed state is
 // consumed (keeps the OS back gesture in sync via the popstate listener).
 document.getElementById('detailBack').addEventListener('click', () => { if (currentDetail !== null) history.back(); });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (currentDetail !== null || debriefOpen || healthOpen || newsOpen || trendsOpen || moreOpen)) history.back(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (currentDetail !== null || debriefOpen || healthOpen || newsOpen || trendsOpen || moreOpen || settingsOpen)) history.back(); });
 // Pressing Return in the checklist input adds the reminder and keeps you typing.
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target && e.target.id === 'taskInput') { e.preventDefault(); commitTaskInput(); }
@@ -4997,6 +5182,7 @@ window.addEventListener('pageshow', maybeRefreshOnVisible);
 
 // ---------- Boot ----------
 installRenderBoundaries();
+applyWidgetVisibility();
 renderGreeting();
 applyTheme(); // hour-based theme immediately; weather refines it with is_day
 // Seed a cached brief (if today's is stored) so the hero card is instant.
