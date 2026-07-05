@@ -271,8 +271,24 @@
   .trends-page.closing { animation: debriefOut 0.22s ease forwards; }
   .trend-section-hdr { position: relative; z-index: 1; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0.2rem 0 -0.35rem; }
   .trend-chart-wrap { position: relative; touch-action: pan-y; }
-  .trend-svg { width: 100%; height: 140px; display: block; }
-  .trend-svg.trend-svg-bars { height: 130px; }
+  /* Athlytic-style charts render axis/point labels as SVG text, so the svg
+     keeps its intrinsic aspect (height:auto) instead of stretching — stretched
+     text is the tell of a non-professional chart. */
+  .trend-svg { width: 100%; height: auto; display: block; }
+  .trend-card-title { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 0.7rem; }
+  .trend-seg { display: flex; background: rgba(255,255,255,0.07); border-radius: 999px; padding: 3px; margin-bottom: 0.9rem; }
+  .trend-seg-btn {
+    flex: 1; font-family: inherit; font-size: 0.82rem; font-weight: 700; color: var(--muted);
+    background: none; border: none; border-radius: 999px; padding: 0.45rem 0; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .trend-seg-btn.active { background: rgba(255,255,255,0.16); color: var(--text); }
+  .trend-sum-row { display: flex; gap: 0.55rem; margin-top: 0.8rem; }
+  .trend-sum { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.5rem 0.6rem; text-align: center; }
+  .trend-sum-val { font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; }
+  .trend-sum-lbl { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-top: 0.12rem; }
+  .trend-leg-band { width: 14px; height: 10px; border-radius: 3px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: inline-block; flex-shrink: 0; }
+  .trend-leg-line { width: 16px; height: 0; border-top: 2.5px solid; border-radius: 2px; display: inline-block; flex-shrink: 0; }
   .trend-legend { display: flex; gap: 1.1rem; margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted); }
   .trend-leg-item { display: flex; align-items: center; gap: 0.35rem; }
   .trend-leg-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
@@ -295,6 +311,70 @@
   .trend-empty { font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
   .trend-entry-card { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
   .trend-entry-arrow { color: var(--muted); font-size: 1.1rem; }
+
+  /* ===== Fitness home (Readiness → Today tab) ===== */
+  .fh-greet { padding: 14px 4px 0; }
+  .fh-hello { font-size: 13px; color: rgba(255,255,255,0.55); }
+  .fh-title { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 500; color: #fff; margin-top: 3px; line-height: 1.2; }
+  .fh-coach { display: flex; align-items: flex-start; gap: 10px; background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 13px 15px; margin-top: 14px; }
+  .fh-coach-ico { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: rgba(61,123,255,0.16); display: flex; align-items: center; justify-content: center; }
+  .fh-coach-body { flex: 1; min-width: 0; }
+  .fh-coach-target { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #7fb2ff; text-transform: uppercase; }
+  .fh-coach-txt { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: 3px; }
+  .fh-sec-hdr { display: flex; align-items: baseline; justify-content: space-between; padding: 18px 4px 8px; }
+  .fh-sec-title { font-family: Georgia, 'Times New Roman', serif; font-size: 21px; font-weight: 500; color: #fff; }
+  .fh-sec-sub { font-size: 11.5px; color: rgba(255,255,255,0.45); }
+  .fh-act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .fh-act-card {
+    position: relative; background: #171a20; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; padding: 14px 14px 12px; text-align: left; cursor: pointer;
+    font-family: inherit; color: #fff; min-height: 96px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+  }
+  .fh-act-card.done { border-color: rgba(52,224,196,0.4); background: rgba(52,224,196,0.08); }
+  .fh-act-top { display: flex; align-items: center; justify-content: space-between; }
+  .fh-act-emoji { width: 38px; height: 38px; border-radius: 12px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+  .fh-act-card.done .fh-act-emoji { background: rgba(52,224,196,0.16); }
+  .fh-act-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent; }
+  .fh-act-card.done .fh-act-check { background: var(--ok); border-color: var(--ok); color: #09332b; }
+  .fh-act-name { font-size: 14.5px; font-weight: 700; }
+  .fh-act-card.done .fh-act-name { text-decoration: line-through; opacity: 0.75; }
+  .fh-act-time { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #9b8cff; margin-top: 2px; }
+  .fh-act-del { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.45); font-size: 11px; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; }
+  .fh-act-grid.editing .fh-act-del { display: flex; }
+  .fh-act-grid.editing .fh-act-check { display: none; }
+  .fh-add-card {
+    background: rgba(255,255,255,0.04); border: 1.5px dashed rgba(255,255,255,0.2);
+    border-radius: 18px; min-height: 96px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px; color: rgba(255,255,255,0.55);
+    font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .fh-add-plus { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.09); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
+  .fh-edit-btn { background: none; border: none; font-family: inherit; font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.45); cursor: pointer; padding: 2px 4px; }
+  .fh-form { background: #171a20; border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 14px 15px; margin-top: 11px; }
+  .fh-form-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .fh-type-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 999px; padding: 6px 11px; font-family: inherit; font-size: 12px; font-weight: 700;
+    color: rgba(255,255,255,0.75); cursor: pointer;
+  }
+  .fh-type-chip.sel { background: rgba(61,123,255,0.25); border-color: rgba(61,123,255,0.6); color: #fff; }
+  .fh-form-bottom { display: flex; gap: 8px; margin-top: 11px; align-items: center; }
+  .fh-time-input { font-family: inherit; font-size: 15px; font-weight: 800; color: #fff; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 7px 10px; color-scheme: dark; }
+  .fh-name-input { flex: 1; min-width: 0; font-family: inherit; font-size: 13px; color: #fff; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 10px; margin-top: 9px; width: 100%; }
+  .fh-name-input::placeholder { color: rgba(255,255,255,0.35); }
+  .fh-save-btn { background: rgba(244,244,240,0.92); color: #16110c; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; }
+  .fh-cancel-btn { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer; padding: 9px 8px; }
+  .fh-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .fh-stat { background: #171a20; border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 13px 15px; display: flex; align-items: center; gap: 12px; }
+  .fh-stat-ring { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
+  .fh-stat-ring svg { width: 46px; height: 46px; transform: rotate(-90deg); }
+  .fh-stat-ring-pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; color: #fff; }
+  .fh-stat-body { min-width: 0; }
+  .fh-stat-val { font-size: 16.5px; font-weight: 800; color: #fff; letter-spacing: -0.01em; white-space: nowrap; }
+  .fh-stat-lbl { font-size: 10.5px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .fh-empty { font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); border: 1.5px dashed rgba(255,255,255,0.16); border-radius: 18px; padding: 16px; text-align: center; }
 
   /* Settings screen */
   .settings-input {
@@ -3079,6 +3159,12 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-debrief-back]')) { if (debriefOpen) history.back(); return; }
   if (e.target.closest('[data-trends-back]')) { if (trendsOpen) history.back(); return; }
   if (e.target.closest('[data-open-trends]')) { openTrends(); return; }
+  const rangeBtn = e.target.closest('[data-trends-range]');
+  if (rangeBtn) {
+    trendsRange = Number(rangeBtn.getAttribute('data-trends-range')) || 7;
+    renderTrendsPage();
+    return;
+  }
   if (e.target.closest('[data-more-close]')) { if (moreOpen) history.back(); return; }
   const moreNavBtn = e.target.closest('[data-more-nav]');
   if (moreNavBtn) {
@@ -3366,7 +3452,7 @@ function detailRingHtml(val, grad, label, underlay = '', overlay = '') {
 
 // On-device recovery history (date -> score) so the card and the brief can show a
 // trend, even though the server only keeps the latest snapshot. Keyed by local
-// date; today's value is overwritten with the latest, capped at 30 days.
+// date; today's value is overwritten with the latest, capped at 60 days.
 const HEALTH_HIST_KEY = 'morningDewHealthHist';
 // Each day's entry used to be a bare recovery number; it's now an object
 // ({ rec, sleepHours, strain }) so the sleep-recommendation engine can see
@@ -3382,7 +3468,8 @@ function recordHealthHistory(h) {
   if (h.sleepHours != null && Number.isFinite(Number(h.sleepHours))) entry.sleepHours = Number(h.sleepHours);
   if (h.strain != null && Number.isFinite(Number(h.strain))) entry.strain = Number(h.strain);
   hist[date] = entry;
-  for (const d of Object.keys(hist).sort().slice(0, -30)) delete hist[d];
+  // 60-day retention so the Trends 60-day range has real data to show.
+  for (const d of Object.keys(hist).sort().slice(0, -60)) delete hist[d];
   lsSet(HEALTH_HIST_KEY, hist);
 }
 function recoveryHistory() {
@@ -3575,14 +3662,11 @@ function todaysBriefEntry() {
 // ========== Trends / self-insight screen ==========
 // Pure client-side aggregation over data the accuracy layer + on-device health
 // history already log — no new network calls, just a longer-range view onto
-// state the app keeps anyway. Recovery/Strain colors validated against this
-// app's dark surface with the dataviz skill's contrast + CVD checker
-// (#3D7BFF/#d95926 — worst-adjacent CVD deltaE 111.9, both in-band lightness).
+// state the app keeps anyway. The exertion blue (#3D7BFF) was validated
+// against this app's dark surface with the dataviz skill's contrast + CVD
+// checker; the recovery line is near-neutral so it separates from blue for
+// every CVD type, and identity is never color-alone (legend + direct labels).
 const TREND_REC_COLOR = '#3D7BFF';
-const TREND_STRAIN_COLOR = '#d95926';
-const TREND_CHART_W = 320;
-const TREND_LINE_H = 140;
-const TREND_BAR_H = 130;
 const TREND_MIN_DAYS = 3;
 
 function fmtTrendDate(dateStr) {
@@ -3593,7 +3677,9 @@ function fmtTrendDate(dateStr) {
 // below so a tap/hover crosshair works on any inline-SVG trend chart without
 // a charting library.
 const _trendCharts = {};
-function registerTrendChart(id, entries, w, tip) { _trendCharts[id] = { entries, w, tip }; }
+function registerTrendChart(id, entries, w, tip, padL, padR) {
+  _trendCharts[id] = { entries, w, tip, padL: padL || 0, padR: padR || 0 };
+}
 
 function trendChartPointerHandler(e) {
   if (!trendsOpen) return;
@@ -3605,18 +3691,22 @@ function trendChartPointerHandler(e) {
   const rect = svg.getBoundingClientRect();
   if (!rect.width) return;
   const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
-  const frac = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  // Map the pointer into the PLOT region (between padL/padR), not the raw
+  // svg width — the Athlytic-style charts reserve gutters for axis labels.
+  const plotW = chart.w - chart.padL - chart.padR;
+  const xView = ((clientX - rect.left) / rect.width) * chart.w;
+  const frac = Math.max(0, Math.min(1, (xView - chart.padL) / (plotW || 1)));
   const n = chart.entries.length;
   const idx = Math.max(0, Math.min(n - 1, Math.round(frac * (n - 1))));
   const entry = chart.entries[idx];
-  const x = n === 1 ? chart.w / 2 : (idx / (n - 1)) * chart.w;
+  const x = chart.padL + (n === 1 ? plotW / 2 : (idx / (n - 1)) * plotW);
   const crosshair = svg.querySelector('.trend-crosshair');
   if (crosshair) { crosshair.style.display = ''; crosshair.setAttribute('x1', x.toFixed(1)); crosshair.setAttribute('x2', x.toFixed(1)); }
   const tip = wrap.querySelector('[data-trend-tip]');
   if (tip) {
     tip.hidden = false;
     tip.textContent = chart.tip(entry);
-    tip.style.left = `${Math.max(8, Math.min(92, frac * 100))}%`;
+    tip.style.left = `${Math.max(8, Math.min(92, (x / chart.w) * 100))}%`;
   }
 }
 function trendChartPointerEnd() {
@@ -3628,15 +3718,6 @@ document.addEventListener('pointerdown', trendChartPointerHandler);
 document.addEventListener('pointerup', trendChartPointerEnd);
 document.addEventListener('pointercancel', trendChartPointerEnd);
 
-function trendLinePoints(entries, key, w, h, padT, padB) {
-  const n = entries.length;
-  return entries.map((e, i) => {
-    const v = e[key];
-    const x = n === 1 ? w / 2 : (i / (n - 1)) * w;
-    const y = (v == null) ? null : padT + (1 - Math.max(0, Math.min(100, v)) / 100) * (h - padT - padB);
-    return { x, y, v };
-  });
-}
 function trendLinePath(pts) {
   const segs = [];
   let cur = [];
@@ -3648,74 +3729,176 @@ function trendLinePath(pts) {
   return segs.map((seg) => seg.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')).join(' ');
 }
 
-// Recovery + Strain, both 0-100, overlaid on a single shared axis (never
-// dual-axis — see the dataviz skill's non-negotiables).
-function svgLineChart(entries) {
-  const w = TREND_CHART_W, h = TREND_LINE_H, padT = 12, padB = 20;
-  const recPts = trendLinePoints(entries, 'rec', w, h, padT, padB);
-  const strainPts = trendLinePoints(entries, 'strain', w, h, padT, padB);
-  const gridLines = [0, 25, 50, 75, 100].map((v) => {
-    const y = padT + (1 - v / 100) * (h - padT - padB);
-    return `<line x1="0" y1="${y.toFixed(1)}" x2="${w}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+// ---- Recovery vs. Exertion (Athlytic-style) ----
+// Dual scales that never share an axis line: recovery reads on the RIGHT as
+// 0-100% (green top, red bottom), exertion reads on the LEFT as 0.0-10.0
+// (strain/10). Both series still plot on the same normalized 0-1 vertical
+// space, so the lines are directly comparable the way Athlytic draws them —
+// "exertion above recovery" visually means you pushed past your capacity.
+// The translucent band is the target exertion range, computed per-day from
+// that day's recovery via targetStrainRange().
+const TREND_REC_LINE = 'rgba(235,238,245,0.85)';
+const TREND_GOOD = '#32d74b';
+const TREND_MID = '#ffd60a';
+const TREND_BAD = '#ff453a';
+function trendBandColor(rec) { return rec >= 67 ? TREND_GOOD : rec >= 34 ? TREND_MID : TREND_BAD; }
+function fmtTrendDayShort(dateStr) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+}
+function fmtTrendDayNum(dateStr) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function svgRecoveryExertion(entries) {
+  const w = 340, h = 205;
+  const padL = 30, padR = 34, padT = 22, padB = 26;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const n = entries.length;
+  const xFor = (i) => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
+  const yFor = (v) => padT + (1 - Math.max(0, Math.min(100, v)) / 100) * plotH;
+
+  // Per-day target exertion band from that day's recovery. Drawn as one area
+  // polygon per contiguous run of days that have recovery data.
+  const bandRuns = [];
+  let run = [];
+  entries.forEach((e, i) => {
+    const t = e.rec != null ? targetStrainRange(e.rec) : null;
+    if (t) run.push({ x: xFor(i), lo: yFor(t.lo), hi: yFor(t.hi) });
+    else { if (run.length) bandRuns.push(run); run = []; }
+  });
+  if (run.length) bandRuns.push(run);
+  const bandPaths = bandRuns.filter((r) => r.length >= 2).map((r) => {
+    const top = r.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.hi.toFixed(1)}`).join(' ');
+    const bottom = [...r].reverse().map((p) => `L${p.x.toFixed(1)},${p.lo.toFixed(1)}`).join(' ');
+    return `<path d="${top} ${bottom} Z" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>`;
   }).join('');
-  const lastOf = (pts) => [...pts].reverse().find((p) => p.y != null);
-  const lastRec = lastOf(recPts), lastStrain = lastOf(strainPts);
-  const dotRow = (pts, color) => pts.filter((p) => p.y != null).map((p) =>
-    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.4" fill="${color}"/>`).join('');
-  const endDot = (p, color) => p ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.8" fill="${color}" stroke="#0a0b12" stroke-width="1.5"/>` : '';
+
+  // Dashed vertical gridlines + x labels. All 7 days get a line + weekday
+  // label; longer ranges get sparse date labels so nothing collides.
+  const labelEvery = n <= 8 ? 1 : n <= 32 ? 5 : 10;
+  const gridCols = entries.map((e, i) => {
+    const x = xFor(i);
+    const line = (n <= 8 || i % labelEvery === 0)
+      ? `<line x1="${x.toFixed(1)}" y1="${padT}" x2="${x.toFixed(1)}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.10)" stroke-width="1" stroke-dasharray="2,4"/>`
+      : '';
+    const label = (i % labelEvery === 0 || (n > 8 && i === n - 1))
+      ? `<text x="${x.toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9.5" font-weight="600" fill="rgba(255,255,255,0.5)">${n <= 8 ? fmtTrendDayShort(e.date) : fmtTrendDayNum(e.date)}</text>`
+      : '';
+    return line + label;
+  }).join('');
+
+  const recPts = entries.map((e, i) => ({ x: xFor(i), y: e.rec == null ? null : yFor(e.rec), v: e.rec }));
+  const exPts = entries.map((e, i) => ({ x: xFor(i), y: e.strain == null ? null : yFor(e.strain), v: e.strain }));
+
+  // % labels above recovery points, colored by band. Every point on 7 days;
+  // sparse on longer ranges to keep the chart readable.
+  const recLabels = recPts.map((p, i) => {
+    if (p.y == null) return '';
+    if (n > 8 && !(i % labelEvery === 0 || i === n - 1)) return '';
+    const yLab = Math.max(10, p.y - 8);
+    return `<text x="${p.x.toFixed(1)}" y="${yLab.toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${trendBandColor(p.v)}">${p.v}%</text>`;
+  }).join('');
+  const recDots = recPts.filter((p) => p.y != null).map((p) =>
+    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${trendBandColor(p.v)}" stroke="#0a0b12" stroke-width="1.4"/>`).join('');
+  const exDots = exPts.filter((p) => p.y != null).map((p) =>
+    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.6" fill="${TREND_REC_COLOR}"/>`).join('');
+
   registerTrendChart('recstrain', entries, w, (e) => {
     const bits = [];
-    if (e.rec != null) bits.push(`Recovery ${e.rec}`);
-    if (e.strain != null) bits.push(`Strain ${e.strain}`);
+    if (e.rec != null) bits.push(`Recovery ${e.rec}%`);
+    if (e.strain != null) bits.push(`Exertion ${(e.strain / 10).toFixed(1)}`);
+    const t = e.rec != null ? targetStrainRange(e.rec) : null;
+    if (t) bits.push(`Target ${(t.lo / 10).toFixed(1)}–${(t.hi / 10).toFixed(1)}`);
     return `${fmtTrendDate(e.date)} · ${bits.length ? bits.join(' · ') : 'no data'}`;
-  });
+  }, padL, padR);
+
   return `<div class="trend-chart-wrap" data-trend-chart="recstrain">
-    <svg viewBox="0 0 ${w} ${h}" class="trend-svg" preserveAspectRatio="none">
-      ${gridLines}
-      <path d="${trendLinePath(recPts)}" fill="none" stroke="${TREND_REC_COLOR}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="${trendLinePath(strainPts)}" fill="none" stroke="${TREND_STRAIN_COLOR}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      ${dotRow(recPts, TREND_REC_COLOR)}
-      ${dotRow(strainPts, TREND_STRAIN_COLOR)}
-      ${endDot(lastRec, TREND_REC_COLOR)}
-      ${endDot(lastStrain, TREND_STRAIN_COLOR)}
-      <line class="trend-crosshair" x1="0" y1="${padT}" x2="0" y2="${h - padB}" stroke="rgba(255,255,255,0.28)" stroke-width="1" style="display:none"/>
+    <svg viewBox="0 0 ${w} ${h}" class="trend-svg">
+      ${bandPaths}
+      ${gridCols}
+      <text x="${padL - 5}" y="${padT + 4}" text-anchor="end" font-size="10" font-weight="700" fill="${TREND_REC_COLOR}">10.0</text>
+      <text x="${padL - 5}" y="${padT + plotH + 3}" text-anchor="end" font-size="10" font-weight="700" fill="${TREND_REC_COLOR}">0.0</text>
+      <text x="${w - padR + 5}" y="${padT + 4}" font-size="10" font-weight="700" fill="${TREND_GOOD}">100%</text>
+      <text x="${w - padR + 5}" y="${padT + plotH + 3}" font-size="10" font-weight="700" fill="${TREND_BAD}">0%</text>
+      <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.16)" stroke-width="1"/>
+      <path d="${trendLinePath(recPts)}" fill="none" stroke="${TREND_REC_LINE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${trendLinePath(exPts)}" fill="none" stroke="${TREND_REC_COLOR}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${exDots}
+      ${recDots}
+      ${recLabels}
+      <line class="trend-crosshair" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" stroke="rgba(255,255,255,0.28)" stroke-width="1" style="display:none"/>
     </svg>
     <div class="trend-legend">
-      <span class="trend-leg-item"><span class="trend-leg-dot" style="background:${TREND_REC_COLOR}"></span>Recovery${lastRec && lastRec.v != null ? ` · ${lastRec.v}` : ''}</span>
-      <span class="trend-leg-item"><span class="trend-leg-dot" style="background:${TREND_STRAIN_COLOR}"></span>Strain${lastStrain && lastStrain.v != null ? ` · ${lastStrain.v}` : ''}</span>
+      <span class="trend-leg-item"><span class="trend-leg-line" style="border-color:${TREND_REC_LINE}"></span>Recovery</span>
+      <span class="trend-leg-item"><span class="trend-leg-line" style="border-color:${TREND_REC_COLOR}"></span>Exertion</span>
+      <span class="trend-leg-item"><span class="trend-leg-band"></span>Target Exertion Range</span>
     </div>
     <div class="trend-tooltip" data-trend-tip hidden></div>
   </div>`;
 }
 
-// Nightly sleep hours vs a fixed 8h target line. Single series (one hue) —
-// no legend box needed for identity, but the target line gets a direct label
-// via the legend row since it isn't a data series.
+// ---- Sleep vs target: labelled bars that actually say something ----
+// Per-bar hour labels, weekday labels, a tagged 8h target line, a dotted
+// average line, and short-vs-on-target bar coloring — plus a summary row
+// (average, nights on target, current sleep debt) under the legend.
+const TREND_SLEEP_SHORT = '#FF9F43';
 function svgSleepBars(nights) {
-  const w = TREND_CHART_W, h = TREND_BAR_H, padT = 14, padB = 20;
+  const w = 340, h = 185;
+  const padL = 6, padR = 30, padT = 20, padB = 24;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
   const target = 8;
   const n = nights.length;
   const maxV = Math.max(target + 1, ...nights.map((night) => night.hours), 1);
-  const gap = 4;
-  const barW = n ? Math.max(4, (w / n) - gap) : 0;
-  const yFor = (v) => padT + (1 - Math.min(v, maxV) / maxV) * (h - padT - padB);
+  const gap = n > 8 ? 3 : 6;
+  const slotW = n ? plotW / n : plotW;
+  const barW = Math.max(4, slotW - gap);
+  const yFor = (v) => padT + (1 - Math.min(v, maxV) / maxV) * plotH;
+  const baseY = padT + plotH;
   const targetY = yFor(target);
+  const avg = n ? nights.reduce((s, x) => s + x.hours, 0) / n : 0;
+  const avgY = yFor(avg);
+  const onTarget = nights.filter((x) => x.hours >= target - 0.05).length;
+  const labelEvery = n > 8 ? 2 : 1;
+
   const bars = nights.map((night, i) => {
-    const x = i * (w / n);
+    const x = padL + i * slotW + gap / 2;
     const y = yFor(night.hours);
-    const barH = Math.max(2, (h - padB) - y);
-    return `<rect x="${(x + gap / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" rx="3" fill="${TREND_REC_COLOR}"/>`;
+    const met = night.hours >= target - 0.05;
+    const fill = met ? TREND_REC_COLOR : TREND_SLEEP_SHORT;
+    const cx = x + barW / 2;
+    const hoursLab = (i % labelEvery === 0 || i === n - 1)
+      ? `<text x="${cx.toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="rgba(255,255,255,0.75)">${(Math.round(night.hours * 10) / 10)}</text>`
+      : '';
+    const dayLab = (i % labelEvery === 0 || i === n - 1)
+      ? `<text x="${cx.toFixed(1)}" y="${h - 7}" text-anchor="middle" font-size="9" font-weight="600" fill="rgba(255,255,255,0.5)">${fmtTrendDayShort(night.date).slice(0, n > 8 ? 1 : 3)}</text>`
+      : '';
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(2, baseY - y).toFixed(1)}" rx="3" fill="${fill}"/>${hoursLab}${dayLab}`;
   }).join('');
-  registerTrendChart('sleepbars', nights, w, (e) => `${fmtTrendDate(e.date)} · ${Math.round(e.hours * 10) / 10}h`);
+
+  registerTrendChart('sleepbars', nights, w, (e) => {
+    const delta = e.hours - target;
+    const deltaTxt = Math.abs(delta) < 0.05 ? 'on target' : delta > 0 ? `+${(Math.round(delta * 10) / 10)}h over` : `${(Math.round(delta * 10) / 10)}h short`;
+    return `${fmtTrendDate(e.date)} · ${Math.round(e.hours * 10) / 10}h · ${deltaTxt}`;
+  }, padL, padR);
+
   return `<div class="trend-chart-wrap" data-trend-chart="sleepbars">
-    <svg viewBox="0 0 ${w} ${h}" class="trend-svg trend-svg-bars" preserveAspectRatio="none">
-      <line x1="0" y1="${targetY.toFixed(1)}" x2="${w}" y2="${targetY.toFixed(1)}" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+    <svg viewBox="0 0 ${w} ${h}" class="trend-svg">
       ${bars}
-      <line class="trend-crosshair" x1="0" y1="${padT}" x2="0" y2="${h - padB}" stroke="rgba(255,255,255,0.28)" stroke-width="1" style="display:none"/>
+      <line x1="${padL}" y1="${targetY.toFixed(1)}" x2="${padL + plotW}" y2="${targetY.toFixed(1)}" stroke="rgba(255,255,255,0.55)" stroke-width="1" stroke-dasharray="5,4"/>
+      <text x="${w - padR + 4}" y="${(targetY + 3).toFixed(1)}" font-size="9.5" font-weight="700" fill="rgba(255,255,255,0.65)">${target}h</text>
+      <line x1="${padL}" y1="${avgY.toFixed(1)}" x2="${padL + plotW}" y2="${avgY.toFixed(1)}" stroke="rgba(52,224,196,0.6)" stroke-width="1" stroke-dasharray="1,4"/>
+      <text x="${w - padR + 4}" y="${(avgY + 3).toFixed(1)}" font-size="9.5" font-weight="700" fill="rgba(52,224,196,0.85)">avg</text>
+      <line class="trend-crosshair" x1="0" y1="${padT}" x2="0" y2="${baseY}" stroke="rgba(255,255,255,0.28)" stroke-width="1" style="display:none"/>
     </svg>
     <div class="trend-legend">
-      <span class="trend-leg-item"><span class="trend-leg-dot" style="background:${TREND_REC_COLOR}"></span>Sleep hours</span>
-      <span class="trend-leg-item"><span class="trend-leg-dot" style="background:rgba(255,255,255,0.5)"></span>8h target</span>
+      <span class="trend-leg-item"><span class="trend-leg-dot" style="background:${TREND_REC_COLOR}"></span>On target</span>
+      <span class="trend-leg-item"><span class="trend-leg-dot" style="background:${TREND_SLEEP_SHORT}"></span>Short night</span>
+      <span class="trend-leg-item"><span class="trend-leg-line" style="border-top-style:dashed;border-color:rgba(255,255,255,0.55)"></span>${target}h target</span>
+    </div>
+    <div class="trend-sum-row">
+      <div class="trend-sum"><div class="trend-sum-val">${(Math.round(avg * 10) / 10)}h</div><div class="trend-sum-lbl">Avg / night</div></div>
+      <div class="trend-sum"><div class="trend-sum-val">${onTarget}/${n}</div><div class="trend-sum-lbl">Nights on target</div></div>
+      <div class="trend-sum"><div class="trend-sum-val">${Math.round(rdSleepDebtHours() * 10) / 10}h</div><div class="trend-sum-lbl">Sleep debt</div></div>
     </div>
     <div class="trend-tooltip" data-trend-tip hidden></div>
   </div>`;
@@ -3758,18 +3941,25 @@ function trendPatternsHtml() {
   </section>`;
 }
 
+let trendsRange = 7; // 7 | 30 | 60 — Athlytic-style range selector
 function trendsPageHtml() {
   const histAsc = healthHistEntries(); // ascending, {date, rec, sleepHours, strain}
   const daysLogged = histAsc.length;
   if (daysLogged < TREND_MIN_DAYS) {
     return `<section class="glass insight-card"><div class="trend-empty">Trends need at least ${TREND_MIN_DAYS} days of logged recovery data before there's enough signal to chart${daysLogged ? ` — you've got ${daysLogged} so far.` : ', and nothing is logged yet.'} Keep opening Readiness (or entering recovery manually) each morning and this fills in on its own.</div></section>`;
   }
-  const lineEntries = histAsc.slice(-30);
-  const sleepNights = sleepHistory().slice(0, 14).reverse(); // ascending, oldest first
+  const lineEntries = histAsc.slice(-trendsRange);
+  const sleepCount = trendsRange === 7 ? 7 : 14;
+  const sleepNights = sleepHistory().slice(0, sleepCount).reverse(); // ascending, oldest first
+  const seg = (v) => `<button class="trend-seg-btn${trendsRange === v ? ' active' : ''}" data-trends-range="${v}">${v} Days</button>`;
   return `
     ${trendStatsHtml()}
-    <div class="trend-section-hdr">Recovery &amp; strain · last ${lineEntries.length} days</div>
-    <section class="glass insight-card">${svgLineChart(lineEntries)}</section>
+    <section class="glass insight-card">
+      <div class="trend-card-title">Recovery vs. Exertion</div>
+      <div class="trend-seg">${seg(7)}${seg(30)}${seg(60)}</div>
+      ${svgRecoveryExertion(lineEntries)}
+      ${trendsRange > daysLogged ? `<div class="trend-empty" style="border:none;background:none;padding:0.6rem 0 0;text-align:left">Showing the ${daysLogged} days logged so far — the full ${trendsRange}-day view fills in as history accumulates.</div>` : ''}
+    </section>
     ${sleepNights.length >= 2
       ? `<div class="trend-section-hdr">Sleep vs 8h target · last ${sleepNights.length} nights</div>
          <section class="glass insight-card">${svgSleepBars(sleepNights)}</section>`
@@ -4306,17 +4496,159 @@ function rdSleepMiddle(h, rec) {
       <div class="rd-body">${escapeHtml(body)}</div>
     </div>`;
 }
+// ===== Fitness home: activity planner (on-device) =====
+// Daily plan of health/fitness activities: each has a name, emoji, and time,
+// and completion is tracked per-date so the plan resets naturally each
+// morning without wiping the schedule itself.
+const FH_ACTS_KEY = 'morningDewActivities';
+const FH_TYPES = [
+  { emoji: '🏃', name: 'Running' }, { emoji: '🏋️', name: 'Gym' },
+  { emoji: '🚶', name: 'Walk' }, { emoji: '🧘', name: 'Yoga' },
+  { emoji: '🌿', name: 'Meditation' }, { emoji: '🚴', name: 'Cycling' },
+  { emoji: '🏊', name: 'Swim' }, { emoji: '🤸', name: 'Stretch' },
+];
+function fhActivities() { const v = lsGet(FH_ACTS_KEY, []); return Array.isArray(v) ? v : []; }
+function fhSaveActivities(a) { lsSet(FH_ACTS_KEY, a); }
+function fhAddActivity(name, emoji, time) {
+  const a = fhActivities();
+  a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: String(name).trim().slice(0, 30), emoji, time, done: {} });
+  a.sort((x, y) => (x.time || '99:99') < (y.time || '99:99') ? -1 : 1);
+  fhSaveActivities(a);
+}
+function fhToggleActivity(id) {
+  const a = fhActivities();
+  const act = a.find((x) => x.id === id);
+  if (!act) return;
+  const today = localDateStr(new Date());
+  if (!act.done || typeof act.done !== 'object') act.done = {};
+  if (act.done[today]) delete act.done[today]; else act.done[today] = Date.now();
+  // Completion history only needs to survive long enough for streak-style
+  // reads; trim anything older than 30 days so the store stays small.
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  const cutStr = localDateStr(cutoff);
+  Object.keys(act.done).forEach((d) => { if (d < cutStr) delete act.done[d]; });
+  fhSaveActivities(a);
+}
+function fhDeleteActivity(id) { fhSaveActivities(fhActivities().filter((x) => x.id !== id)); }
+function fhFmtTime(t) {
+  if (!/^\d{2}:\d{2}$/.test(t || '')) return '';
+  const [hh, mm] = t.split(':').map(Number);
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+  let h12 = hh % 12; if (h12 === 0) h12 = 12;
+  return `${h12}:${String(mm).padStart(2, '0')} ${ampm}`;
+}
+
+// Transient add-form state (never persisted; rebuilt on each render).
+let fhFormOpen = false;
+let fhFormType = 0; // index into FH_TYPES, or -1 for custom
+let fhEditMode = false;
+
+function fhActCardHtml(act) {
+  const today = localDateStr(new Date());
+  const done = !!(act.done && act.done[today]);
+  return `<button class="fh-act-card${done ? ' done' : ''}" data-fh-toggle="${act.id}">
+    <span class="fh-act-top">
+      <span class="fh-act-emoji">${escapeHtml(act.emoji || '⭐')}</span>
+      <span class="fh-act-check">✓</span>
+    </span>
+    <span>
+      <span class="fh-act-name">${escapeHtml(act.name)}</span>
+      ${act.time ? `<div class="fh-act-time">${escapeHtml(fhFmtTime(act.time))}</div>` : ''}
+    </span>
+    <span class="fh-act-del" data-fh-del="${act.id}" role="button" aria-label="Remove">✕</span>
+  </button>`;
+}
+function fhFormHtml() {
+  const chips = FH_TYPES.map((t, i) =>
+    `<button class="fh-type-chip${fhFormType === i ? ' sel' : ''}" data-fh-type="${i}">${t.emoji} ${escapeHtml(t.name)}</button>`).join('');
+  return `<div class="fh-form">
+    <div class="fh-form-row">${chips}</div>
+    <input class="fh-name-input" id="fhCustomName" type="text" maxlength="30" placeholder="Or type your own (e.g. Physio, Boxing)" />
+    <div class="fh-form-bottom">
+      <input class="fh-time-input" id="fhTimeInput" type="time" value="07:00" />
+      <button class="fh-save-btn" data-fh-save>Add to plan</button>
+      <button class="fh-cancel-btn" data-fh-cancel>Cancel</button>
+    </div>
+  </div>`;
+}
+function fhStatRing(pct, color) {
+  const R = 19, C = 2 * Math.PI * R;
+  const v = pct == null ? null : Math.max(0, Math.min(100, pct));
+  const prog = v == null ? '' :
+    `<circle cx="23" cy="23" r="${R}" stroke="${color}" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - v / 100)).toFixed(1)}"/>`;
+  return `<div class="fh-stat-ring">
+    <svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="${R}" stroke="rgba(255,255,255,0.12)" stroke-width="4" fill="none"/>${prog}</svg>
+    <span class="fh-stat-ring-pct">${v == null ? '–' : Math.round(v) + '%'}</span>
+  </div>`;
+}
+function fhStatsHtml(h) {
+  const stepGoal = h.moveGoal || 8000;
+  const kcalGoal = 850;
+  const sleepTarget = rdTargetSleepHours(h);
+  const stats = [
+    {
+      ring: fhStatRing(h.steps != null ? h.steps / stepGoal * 100 : null, '#3D7BFF'),
+      val: h.steps != null ? h.steps.toLocaleString() : '—',
+      lbl: `Steps · goal ${stepGoal.toLocaleString()}`,
+    },
+    {
+      ring: fhStatRing(h.activeEnergy != null ? h.activeEnergy / kcalGoal * 100 : null, '#FF9F43'),
+      val: h.activeEnergy != null ? `${Math.round(h.activeEnergy)} kcal` : '—',
+      lbl: `Active energy · goal ${kcalGoal}`,
+    },
+    {
+      ring: fhStatRing(h.sleepHours != null ? h.sleepHours / sleepTarget * 100 : null, '#9b8cff'),
+      val: h.sleepHours != null ? rdFmtDuration(h.sleepHours) : '—',
+      lbl: `Sleep · target ${rdFmtDuration(sleepTarget)}`,
+    },
+    {
+      ring: fhStatRing(h.restingHeartRate != null ? Math.max(4, Math.min(100, 100 - ((h.restingHeartRate - 40) / 60) * 100)) : null, '#34e0c4'),
+      val: h.restingHeartRate != null ? `${Math.round(h.restingHeartRate)} bpm` : '—',
+      lbl: 'Resting heart rate',
+    },
+  ];
+  return `<div class="fh-stat-grid">${stats.map((s) =>
+    `<div class="fh-stat">${s.ring}<div class="fh-stat-body"><div class="fh-stat-val">${escapeHtml(s.val)}</div><div class="fh-stat-lbl">${escapeHtml(s.lbl)}</div></div></div>`).join('')}</div>`;
+}
+
 function rdTodayContent(h) {
   const t = recoveryTrend();
   const trendTxt = t
-    ? (t.delta > 0 ? `Up ${t.delta} from yesterday` : t.delta < 0 ? `Down ${Math.abs(t.delta)} from yesterday` : 'Holding steady')
-    : 'Updated just now';
-  return `<div class="rd-card">
-      <div class="rd-cicon">${RD_WAVE}</div>
-      <div class="rd-cbody"><div class="rd-ctitle">Recovery Trend</div><div class="rd-ctime">${escapeHtml(trendTxt.toUpperCase())}</div></div>
-      ${RD_CHEV}
+    ? (t.delta > 0 ? `up ${t.delta} from yesterday` : t.delta < 0 ? `down ${Math.abs(t.delta)} from yesterday` : 'holding steady')
+    : null;
+  const target = targetStrainRange(h.recovery);
+  const acts = fhActivities();
+  const today = localDateStr(new Date());
+  const doneCount = acts.filter((a) => a.done && a.done[today]).length;
+  const name = getSettings().name;
+  const coach = `${rdDesc(h.recovery)}${trendTxt ? ` Recovery is ${trendTxt}.` : ''}`;
+  return `
+    <div class="fh-greet">
+      <div class="fh-hello">Hello, ${escapeHtml(name)} 👋</div>
+      <div class="fh-title">Ready for today's challenges?</div>
     </div>
-    <div class="rd-sec"><div class="rd-sh">${escapeHtml(recoveryHeadline(h.recovery))}</div><div class="rd-sp">${escapeHtml(rdDesc(h.recovery))}</div></div>`;
+    <div class="fh-coach">
+      <span class="fh-coach-ico">${RD_WAVE}</span>
+      <span class="fh-coach-body">
+        <div class="fh-coach-target">${target ? `Target exertion ${(target.lo / 10).toFixed(1)} – ${(target.hi / 10).toFixed(1)}` : 'Log recovery to get a daily exertion target'}</div>
+        <div class="fh-coach-txt">${escapeHtml(coach)}</div>
+      </span>
+    </div>
+    <div class="fh-sec-hdr">
+      <span class="fh-sec-title">Today's plan</span>
+      <span style="display:flex;align-items:center;gap:8px">
+        ${acts.length ? `<span class="fh-sec-sub">${doneCount} of ${acts.length} done</span>` : ''}
+        ${acts.length ? `<button class="fh-edit-btn" data-fh-edit>${fhEditMode ? 'Done' : 'Edit'}</button>` : ''}
+      </span>
+    </div>
+    <div class="fh-act-grid${fhEditMode ? ' editing' : ''}">
+      ${acts.map(fhActCardHtml).join('')}
+      <button class="fh-add-card" data-fh-add><span class="fh-add-plus">+</span>Add activity</button>
+    </div>
+    ${fhFormOpen ? fhFormHtml() : ''}
+    ${!acts.length && !fhFormOpen ? `<div class="fh-empty" style="margin-top:11px">Plan your day: add a run, gym session, yoga, or anything else — tap a card to check it off as you go. Your plan carries over every day.</div>` : ''}
+    <div class="fh-sec-hdr"><span class="fh-sec-title">Today's stats</span></div>
+    ${fhStatsHtml(h)}`;
 }
 function rdSleepContent(h, recArg) {
   const r = recArg || rdRecommended(h);
@@ -5095,6 +5427,36 @@ document.getElementById('healthPage').addEventListener('click', (e) => {
   }
   const help = e.target.closest('#rdAlarmHelp');
   if (help) { rdAlarmSetupHelp(); return; }
+  // ---- Fitness-home activity planner ----
+  const del = e.target.closest('[data-fh-del]');
+  if (del) { e.stopPropagation(); fhDeleteActivity(del.getAttribute('data-fh-del')); if (!fhActivities().length) fhEditMode = false; renderHealthPage(); return; }
+  const togg = e.target.closest('[data-fh-toggle]');
+  if (togg) { if (!fhEditMode) fhToggleActivity(togg.getAttribute('data-fh-toggle')); renderHealthPage(); return; }
+  if (e.target.closest('[data-fh-add]')) { fhFormOpen = true; fhEditMode = false; renderHealthPage(); return; }
+  if (e.target.closest('[data-fh-cancel]')) { fhFormOpen = false; renderHealthPage(); return; }
+  if (e.target.closest('[data-fh-edit]')) { fhEditMode = !fhEditMode; fhFormOpen = false; renderHealthPage(); return; }
+  const typeChip = e.target.closest('[data-fh-type]');
+  if (typeChip) {
+    fhFormType = Number(typeChip.getAttribute('data-fh-type'));
+    // Toggle chip selection in place — a full re-render would wipe whatever
+    // the user already typed into the custom-name / time inputs.
+    document.querySelectorAll('.fh-type-chip').forEach((c) => c.classList.remove('sel'));
+    typeChip.classList.add('sel');
+    return;
+  }
+  if (e.target.closest('[data-fh-save]')) {
+    const customEl = document.getElementById('fhCustomName');
+    const timeEl = document.getElementById('fhTimeInput');
+    const custom = customEl ? customEl.value.trim() : '';
+    const type = FH_TYPES[fhFormType] || FH_TYPES[0];
+    const name = custom || type.name;
+    const emoji = custom ? '⭐' : type.emoji;
+    const time = (timeEl && /^\d{2}:\d{2}$/.test(timeEl.value)) ? timeEl.value : '';
+    fhAddActivity(name, emoji, time);
+    fhFormOpen = false;
+    renderHealthPage();
+    return;
+  }
 });
 document.getElementById('healthPage').addEventListener('change', (e) => {
   const input = e.target.closest('#rdWakeInput');
