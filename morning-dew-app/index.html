@@ -406,6 +406,10 @@
   .rd-serif { font-family: Georgia, 'Times New Roman', serif; }
   .rd-hero { position: relative; width: 100%; height: 512px; overflow: hidden; flex-shrink: 0; }
   .rd-hero.rd-hero-short { height: 300px; }
+  /* Bare hero: just the top bar (back button + wordmark) — used by the
+     fitness-home Today tab so the plan starts right under the header. */
+  .rd-hero.rd-hero-bare { height: auto; padding-bottom: 6px; }
+  .rd-hero.rd-hero-bare .rd-hero-overlay { display: none; }
   .rd-hero-overlay { position: absolute; inset: 0; background:
     linear-gradient(180deg, rgba(10,13,17,0) 0%, rgba(10,13,17,0) 58%, rgba(10,13,17,0.82) 86%, #0a0e18 100%); }
   .rd-topbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; padding: calc(env(safe-area-inset-top) + 12px) 20px 0; }
@@ -4462,24 +4466,6 @@ function rdHeroTop() {
     <div class="rd-grp">${RD_SHARE}${RD_TARGET_IC}</div>
   </div>`;
 }
-function rdTodayMiddle(h) {
-  const goal = h.moveGoal || 15000;
-  const steps = h.steps != null ? h.steps : null;
-  const pct = steps != null ? steps / goal * 100 : null;
-  const head = steps == null ? recoveryHeadline(h.recovery)
-    : pct >= 100 ? 'Goal complete' : pct >= 60 ? 'Making progress' : 'Getting started';
-  const body = steps == null
-    ? 'Connect Apple Health to track your steps and move goal here.'
-    : "Today's activity goal is above baseline as your readiness is optimal.";
-  return `<div class="rd-arc">${RD_ARC}<div class="rd-endlabel">${escapeHtml(goal.toLocaleString())}</div><div class="rd-flame">${RD_FLAME}</div></div>
-    <div class="rd-steps">
-      <div class="rd-kicker">STEPS PROGRESS</div>
-      <div class="rd-big">${escapeHtml(steps != null ? steps.toLocaleString() : '—')}</div>
-      <div class="rd-head">${escapeHtml(head)}</div>
-      <div class="rd-body">${escapeHtml(body)}</div>
-      <button class="rd-learn" data-rdtab="overview">Learn more</button>
-    </div>`;
-}
 function rdSleepMiddle(h, rec) {
   const score = h.sleep;
   const head = score == null ? 'Sleep' : score >= 75 ? 'Well rested' : score >= 40 ? 'Decent night' : 'Short night';
@@ -4718,10 +4704,15 @@ function healthPageHtml() {
         <button class="rd-learn" data-set-recovery>Enter today's recovery</button>
       </div></div>${rdNavHtml()}`;
   }
-  const short = healthTab === 'overview';
   const sleepRec = healthTab === 'sleep' ? rdRecommended(h) : null;
-  const middle = short ? '' : (healthTab === 'sleep' ? rdSleepMiddle(h, sleepRec) : rdTodayMiddle(h));
-  const hero = `<div class="rd-hero${short ? ' rd-hero-short' : ''}"><div class="rd-hero-overlay"></div>${rdHeroTop()}${rdRingsHtml(h)}${middle}</div>`;
+  // Today is the fitness home: just the top bar up top — no rings row, no
+  // steps arc — so the page opens straight into the greeting + day plan.
+  // Sleep keeps the full hero; Overview keeps the short rings hero.
+  const hero = healthTab === 'today'
+    ? `<div class="rd-hero rd-hero-bare"><div class="rd-hero-overlay"></div>${rdHeroTop()}</div>`
+    : healthTab === 'overview'
+    ? `<div class="rd-hero rd-hero-short"><div class="rd-hero-overlay"></div>${rdHeroTop()}${rdRingsHtml(h)}</div>`
+    : `<div class="rd-hero"><div class="rd-hero-overlay"></div>${rdHeroTop()}${rdRingsHtml(h)}${rdSleepMiddle(h, sleepRec)}</div>`;
   const content = healthTab === 'sleep' ? rdSleepContent(h, sleepRec)
     : healthTab === 'overview' ? rdOverviewContent(h)
     : rdTodayContent(h);
