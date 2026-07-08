@@ -204,4 +204,102 @@ async function generateBrief(context) {
   }
 }
 
-module.exports = { generateBrief };
+// ---- Inbox AI summary: reads the important unread emails and pulls out the
+// highlights, the concrete tasks/actions they imply, and any dated events that
+// could go on a calendar. Returns structured JSON the app renders at the top
+// of the email screen, with one-tap "add to calendar" for each event. ----
+const SUMMARY_SYSTEM_PROMPT = `You are the inbox triage assistant inside Morning Dew.
+You receive a JSON array of the user's unread/important emails (from, subject, date,
+and a short plaintext snippet of the body). The current date is given so you can
+resolve relative dates like "Friday" or "next week". Read them the way a sharp
+personal assistant would and surface only what actually matters.
+
+OUTPUT — respond with ONLY a single \`\`\`json fenced block, one JSON object, this shape:
+
+{
+  "overview": "1-2 plain sentences: what needs the user's attention right now. If nothing is important, say so.",
+  "highlights": [
+    {
+      "from": "sender name",
+      "subject": "the email subject",
+      "why": "one short line on why this matters",
+      "tasks": ["concrete action the user must take, imperative, <= 10 words", "..."]
+    }
+  ],
+  "events": [
+    {
+      "title": "short event/deadline title",
+      "date": "YYYY-MM-DD or YYYY-MM-DDTHH:MM (local, 24h). Omit time if unknown.",
+      "durationMins": 60,
+      "location": "if stated, else empty string",
+      "notes": "one line of context",
+      "sourceSubject": "the subject of the email this came from"
+    }
+  ]
+}
+
+RULES:
+- Only include a highlight for emails that genuinely need attention (deadlines,
+  actions, money, results, appointments). Skip newsletters, promos, receipts with
+  no action. If none matter, return an empty highlights array and say so in overview.
+- "tasks" are things the USER must DO. If an email is purely informational, give it
+  an empty tasks array.
+- "events" are only for things with a real date/deadline (assignment due dates,
+  meetings, enrolment deadlines, appointments). Resolve relative dates against the
+  provided current date. Never invent a date you can't find. Assignment/enrolment
+  DEADLINES are valid events — title them like "CAB230 Assignment 2 due".
+- Be specific: use real names, unit codes, amounts, times from the emails.
+- No preamble, no AI talk, no em-dashes. Just the JSON.`;
+
+async function summarizeInbox(emails, nowIso) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { configured: false };
+  if (!Array.isArray(emails) || !emails.length) {
+    return { configured: true, summary: { overview: 'No unread email to summarize right now.', highlights: [], events: [] } };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  try {
+    const payload = {
+      now: nowIso || new Date().toISOString(),
+      emails: emails.slice(0, 15).map((m) => ({
+        from: m.from, subject: m.subject, date: m.date, snippet: (m.snippet || '').slice(0, 400),
+      })),
+    };
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1500,
+        system: SUMMARY_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: `Current date/time: ${payload.now}\n\nHere are my unread emails:\n\n${JSON.stringify(payload.emails)}\n\nSummarize my inbox.` }],
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`anthropic ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    const raw = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+    const parsed = extractJson(raw);
+    // Normalize so the client can trust the shape.
+    return {
+      configured: true,
+      summary: {
+        overview: typeof parsed.overview === 'string' ? parsed.overview : '',
+        highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
+        events: Array.isArray(parsed.events) ? parsed.events : [],
+      },
+    };
+  } catch (err) {
+    if (err && err.name === 'AbortError') return { configured: true, error: 'Summary timed out — try again in a moment.' };
+    return { configured: true, error: String(err.message || err) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+module.exports = { generateBrief, summarizeInbox };

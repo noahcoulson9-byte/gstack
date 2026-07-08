@@ -146,6 +146,65 @@ function parseFetchLine(line) {
   return { id, subject, from, snippet: '', date };
 }
 
+// Pull the literal that follows a given FETCH item marker out of a logical
+// line. The literal bytes are already inlined by the parser, so use the
+// declared {N} length to slice exactly N chars (the body may contain `)`).
+function extractLiteralAfter(line, marker) {
+  const idx = line.indexOf(marker);
+  if (idx < 0) return '';
+  const rest = line.slice(idx);
+  const lit = rest.match(/\{(\d+)\}\r?\n/);
+  if (!lit) return '';
+  const start = idx + lit.index + lit[0].length;
+  return line.slice(start, start + parseInt(lit[1], 10));
+}
+
+// Best-effort plaintext preview of a raw body part: decode base64 or
+// quoted-printable if that's what it looks like, strip HTML, collapse
+// whitespace, truncate. Never throws — a messy email just yields a shorter
+// or emptier snippet, and the AI summary relies on the subject line anyway.
+function cleanSnippet(raw) {
+  let s = String(raw || '');
+  const compact = s.replace(/\s+/g, '');
+  // Looks base64 (long, only base64 alphabet)? Decode it.
+  if (compact.length > 40 && /^[A-Za-z0-9+/=]+$/.test(compact)) {
+    try { s = Buffer.from(compact, 'base64').toString('utf8'); } catch { /* keep raw */ }
+  }
+  // Quoted-printable: soft line breaks + =XX escapes.
+  if (/=\r?\n/.test(s) || /=[0-9A-Fa-f]{2}/.test(s)) {
+    s = s.replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (_, h) => {
+      try { return String.fromCharCode(parseInt(h, 16)); } catch { return ''; }
+    });
+  }
+  s = s
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>').replace(/&#39;|&apos;/gi, "'").replace(/&quot;/gi, '"')
+    .replace(/https?:\/\/\S+/g, ' ') // links add noise, not meaning, to a preview
+    .replace(/\s+/g, ' ')
+    .trim();
+  return s.slice(0, 400);
+}
+
+// One batched fetch of the first body part (capped) for a set of UIDs ->
+// Map(uid -> cleaned snippet).
+async function fetchBodies(client, uids) {
+  const out = new Map();
+  if (!uids.length) return out;
+  const res = await client.command(`UID FETCH ${uids.join(',')} (BODY.PEEK[1]<0.1400>)`);
+  if (res.status !== 'OK') return out;
+  for (const line of res.lines) {
+    if (!/^\* \d+ FETCH /i.test(line)) continue;
+    const uidMatch = line.match(/UID\s+(\d+)/i);
+    if (!uidMatch) continue;
+    const raw = extractLiteralAfter(line, 'BODY[1]');
+    if (raw) out.set(uidMatch[1], cleanSnippet(raw));
+  }
+  return out;
+}
+
 async function searchAndFetch(client, gmailQuery, maxResults) {
   const search = await client.command(`UID SEARCH X-GM-RAW ${quote(gmailQuery)}`);
   if (search.status !== 'OK') return [];
@@ -169,7 +228,7 @@ async function searchAndFetch(client, gmailQuery, maxResults) {
 
 // Public API — mirrors gmail.js's fetchTriage signature/return shape.
 // creds: { user, password, host?, port?, rejectUnauthorized? }
-async function fetchTriage(creds, { maxPerSection = 8, deadlineMs = 14000 } = {}) {
+async function fetchTriage(creds, { maxPerSection = 8, deadlineMs = 14000, withBody = false } = {}) {
   const host = creds.host || 'imap.gmail.com';
   const port = creds.port || 993;
   const rejectUnauthorized = creds.rejectUnauthorized !== false;
@@ -189,6 +248,17 @@ async function fetchTriage(creds, { maxPerSection = 8, deadlineMs = 14000 } = {}
         if (sel.status !== 'OK') throw new Error('could not open INBOX');
         const urgent = await searchAndFetch(client, 'is:important is:unread', maxPerSection);
         const recent = await searchAndFetch(client, 'is:unread newer_than:1d', maxPerSection);
+        if (withBody) {
+          // Attach a plaintext preview to each message so the AI summary has
+          // real content, not just subject lines. Best-effort: on any failure
+          // the snippets simply stay empty.
+          try {
+            const all = [...urgent, ...recent];
+            const uids = [...new Set(all.map((m) => m.id).filter(Boolean))];
+            const bodies = await fetchBodies(client, uids);
+            for (const m of all) { const snip = bodies.get(m.id); if (snip) m.snippet = snip; }
+          } catch { /* leave snippets empty */ }
+        }
         try { await client.command('LOGOUT'); } catch { /* best effort */ }
         finish(resolve, { urgent, recent });
       } catch (err) {
@@ -200,4 +270,4 @@ async function fetchTriage(creds, { maxPerSection = 8, deadlineMs = 14000 } = {}
   });
 }
 
-module.exports = { fetchTriage, _internal: { parseFetchLine, parseSearchUids, readHeader } };
+module.exports = { fetchTriage, _internal: { parseFetchLine, parseSearchUids, readHeader, cleanSnippet, extractLiteralAfter } };
