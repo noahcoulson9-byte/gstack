@@ -1880,7 +1880,33 @@ function cachedBrief() {
   const health = overview.health || lsGet(HEALTH_CACHE_KEY, null);
   const currentHealthUpdatedAt = (health && health.updatedAt) || null;
   if (b.healthUpdatedAt !== undefined && b.healthUpdatedAt !== currentHealthUpdatedAt) return null;
-  return { brief: b.brief, structured: !!b.structured };
+  const norm = normalizeBrief(b.brief, b.structured);
+  return { brief: norm.brief, structured: norm.structured };
+}
+// Safety net against a brief that arrived (or was cached) as raw ```json text —
+// e.g. a truncated model response the server couldn't parse. Strips any fence,
+// recovers a flattened JSON brief back into its structured object, and returns
+// an empty brief (→ the "generate" state) for JSON too broken to parse, so the
+// UI never renders a literal code block.
+function normalizeBrief(brief, structured) {
+  if (brief && typeof brief === 'object') return { brief, structured: true };
+  if (typeof brief !== 'string') return { brief, structured: !!structured };
+  let s = brief.trim();
+  const open = s.match(/```(?:json)?\s*/i);
+  if (open) {
+    s = s.slice(open.index + open[0].length);
+    const close = s.lastIndexOf('```');
+    if (close !== -1) s = s.slice(0, close);
+    s = s.trim();
+  }
+  if (/^[[{]/.test(s)) {
+    try {
+      const parsed = JSON.parse(s);
+      if (parsed && Array.isArray(parsed.sections)) return { brief: parsed, structured: true };
+    } catch { /* truncated/broken JSON — fall through */ }
+    return { brief: '', structured: false }; // don't render raw braces; show generate state
+  }
+  return { brief: s, structured: false };
 }
 // brief is either a structured object ({headline, opener, sections, tomorrow})
 // from the redesigned AI prompt, or a legacy flat markdown string.
@@ -2036,18 +2062,26 @@ async function fetchBrief(force) {
     const data = await res.json();
     if (data.configured === false) { overview.briefConfigured = false; }
     else if (data.brief) {
-      overview.brief = data.brief;
-      overview.briefStructured = !!data.structured;
-      overview.briefConfigured = true;
-      recordBriefInsight(ctx, data.brief);
-      const healthNow = overview.health || lsGet(HEALTH_CACHE_KEY, null);
-      lsSet(BRIEF_KEY, {
-        date: localDateStr(new Date()),
-        brief: data.brief,
-        structured: !!data.structured,
-        generatedAt: Date.now(),
-        healthUpdatedAt: (healthNow && healthNow.updatedAt) || null,
-      });
+      const norm = normalizeBrief(data.brief, data.structured);
+      if (!norm.brief) {
+        // Server sent something we couldn't turn into a real brief (e.g. broken
+        // JSON). Treat as an error so the user gets a clean Regenerate prompt.
+        overview.briefConfigured = true;
+        overview.briefError = 'Could not format the brief this time. Tap Regenerate.';
+      } else {
+        overview.brief = norm.brief;
+        overview.briefStructured = norm.structured;
+        overview.briefConfigured = true;
+        recordBriefInsight(ctx, norm.brief);
+        const healthNow = overview.health || lsGet(HEALTH_CACHE_KEY, null);
+        lsSet(BRIEF_KEY, {
+          date: localDateStr(new Date()),
+          brief: norm.brief,
+          structured: norm.structured,
+          generatedAt: Date.now(),
+          healthUpdatedAt: (healthNow && healthNow.updatedAt) || null,
+        });
+      }
     } else if (data.error) {
       overview.briefError = data.error;
     }
