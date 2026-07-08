@@ -3169,15 +3169,30 @@ async function fetchInboxSummary(force) {
   _inboxSummaryErr = null;
   renderInboxSummaryCard();
   try {
-    // Claude can take ~30-45s to read the inbox, so allow a generous timeout.
-    const res = await fetchWithTimeout(apiUrl('/api/email-summary'), {}, 55000);
-    const data = await res.json();
+    // Claude can take ~30-45s and the email fetch adds up to ~20s, so allow a
+    // generous timeout that sits ABOVE the backend's own limits — that way a
+    // slow run returns a real JSON error instead of a client-side abort.
+    const res = await fetchWithTimeout(apiUrl('/api/email-summary'), {}, 75000);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch {
+      // Not JSON — almost always means the backend hasn't redeployed with the
+      // /api/email-summary route yet (it fell through to serving HTML or 404).
+      _inboxSummaryState = 'error';
+      _inboxSummaryErr = !res.ok
+        ? `The summary service returned ${res.status}. Your backend probably needs to redeploy (Render → Deploy latest commit).`
+        : 'Your backend needs to redeploy to enable summaries (Render → Deploy latest commit).';
+      renderInboxSummaryCard();
+      return;
+    }
     if (data.configured === false) { _inboxSummaryState = 'error'; _inboxSummaryErr = 'not-configured'; }
     else if (data.error) { _inboxSummaryState = 'error'; _inboxSummaryErr = data.error; }
     else { _inboxSummary = data.summary || { overview: '', highlights: [], events: [] }; _inboxSummaryState = 'done'; _inboxSummarySig = sig; }
   } catch (err) {
     _inboxSummaryState = 'error';
-    _inboxSummaryErr = String((err && err.message) || err);
+    const msg = String((err && err.message) || err);
+    _inboxSummaryErr = /abort/i.test(msg) ? 'The summary took too long to build. Tap to try again.' : msg;
   }
   renderInboxSummaryCard();
 }
@@ -3216,9 +3231,11 @@ function inboxSummaryCardHtml() {
   if (_inboxSummaryState === 'loading') {
     inner = `<div class="aisum-loading"><span class="aisum-spin"></span>Reading your important emails…</div>`;
   } else if (_inboxSummaryState === 'error') {
-    inner = _inboxSummaryErr === 'not-configured'
-      ? `<div class="aisum-err">Add your email + an <code>ANTHROPIC_API_KEY</code> on the server to get an AI summary here.</div>`
-      : `<div class="aisum-err">Couldn't build the summary just now. <button class="aisum-refresh" data-inbox-summary-refresh style="color:var(--home-accent)">Try again</button></div>`;
+    if (_inboxSummaryErr === 'not-configured') {
+      inner = `<div class="aisum-err">The AI summary needs an <code>ANTHROPIC_API_KEY</code> set on your server (the same key that powers the morning brief). Add it in Render, then tap <button class="aisum-refresh" data-inbox-summary-refresh style="color:var(--home-accent)">try again</button>.</div>`;
+    } else {
+      inner = `<div class="aisum-err">Couldn't build the summary just now.<br><span style="opacity:0.75;font-size:0.8rem">${escapeHtml(String(_inboxSummaryErr || '').slice(0, 220))}</span><br><button class="aisum-refresh" data-inbox-summary-refresh style="color:var(--home-accent);margin-top:0.4rem">Try again</button></div>`;
+    }
   } else if (_inboxSummaryState === 'done' && _inboxSummary) {
     const s = _inboxSummary;
     const parts = [`<div class="aisum-overview">${escapeHtml(s.overview || 'Nothing urgent in your inbox right now.')}</div>`];
