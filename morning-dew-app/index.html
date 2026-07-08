@@ -725,6 +725,45 @@
     background: #3a8dff; margin: 0.5rem 0 0 -0.2rem;
   }
 
+  /* ---- Inbox: Work / Personal segmented view (minimal, professional) ---- */
+  .inbox-seg {
+    position: relative; z-index: 1;
+    display: flex; gap: 4px; padding: 4px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: 14px; margin-bottom: 0.9rem;
+  }
+  .inbox-seg-btn {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    font-family: inherit; font-size: 0.9rem; font-weight: 700; color: var(--muted);
+    background: none; border: none; border-radius: 10px; padding: 0.55rem 0; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .inbox-seg-btn.active { background: rgba(255,255,255,0.10); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+  .inbox-seg-badge {
+    min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 800; color: #fff; background: rgba(255,255,255,0.16);
+  }
+  .inbox-seg-btn.active .inbox-seg-badge { background: var(--home-accent); }
+  .inbox-summary {
+    position: relative; z-index: 1;
+    font-size: 0.82rem; color: var(--muted); margin: 0 0.2rem 0.7rem;
+  }
+  .inbox-summary b { color: var(--text); font-weight: 700; }
+  .inbox-grouplabel {
+    position: relative; z-index: 1;
+    font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 0.2rem 0 0.4rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .inbox-grouplabel.urgent { color: var(--danger); }
+  .inbox-empty {
+    position: relative; z-index: 1;
+    text-align: center; padding: 2.4rem 1rem; color: var(--muted);
+  }
+  .inbox-empty-ico { font-size: 1.8rem; opacity: 0.7; }
+  .inbox-empty-txt { font-size: 0.9rem; margin-top: 0.6rem; line-height: 1.5; }
+
   button {
     font-family: inherit;
     border: none;
@@ -3038,36 +3077,77 @@ function reviewDetailHtml() {
 }
 
 // ---- Inbox section: triage + sender insights + the actual email lists ----
+// Work vs Personal split. All mail arrives through one connected mailbox
+// (e.g. a personal Gmail that a university address forwards into), so the
+// clean, deterministic split is by SENDER domain: anything from a configured
+// "work" domain (university / employer) is Work, everything else Personal.
+// The domain list is user-editable in Settings and defaults to the uni +
+// education domains, so a forwarded student mailbox lands in Work out of the box.
+const DEFAULT_WORK_DOMAINS = ['qut.edu.au', '.edu'];
+function getWorkDomains() {
+  const s = lsGet(SETTINGS_KEY, {});
+  const arr = (s.workDomains && Array.isArray(s.workDomains)) ? s.workDomains.filter(Boolean) : null;
+  return arr && arr.length ? arr : DEFAULT_WORK_DOMAINS;
+}
+function emailDomain(from) {
+  const m = String(from || '').match(/[\w.+-]+@([\w.-]+)/);
+  return m ? m[1].toLowerCase() : '';
+}
+function isWorkEmail(m) {
+  const dom = emailDomain(m.from);
+  if (!dom) return false;
+  return getWorkDomains().some((frag) => dom.includes(String(frag).toLowerCase().replace(/^@/, '')));
+}
+
+let inboxSegment = 'work'; // 'work' | 'personal'
+
+function inboxSectionHtml(bucket) {
+  const hasUrgent = bucket.urgent.length > 0;
+  const hasRecent = bucket.recent.length > 0;
+  if (!hasUrgent && !hasRecent) {
+    return `<div class="inbox-empty"><div class="inbox-empty-ico">✉️</div>
+      <div class="inbox-empty-txt">Nothing new in ${inboxSegment === 'work' ? 'Work' : 'Personal'} right now.</div></div>`;
+  }
+  const parts = [];
+  if (hasUrgent) {
+    parts.push(`<div class="inbox-grouplabel urgent"><span>●</span>Priority · ${bucket.urgent.length}</div>
+      <div class="mail-scroll" style="max-height:none">${bucket.urgent.map(mailRow).join('')}</div>`);
+  }
+  if (hasRecent) {
+    parts.push(`<div class="inbox-grouplabel"${hasUrgent ? ' style="margin-top:1rem"' : ''}>Recent · ${bucket.recent.length}</div>
+      <div class="mail-scroll" style="max-height:none">${bucket.recent.map(mailRow).join('')}</div>`);
+  }
+  return parts.join('');
+}
+
 function inboxDetailHtml() {
   if (overview.emailReached === false) return `<section class="glass insight-card"><div class="error-state">Couldn't reach the email service. Pull down to retry.</div></section>`;
-  if (overview.emailConfigured === false) return `<section class="glass insight-card"><div class="placeholder-state">No email source connected yet. Set the <code>GOOGLE_*</code> (Gmail) and/or <code>MS_*</code> (Outlook) vars on the server.</div></section>`;
+  if (overview.emailConfigured === false) return `<section class="glass insight-card"><div class="placeholder-state">No email source connected yet. Add a Gmail (app password) or Outlook account on the server — see Settings.</div></section>`;
   const d = overview.emailData;
   if (!d) return `<section class="glass insight-card"><div class="empty-state">Email is still loading…</div></section>`;
-  const all = [...d.urgent, ...d.recent];
 
-  const counts = {};
-  all.forEach((m) => { const s = senderName(m.from); counts[s] = (counts[s] || 0) + 1; });
-  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const maxCount = Math.max(...top.map((t) => t[1]), 1);
-  const senderBars = top.map(([name, n]) => barRow(name, n, maxCount, String(n))).join('');
+  const work = { urgent: d.urgent.filter(isWorkEmail), recent: d.recent.filter(isWorkEmail) };
+  const personal = { urgent: d.urgent.filter((m) => !isWorkEmail(m)), recent: d.recent.filter((m) => !isWorkEmail(m)) };
+  const workCount = work.urgent.length + work.recent.length;
+  const personalCount = personal.urgent.length + personal.recent.length;
+  const bucket = inboxSegment === 'personal' ? personal : work;
 
-  const tips = [];
-  if (d.urgent.length) tips.push({ ico: '🚩', text: `<b>${d.urgent.length}</b> urgent email${d.urgent.length > 1 ? 's' : ''} flagged important — clear ${d.urgent.length > 1 ? 'these' : 'this'} first.` });
-  tips.push({ ico: '📥', text: `<b>${d.recent.length}</b> new unread in the last day.` });
-  if (top.length) tips.push({ ico: '👤', text: `Most is from <b>${escapeHtml(top[0][0])}</b> (${top[0][1]}).` });
+  const badge = (n) => n ? `<span class="inbox-seg-badge">${n}</span>` : '';
+  const toggle = `<div class="inbox-seg">
+    <button class="inbox-seg-btn${inboxSegment === 'work' ? ' active' : ''}" data-inbox-seg="work">Work${badge(workCount)}</button>
+    <button class="inbox-seg-btn${inboxSegment === 'personal' ? ' active' : ''}" data-inbox-seg="personal">Personal${badge(personalCount)}</button>
+  </div>`;
 
-  const insights = all.length ? `
-    <section class="glass insight-card"><div class="insight-head">Triage</div>${insightLines(tips)}</section>
-    <section class="glass insight-card"><div class="insight-head">Who's emailing you</div><div class="bars">${senderBars}</div></section>` : '';
+  const newCount = bucket.recent.length;
+  const urgentCount = bucket.urgent.length;
+  const summary = (newCount || urgentCount)
+    ? `<div class="inbox-summary"><b>${newCount}</b> new${urgentCount ? ` · <b>${urgentCount}</b> priority` : ''} in ${inboxSegment === 'work' ? 'Work' : 'Personal'}</div>`
+    : '';
 
   return `
-    <section class="glass detail-hero">
-      <div class="metric-big">${d.recent.length}<span style="font-size:1.2rem;font-weight:600;color:var(--muted)"> new</span></div>
-      <div class="metric-sub">${d.urgent.length} urgent · tap any email to open it</div>
-    </section>
-    ${insights}
-    <section class="glass insight-card"><div class="insight-head">Urgent</div>${mailListHtml(d.urgent, 'No urgent email right now.')}</section>
-    <section class="glass insight-card"><div class="insight-head">New</div>${mailListHtml(d.recent, 'No new email right now.')}</section>`;
+    ${toggle}
+    ${summary}
+    <section class="glass insight-card">${inboxSectionHtml(bucket)}</section>`;
 }
 
 const DETAILS = {
@@ -3159,6 +3239,15 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-task-add-inline]')) { commitTaskInput(); return; }
+  const inboxSeg = e.target.closest('[data-inbox-seg]');
+  if (inboxSeg) {
+    inboxSegment = inboxSeg.getAttribute('data-inbox-seg');
+    // Re-render just the inbox content so the toggle feels instant and doesn't
+    // reset scroll or push history.
+    const el = document.getElementById('detailContent');
+    if (el && currentDetail === 'inbox') el.innerHTML = inboxDetailHtml();
+    return;
+  }
   if (e.target.closest('[data-debrief-refresh]')) { fetchBrief(true); return; }
   if (e.target.closest('[data-debrief-back]')) { if (debriefOpen) history.back(); return; }
   if (e.target.closest('[data-trends-back]')) { if (trendsOpen) history.back(); return; }
@@ -4087,6 +4176,7 @@ function getSettings() {
       schedule: s.widgets ? s.widgets.schedule !== false : true,
       inbox: s.widgets ? s.widgets.inbox !== false : true,
     },
+    workDomains: Array.isArray(s.workDomains) ? s.workDomains : [],
   };
 }
 function saveSettings(patch) {
@@ -4147,6 +4237,11 @@ function settingsPageHtml() {
       <div class="insight-head">Home widgets</div>
       <div class="settings-toggle-row"><span>Schedule</span><input type="checkbox" id="settingsWidgetSchedule" ${s.widgets.schedule ? 'checked' : ''} /></div>
       <div class="settings-toggle-row"><span>Inbox</span><input type="checkbox" id="settingsWidgetInbox" ${s.widgets.inbox ? 'checked' : ''} /></div>
+    </section>
+    <section class="glass insight-card">
+      <div class="insight-head">Work email domains</div>
+      <input class="settings-input" id="settingsWorkDomains" type="text" placeholder="qut.edu.au, .edu" value="${escapeHtml((s.workDomains || []).join(', '))}" />
+      <div class="settings-hint">Comma-separated. Mail from these domains shows under <b>Work</b> in your inbox; everything else is <b>Personal</b>. Defaults to your university if left blank.</div>
     </section>
     <section class="glass insight-card">
       <div class="insight-head">Wake time</div>
@@ -4220,6 +4315,11 @@ document.addEventListener('change', (e) => {
   if (e.target.id === 'settingsHomeCoords') {
     saveSettings({ homeCoords: e.target.value.trim() });
     refreshAll({ force: true });
+    return;
+  }
+  if (e.target.id === 'settingsWorkDomains') {
+    const domains = e.target.value.split(',').map((x) => x.trim().toLowerCase().replace(/^@/, '')).filter(Boolean);
+    saveSettings({ workDomains: domains });
     return;
   }
   if (e.target.id === 'settingsWidgetSchedule' || e.target.id === 'settingsWidgetInbox') {
