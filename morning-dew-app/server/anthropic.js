@@ -141,13 +141,31 @@ with whatever data is present; never invent events or numbers. Aim for ~350-500
 words total across all fields: detailed but skimmable, with the recovery section's
 detail field the richest.`;
 
+// Removes a ```json ... ``` fence from the model's response. Tolerates a
+// MISSING closing fence — when a response is truncated at max_tokens the opening
+// ```json survives but the closing ``` never arrives, and a naive match would
+// leave the fence in place and leak it to the UI.
+function stripFences(text) {
+  let s = String(text).trim();
+  const open = s.match(/```(?:json)?\s*/i);
+  if (open) {
+    s = s.slice(open.index + open[0].length);
+    const close = s.lastIndexOf('```');
+    if (close !== -1) s = s.slice(0, close);
+  }
+  return s.trim();
+}
+
 // Pulls the JSON object out of the model's response. Expects a single
-// ```json fenced block per SYSTEM_PROMPT, but falls back to the raw trimmed
-// text in case the model omits the fence.
+// ```json fenced block per SYSTEM_PROMPT, but is deliberately forgiving: it
+// strips a one-sided fence and, if there's stray prose around the object,
+// falls back to the outermost { ... } braces before parsing.
 function extractJson(text) {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const candidate = fenced ? fenced[1] : text;
-  return JSON.parse(candidate.trim());
+  let s = stripFences(text);
+  const first = s.indexOf('{');
+  const last = s.lastIndexOf('}');
+  if (first !== -1 && last > first) s = s.slice(first, last + 1);
+  return JSON.parse(s.trim());
 }
 
 async function generateBrief(context) {
@@ -167,7 +185,10 @@ async function generateBrief(context) {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 2000,
+        // Headroom so a detailed brief (all sections + the rich recovery detail)
+        // never truncates mid-JSON. Truncation drops the closing fence and the
+        // brief falls back to raw text — the "YOUR BRIEF ```json" leak.
+        max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: `Here is today's context:\n\n${JSON.stringify(context)}\n\nWrite my morning brief.` },
@@ -191,11 +212,19 @@ async function generateBrief(context) {
         return { configured: true, structured: true, brief: parsed };
       }
     } catch {
-      // Falls through to the flat-string fallback below.
+      // Falls through to the fallback below.
     }
-    // The model didn't return well-formed structured JSON — degrade gracefully
-    // to the legacy flat-string contract instead of erroring the whole brief.
-    return { configured: true, structured: false, brief: raw };
+    // Structured parse failed. Never return the raw text as-is: if the model
+    // wrapped its answer in a ```json fence (and it truncated so the JSON won't
+    // parse), the raw string still carries the fence and the UI would render a
+    // literal code block. Strip the fence; if what's left still looks like
+    // broken JSON, surface a clean retry prompt instead of dumping braces.
+    const cleaned = stripFences(raw);
+    if (/^[[{]/.test(cleaned)) {
+      return { configured: true, error: 'Could not format the brief this time. Tap Regenerate.' };
+    }
+    // Genuine prose (a non-JSON answer) — safe to show as a flat brief.
+    return { configured: true, structured: false, brief: cleaned };
   } catch (err) {
     if (err && err.name === 'AbortError') return { configured: true, error: 'Brief timed out — try again in a moment.' };
     throw err;
@@ -273,7 +302,7 @@ async function summarizeInbox(emails, nowIso) {
       headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 1500,
+        max_tokens: 2500, // headroom so a busy inbox's JSON never truncates mid-object
         system: SUMMARY_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: `Current date/time: ${payload.now}\n\nHere are my unread emails:\n\n${JSON.stringify(payload.emails)}\n\nSummarize my inbox.` }],
       }),
