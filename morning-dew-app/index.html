@@ -2536,7 +2536,8 @@ function tasksListHtml() {
 
 async function loadCalendar() {
   try {
-    const res = await fetchWithTimeout(apiUrl('/api/calendar'));
+    // Generous timeout so a cold-starting backend doesn't drop the calendar.
+    const res = await fetchWithTimeout(apiUrl('/api/calendar'), {}, 45000);
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     overview.calendarConfigured = !!data.configured;
@@ -2550,6 +2551,7 @@ async function loadCalendar() {
   } catch (err) {
     overview.calendarReached = false;
     renderToday();
+    fetchBrief(); // don't let a slow/cold calendar block the morning brief
     return false;
   }
 }
@@ -2557,7 +2559,7 @@ async function loadCalendar() {
 // ---------- Reminders ----------
 async function loadReminders() {
   try {
-    const res = await fetchWithTimeout(apiUrl('/api/reminders'));
+    const res = await fetchWithTimeout(apiUrl('/api/reminders'), {}, 45000);
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     overview.remindersConfigured = !!data.configured;
@@ -2658,24 +2660,32 @@ function mailListHtml(items, emptyMsg) {
 }
 
 async function loadEmail() {
-  try {
-    const res = await fetchWithTimeout(apiUrl('/api/email'));
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const data = await res.json();
-    overview.emailReached = true;
-    overview.emailConfigured = !!data.configured;
-    overview.emailError = data.error || null;
-    overview.email = { urgent: data.configured ? data.urgent.length : 0 };
-    overview.emailData = data.configured ? { urgent: data.urgent, recent: data.recent } : { urgent: [], recent: [] };
-    renderOverview();
-    renderHome();
-    if (currentDetail === 'inbox') openDetail('inbox');
-    return true;
-  } catch (err) {
-    overview.emailReached = false;
-    renderHome();
-    if (currentDetail === 'inbox') openDetail('inbox');
-    return false;
+  // The backend (Render free tier) sleeps after ~15 min idle and takes 30-50s
+  // to wake, and the IMAP fetch itself can take ~15s even when warm — both far
+  // longer than the default 8s. Use a generous timeout and retry once (the
+  // first request wakes the service, the second succeeds) so email loads
+  // reliably instead of only when the backend happens to be warm.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(apiUrl('/api/email'), {}, 60000);
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = await res.json();
+      overview.emailReached = true;
+      overview.emailConfigured = !!data.configured;
+      overview.emailError = data.error || null;
+      overview.email = { urgent: data.configured ? data.urgent.length : 0 };
+      overview.emailData = data.configured ? { urgent: data.urgent, recent: data.recent } : { urgent: [], recent: [] };
+      renderOverview();
+      renderHome();
+      if (currentDetail === 'inbox') openDetail('inbox');
+      return true;
+    } catch (err) {
+      if (attempt === 0) { await new Promise((r) => setTimeout(r, 2500)); continue; }
+      overview.emailReached = false;
+      renderHome();
+      if (currentDetail === 'inbox') openDetail('inbox');
+      return false;
+    }
   }
 }
 
