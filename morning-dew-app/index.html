@@ -764,6 +764,55 @@
   .inbox-empty-ico { font-size: 1.8rem; opacity: 0.7; }
   .inbox-empty-txt { font-size: 0.9rem; margin-top: 0.6rem; line-height: 1.5; }
 
+  /* ---- AI inbox summary card ---- */
+  .aisum { position: relative; z-index: 1; padding: 1rem 1.1rem; margin-bottom: 0.9rem; }
+  .aisum-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+  .aisum-spark { font-size: 0.95rem; }
+  .aisum-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); flex: 1; }
+  .aisum-refresh { background: none; border: none; color: var(--muted); font-size: 0.95rem; cursor: pointer; padding: 0.1rem 0.3rem; border-radius: 8px; }
+  .aisum-refresh:active { background: rgba(255,255,255,0.1); }
+  .aisum-overview { font-size: 0.98rem; line-height: 1.5; font-weight: 600; }
+  .aisum-loading { display: flex; align-items: center; gap: 0.6rem; color: var(--muted); font-size: 0.9rem; padding: 0.3rem 0; }
+  .aisum-spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: aisumspin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes aisumspin { to { transform: rotate(360deg); } }
+  .aisum-err { font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
+  .aisum-sec-label { font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 1rem 0 0.5rem; }
+  .aisum-hl { padding: 0.6rem 0; border-top: 1px solid rgba(255,255,255,0.08); }
+  .aisum-hl:first-of-type { border-top: none; }
+  .aisum-hl-top { display: flex; align-items: baseline; gap: 0.5rem; }
+  .aisum-hl-from { font-size: 0.82rem; font-weight: 700; color: var(--home-accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aisum-hl-why { font-size: 0.92rem; line-height: 1.4; margin-top: 0.2rem; }
+  .aisum-task { display: flex; align-items: center; gap: 0.55rem; margin-top: 0.45rem; }
+  .aisum-task-btn {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 7px;
+    background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
+    color: var(--text); font-size: 0.95rem; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .aisum-task-btn.added { background: rgba(52,224,196,0.2); border-color: rgba(52,224,196,0.5); color: var(--ok); }
+  .aisum-task-txt { font-size: 0.9rem; line-height: 1.35; }
+  .aisum-task-btn.added + .aisum-task-txt { color: var(--muted); text-decoration: line-through; }
+  .aisum-ev {
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.6rem 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .aisum-ev-date {
+    flex-shrink: 0; width: 46px; text-align: center; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); padding: 0.35rem 0;
+  }
+  .aisum-ev-mon { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--danger); }
+  .aisum-ev-day { font-size: 1.15rem; font-weight: 800; line-height: 1.05; }
+  .aisum-ev-body { flex: 1; min-width: 0; }
+  .aisum-ev-title { font-size: 0.92rem; font-weight: 700; }
+  .aisum-ev-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+  .aisum-ev-add {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.3rem;
+    background: rgba(61,123,255,0.16); border: 1px solid rgba(61,123,255,0.45); color: #a9c9ff;
+    font-family: inherit; font-size: 0.76rem; font-weight: 700; padding: 0.4rem 0.7rem;
+    border-radius: 999px; text-decoration: none; cursor: pointer; white-space: nowrap;
+  }
+  .aisum-ev-add:active { background: rgba(61,123,255,0.28); }
+
   button {
     font-family: inherit;
     border: none;
@@ -3101,6 +3150,112 @@ function isWorkEmail(m) {
 
 let inboxSegment = 'work'; // 'work' | 'personal'
 
+// ---- AI inbox summary state ----
+let _inboxSummary = null;         // { overview, highlights, events } once loaded
+let _inboxSummaryState = 'idle';  // 'idle' | 'loading' | 'done' | 'error'
+let _inboxSummaryErr = null;
+let _inboxSummarySig = null;      // email signature the summary was built for
+
+function inboxEmailSignature() {
+  const d = overview.emailData;
+  if (!d) return '';
+  return [...(d.urgent || []), ...(d.recent || [])].map((m) => m.id || m.subject).join('|');
+}
+async function fetchInboxSummary(force) {
+  const sig = inboxEmailSignature();
+  if (!force && _inboxSummaryState === 'done' && _inboxSummarySig === sig) return;
+  if (_inboxSummaryState === 'loading') return;
+  _inboxSummaryState = 'loading';
+  _inboxSummaryErr = null;
+  renderInboxSummaryCard();
+  try {
+    // Claude can take ~30-45s to read the inbox, so allow a generous timeout.
+    const res = await fetchWithTimeout(apiUrl('/api/email-summary'), {}, 55000);
+    const data = await res.json();
+    if (data.configured === false) { _inboxSummaryState = 'error'; _inboxSummaryErr = 'not-configured'; }
+    else if (data.error) { _inboxSummaryState = 'error'; _inboxSummaryErr = data.error; }
+    else { _inboxSummary = data.summary || { overview: '', highlights: [], events: [] }; _inboxSummaryState = 'done'; _inboxSummarySig = sig; }
+  } catch (err) {
+    _inboxSummaryState = 'error';
+    _inboxSummaryErr = String((err && err.message) || err);
+  }
+  renderInboxSummaryCard();
+}
+function renderInboxSummaryCard() {
+  const el = document.getElementById('inboxSummaryCard');
+  if (el) el.outerHTML = inboxSummaryCardHtml();
+}
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+function summaryEventDateChip(dateStr) {
+  const m = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return { mon: '', day: '?' };
+  return { mon: MONTHS[Number(m[2]) - 1] || '', day: String(Number(m[3])) };
+}
+function summaryEventMeta(ev) {
+  const m = String(ev.date || '').match(/^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})/);
+  const bits = [];
+  if (m) {
+    let h = Number(m[1]); const mm = m[2]; const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    bits.push(`${h}:${mm} ${ap}`);
+  }
+  if (ev.location) bits.push(ev.location);
+  return bits.join(' · ');
+}
+function icsHref(ev) {
+  const q = new URLSearchParams();
+  q.set('title', ev.title || 'Event');
+  q.set('start', ev.date || '');
+  if (ev.durationMins) q.set('durationMins', String(ev.durationMins));
+  if (ev.location) q.set('location', ev.location);
+  if (ev.notes) q.set('notes', ev.notes);
+  return apiUrl('/api/ics') + '?' + q.toString();
+}
+function inboxSummaryCardHtml() {
+  const head = `<div class="aisum-head"><span class="aisum-spark">✨</span><span class="aisum-title">Inbox summary</span>${_inboxSummaryState === 'done' ? '<button class="aisum-refresh" data-inbox-summary-refresh aria-label="Refresh">⟳</button>' : ''}</div>`;
+  let inner;
+  if (_inboxSummaryState === 'loading') {
+    inner = `<div class="aisum-loading"><span class="aisum-spin"></span>Reading your important emails…</div>`;
+  } else if (_inboxSummaryState === 'error') {
+    inner = _inboxSummaryErr === 'not-configured'
+      ? `<div class="aisum-err">Add your email + an <code>ANTHROPIC_API_KEY</code> on the server to get an AI summary here.</div>`
+      : `<div class="aisum-err">Couldn't build the summary just now. <button class="aisum-refresh" data-inbox-summary-refresh style="color:var(--home-accent)">Try again</button></div>`;
+  } else if (_inboxSummaryState === 'done' && _inboxSummary) {
+    const s = _inboxSummary;
+    const parts = [`<div class="aisum-overview">${escapeHtml(s.overview || 'Nothing urgent in your inbox right now.')}</div>`];
+    if (Array.isArray(s.highlights) && s.highlights.length) {
+      parts.push(`<div class="aisum-sec-label">Needs attention</div>`);
+      s.highlights.forEach((h) => {
+        const tasks = Array.isArray(h.tasks) ? h.tasks.filter(Boolean) : [];
+        const taskHtml = tasks.map((t) => {
+          const added = briefTaskExists(t);
+          return `<div class="aisum-task"><button class="aisum-task-btn${added ? ' added' : ''}" data-aisum-task="${escapeHtml(t)}" ${added ? 'disabled' : ''}>${added ? '✓' : '+'}</button><span class="aisum-task-txt">${escapeHtml(t)}</span></div>`;
+        }).join('');
+        parts.push(`<div class="aisum-hl">
+          <div class="aisum-hl-top"><span class="aisum-hl-from">${escapeHtml(h.from || '')}</span></div>
+          <div class="aisum-hl-why">${escapeHtml(h.why || h.subject || '')}</div>
+          ${taskHtml}
+        </div>`);
+      });
+    }
+    if (Array.isArray(s.events) && s.events.length) {
+      parts.push(`<div class="aisum-sec-label">Add to calendar</div>`);
+      s.events.forEach((ev) => {
+        const chip = summaryEventDateChip(ev.date);
+        const meta = summaryEventMeta(ev);
+        parts.push(`<div class="aisum-ev">
+          <div class="aisum-ev-date"><div class="aisum-ev-mon">${escapeHtml(chip.mon)}</div><div class="aisum-ev-day">${escapeHtml(chip.day)}</div></div>
+          <div class="aisum-ev-body"><div class="aisum-ev-title">${escapeHtml(ev.title || '')}</div>${meta ? `<div class="aisum-ev-meta">${escapeHtml(meta)}</div>` : ''}</div>
+          <a class="aisum-ev-add" href="${escapeHtml(icsHref(ev))}" target="_blank" rel="noopener">+ Add</a>
+        </div>`);
+      });
+    }
+    inner = parts.join('');
+  } else {
+    inner = `<div class="aisum-loading"><span class="aisum-spin"></span>Preparing your summary…</div>`;
+  }
+  return `<section class="glass insight-card aisum" id="inboxSummaryCard">${head}${inner}</section>`;
+}
+
 function inboxSectionHtml(bucket) {
   const hasUrgent = bucket.urgent.length > 0;
   const hasRecent = bucket.recent.length > 0;
@@ -3144,7 +3299,9 @@ function inboxDetailHtml() {
     ? `<div class="inbox-summary"><b>${newCount}</b> new${urgentCount ? ` · <b>${urgentCount}</b> priority` : ''} in ${inboxSegment === 'work' ? 'Work' : 'Personal'}</div>`
     : '';
 
+  const hasAnyMail = (d.urgent.length + d.recent.length) > 0;
   return `
+    ${hasAnyMail ? inboxSummaryCardHtml() : ''}
     ${toggle}
     ${summary}
     <section class="glass insight-card">${inboxSectionHtml(bucket)}</section>`;
@@ -3173,6 +3330,11 @@ function openDetail(type) {
   if (type === 'schedule') {
     const nowLine = document.getElementById('detailContent').querySelector('.day-tl-now');
     if (nowLine) nowLine.scrollIntoView({ block: 'center' });
+  }
+  // Kick off the AI inbox summary when opening Inbox (no-op if already built
+  // for the current set of emails). Runs async; the card updates itself.
+  if (type === 'inbox' && overview.emailData && ((overview.emailData.urgent || []).length + (overview.emailData.recent || []).length) > 0) {
+    fetchInboxSummary();
   }
   // Push a history entry the first time we open, so the OS back gesture closes it.
   if (!wasOpen) history.pushState({ detail: type }, '');
@@ -3246,6 +3408,18 @@ document.addEventListener('click', (e) => {
     // reset scroll or push history.
     const el = document.getElementById('detailContent');
     if (el && currentDetail === 'inbox') el.innerHTML = inboxDetailHtml();
+    return;
+  }
+  if (e.target.closest('[data-inbox-summary-refresh]')) { fetchInboxSummary(true); return; }
+  const aiTask = e.target.closest('[data-aisum-task]');
+  if (aiTask) {
+    const text = aiTask.getAttribute('data-aisum-task');
+    if (addBriefTask(text)) {
+      aiTask.classList.add('added');
+      aiTask.disabled = true;
+      aiTask.textContent = '✓';
+      renderHome();
+    }
     return;
   }
   if (e.target.closest('[data-debrief-refresh]')) { fetchBrief(true); return; }
