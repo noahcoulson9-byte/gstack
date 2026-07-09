@@ -1125,6 +1125,12 @@
     padding: 0 0.6rem; border-radius: 12px; text-decoration: none;
   }
   .brief-item-cal:active { background: rgba(61,123,255,0.26); }
+  .brief-item-cal.added, .aisum-task-cal.added, .aisum-ev-add.added {
+    background: rgba(52,224,196,0.16); border-color: rgba(52,224,196,0.5); color: var(--ok); cursor: default;
+  }
+  .mailx-mode .aisum-task-cal.added, .mailx-mode .aisum-ev-add.added {
+    background: rgba(38,150,110,0.14); border-color: rgba(38,150,110,0.45); color: #1f7a58;
+  }
 
   /* Plan-progress bar at the top of the brief: N of M brief tasks done today. */
   .brief-adherence { margin: 0.2rem 0 1rem; }
@@ -3124,9 +3130,15 @@ function briefItemRowHtml(it) {
   const text = item.text || '';
   const added = briefTaskExists(text);
   const when = briefItemWhen(item);
+  const durationMins = Number(item.durationMins) || 30;
   const calDay = mailxDayLabel(when);
-  const calLabel = (calDay === 'Today' ? '' : calDay + ' ') + fmtClock(when);
-  const cal = `<a class="brief-item-cal" href="${escapeHtml(icsHref({ title: text, date: when, durationMins: Number(item.durationMins) || 30, notes: 'From your Morning Dew daily brief' }))}" aria-label="Add to calendar">${escapeHtml(calLabel)} 📅</a>`;
+  const calLabel = (calDay === 'Today' ? '' : calDay + ' ') + fmtClock(when) + ' 📅';
+  const cal = calAddBtnHtml({
+    title: text, start: when, durationMins,
+    notes: 'From your Morning Dew daily brief',
+    category: item.category || '',
+    ics: icsHref({ title: text, date: when, durationMins, notes: 'From your Morning Dew daily brief' }),
+  }, calLabel, 'brief-item-cal');
   return `<div class="brief-item-row"><button class="brief-item${added ? ' added' : ''}" data-brief-item="${escapeHtml(text)}" ${added ? 'disabled' : ''}>
     <span class="brief-item-ico">${added ? '✓' : '+'}</span><span class="brief-item-txt">${escapeHtml(text)}</span></button>${cal}</div>`;
 }
@@ -3455,6 +3467,28 @@ function taskIcsHref(t, sourceSubject) {
     notes: sourceSubject ? `From email: ${sourceSubject}` : 'From Morning Dew inbox',
   });
 }
+
+// ---- One-tap iCloud calendar add ----
+// Buttons POST to /api/calendar-add, which writes the event straight into the
+// user's iCloud account via CalDAV — smart-routed into the calendar matching
+// the task's category (fitness → Health & Fitness, chores → Tasks, …). When
+// iCloud creds aren't configured (or the write fails) the tap falls back to
+// the native .ics add sheet, so the button always lands the event somewhere.
+const CAL_ADDED_KEY = 'morningDewCalAdded';
+function calAddedMap() { return lsGet(CAL_ADDED_KEY, {}); }
+function calIsAdded(title, start) { return calAddedMap()[`${title}|${start}`] || null; }
+function markCalAdded(title, start, calendar) {
+  const m = calAddedMap();
+  m[`${title}|${start}`] = { calendar: calendar || '', at: Date.now() };
+  // Keep the memory bounded: drop entries older than two weeks.
+  for (const k of Object.keys(m)) if (Date.now() - (m[k].at || 0) > 14 * 86400000) delete m[k];
+  lsSet(CAL_ADDED_KEY, m);
+}
+function calAddBtnHtml(payload, label, cls) {
+  const added = calIsAdded(payload.title, payload.start);
+  if (added) return `<button class="${cls} added" disabled>✓ ${escapeHtml(added.calendar || 'Added')}</button>`;
+  return `<button class="${cls}" data-cal-add="${escapeHtml(JSON.stringify(payload))}">${escapeHtml(label)}</button>`;
+}
 function inboxSummaryCardHtml() {
   const head = `<div class="aisum-head"><span class="aisum-spark">✨</span><span class="aisum-title">Inbox summary</span>${_inboxSummaryState === 'done' ? '<button class="aisum-refresh" data-inbox-summary-refresh aria-label="Refresh">⟳</button>' : ''}</div>`;
   let inner;
@@ -3479,7 +3513,13 @@ function inboxSummaryCardHtml() {
         // taps through to a real .ics event (never a reminder).
         const taskHtml = tasks.map((t) => {
           const chip = summaryEventDateChip(taskWhen(t));
-          return `<div class="aisum-task"><span class="aisum-task-txt">${escapeHtml(t.text)}</span><a class="aisum-task-cal" href="${escapeHtml(taskIcsHref(t, h.subject))}">${escapeHtml(chip.mon)} ${escapeHtml(chip.day)} · Add</a></div>`;
+          const btn = calAddBtnHtml({
+            title: t.text, start: taskWhen(t), durationMins: Number(t.durationMins) || 30,
+            notes: h.subject ? `From email: ${h.subject}` : 'From Morning Dew inbox',
+            category: t.category || '',
+            ics: taskIcsHref(t, h.subject),
+          }, `${chip.mon} ${chip.day} · Add`, 'aisum-task-cal');
+          return `<div class="aisum-task"><span class="aisum-task-txt">${escapeHtml(t.text)}</span>${btn}</div>`;
         }).join('');
         parts.push(`<div class="aisum-hl">
           <div class="aisum-hl-top"><span class="aisum-hl-from">${escapeHtml(h.from || '')}</span></div>
@@ -3496,7 +3536,7 @@ function inboxSummaryCardHtml() {
         parts.push(`<div class="aisum-ev">
           <div class="aisum-ev-date"><div class="aisum-ev-mon">${escapeHtml(chip.mon)}</div><div class="aisum-ev-day">${escapeHtml(chip.day)}</div></div>
           <div class="aisum-ev-body"><div class="aisum-ev-title">${escapeHtml(ev.title || '')}</div>${meta ? `<div class="aisum-ev-meta">${escapeHtml(meta)}</div>` : ''}</div>
-          <a class="aisum-ev-add" href="${escapeHtml(icsHref(ev))}">+ Add</a>
+          ${calAddBtnHtml({ title: ev.title || 'Event', start: String(ev.date || '').slice(0, 16), durationMins: Number(ev.durationMins) || 60, notes: ev.notes || '', location: ev.location || '', category: ev.category || 'event', ics: icsHref(ev) }, '+ Add', 'aisum-ev-add')}
         </div>`);
       });
     }
@@ -3697,6 +3737,37 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-inbox-summary-refresh]')) { fetchInboxSummary(true); return; }
+  const calBtn = e.target.closest('[data-cal-add]');
+  if (calBtn) {
+    let p;
+    try { p = JSON.parse(calBtn.getAttribute('data-cal-add')); } catch { return; }
+    calBtn.disabled = true;
+    const orig = calBtn.innerHTML;
+    calBtn.innerHTML = 'Adding…';
+    (async () => {
+      try {
+        const res = await fetchWithTimeout(apiUrl('/api/calendar-add'), {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: p.title, start: p.start, durationMins: p.durationMins, notes: p.notes, location: p.location, category: p.category }),
+        }, 30000);
+        const data = await res.json();
+        if (data && data.ok) {
+          markCalAdded(p.title, p.start, data.calendar);
+          calBtn.classList.add('added');
+          calBtn.innerHTML = '✓ ' + escapeHtml(data.calendar || 'Added');
+          return;
+        }
+        throw new Error((data && data.error) || 'calendar add unavailable');
+      } catch {
+        // No direct iCloud write (not configured, offline, or rejected) — fall
+        // back to the native .ics add sheet so the tap still lands the event.
+        calBtn.disabled = false;
+        calBtn.innerHTML = orig;
+        if (p.ics) window.location.href = p.ics;
+      }
+    })();
+    return;
+  }
   if (e.target.closest('[data-debrief-refresh]')) { fetchBrief(true); return; }
   if (e.target.closest('[data-debrief-back]')) { if (debriefOpen) history.back(); return; }
   if (e.target.closest('[data-trends-back]')) { if (trendsOpen) history.back(); return; }
