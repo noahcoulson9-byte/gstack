@@ -2802,6 +2802,9 @@ function mailxDayLabel(iso) {
   const y = new Date(now);
   y.setDate(now.getDate() - 1);
   if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  const t = new Date(now);
+  t.setDate(now.getDate() + 1);
+  if (d.toDateString() === t.toDateString()) return 'Tomorrow';
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 // One white rounded email card: tag pill + unread dot, sender with avatar,
@@ -3095,15 +3098,25 @@ function briefAdherenceHtml() {
     <div class="brief-adherence-bar"><span style="width:${pct}%"></span></div>
   </div>`;
 }
-// Fallback slot for a brief item the AI didn't date: the next full hour today,
-// or tomorrow 09:00 once the evening is done.
+// Fallback slot for a brief item the AI didn't date. Times stay inside
+// realistic waking hours (the user wakes ~8am): overnight and early-morning
+// renders schedule for 9am, evenings roll to tomorrow morning, and each
+// consecutive undated item lands one hour after the previous one so a list of
+// actions spreads across the day instead of piling onto a single time.
+let _briefSlot = 0;
 function briefItemWhen(it) {
   const w = String((it && it.when) || '');
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(w)) return w.slice(0, 16);
   if (/^\d{4}-\d{2}-\d{2}$/.test(w)) return w + 'T09:00';
   const d = new Date();
-  if (d.getHours() >= 20) { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); }
-  else d.setHours(d.getHours() + 1, 0, 0, 0);
+  let day = 0;
+  let h = d.getHours() + 1;          // next full hour…
+  if (h < 9) h = 9;                  // …but never before the 8am wake-up settles
+  if (h > 21) { day = 1; h = 9; }    // evening done → tomorrow morning
+  h += _briefSlot++;
+  while (h > 21) { day += 1; h -= 13; if (h < 9) h = 9; } // spill into next morning
+  d.setDate(d.getDate() + day);
+  d.setHours(h, 0, 0, 0);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:00`;
 }
 function briefItemRowHtml(it) {
@@ -3111,7 +3124,9 @@ function briefItemRowHtml(it) {
   const text = item.text || '';
   const added = briefTaskExists(text);
   const when = briefItemWhen(item);
-  const cal = `<a class="brief-item-cal" href="${escapeHtml(icsHref({ title: text, date: when, durationMins: Number(item.durationMins) || 30, notes: 'From your Morning Dew daily brief' }))}" target="_blank" rel="noopener" aria-label="Add to calendar">${escapeHtml(fmtClock(when))} 📅</a>`;
+  const calDay = mailxDayLabel(when);
+  const calLabel = (calDay === 'Today' ? '' : calDay + ' ') + fmtClock(when);
+  const cal = `<a class="brief-item-cal" href="${escapeHtml(icsHref({ title: text, date: when, durationMins: Number(item.durationMins) || 30, notes: 'From your Morning Dew daily brief' }))}" aria-label="Add to calendar">${escapeHtml(calLabel)} 📅</a>`;
   return `<div class="brief-item-row"><button class="brief-item${added ? ' added' : ''}" data-brief-item="${escapeHtml(text)}" ${added ? 'disabled' : ''}>
     <span class="brief-item-ico">${added ? '✓' : '+'}</span><span class="brief-item-txt">${escapeHtml(text)}</span></button>${cal}</div>`;
 }
@@ -3210,6 +3225,7 @@ function debriefBodyHtml() {
   }
   const b = overview.brief;
   let todayBrief = '';
+  _briefSlot = 0; // fallback item times restart their stagger each render
   if (overview.briefStructured && typeof b === 'object' && Array.isArray(b.sections)) {
     todayBrief = `<section class="glass insight-card brief-card">
         <div class="brief-h" style="margin-top:0">${escapeHtml(b.headline || '')}</div>
@@ -3463,7 +3479,7 @@ function inboxSummaryCardHtml() {
         // taps through to a real .ics event (never a reminder).
         const taskHtml = tasks.map((t) => {
           const chip = summaryEventDateChip(taskWhen(t));
-          return `<div class="aisum-task"><span class="aisum-task-txt">${escapeHtml(t.text)}</span><a class="aisum-task-cal" href="${escapeHtml(taskIcsHref(t, h.subject))}" target="_blank" rel="noopener">${escapeHtml(chip.mon)} ${escapeHtml(chip.day)} · Add</a></div>`;
+          return `<div class="aisum-task"><span class="aisum-task-txt">${escapeHtml(t.text)}</span><a class="aisum-task-cal" href="${escapeHtml(taskIcsHref(t, h.subject))}">${escapeHtml(chip.mon)} ${escapeHtml(chip.day)} · Add</a></div>`;
         }).join('');
         parts.push(`<div class="aisum-hl">
           <div class="aisum-hl-top"><span class="aisum-hl-from">${escapeHtml(h.from || '')}</span></div>
@@ -3480,7 +3496,7 @@ function inboxSummaryCardHtml() {
         parts.push(`<div class="aisum-ev">
           <div class="aisum-ev-date"><div class="aisum-ev-mon">${escapeHtml(chip.mon)}</div><div class="aisum-ev-day">${escapeHtml(chip.day)}</div></div>
           <div class="aisum-ev-body"><div class="aisum-ev-title">${escapeHtml(ev.title || '')}</div>${meta ? `<div class="aisum-ev-meta">${escapeHtml(meta)}</div>` : ''}</div>
-          <a class="aisum-ev-add" href="${escapeHtml(icsHref(ev))}" target="_blank" rel="noopener">+ Add</a>
+          <a class="aisum-ev-add" href="${escapeHtml(icsHref(ev))}">+ Add</a>
         </div>`);
       });
     }
