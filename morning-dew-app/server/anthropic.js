@@ -56,8 +56,8 @@ this exact shape:
   "opener": "2-3 sentences reading the day out loud: their energy (from recovery), the weather, and how full the calendar is",
   "sections": [
     { "key": "recovery", "title": "Recovery", "summary": "1-2 sentence takeaway", "detail": "the full reasoning, markdown-lite (- bullets, **bold**), no headers" },
-    { "key": "plan", "title": "Plan", "summary": "...", "detail": "...", "items": [{ "text": "one atomic checkable action, imperative, <= 8 words", "kind": "task" }] },
-    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "...", "items": [{ "text": "...", "kind": "task" }] },
+    { "key": "plan", "title": "Plan", "summary": "...", "detail": "...", "items": [{ "text": "one atomic checkable action, imperative, <= 8 words", "kind": "task", "when": "YYYY-MM-DDTHH:MM (local, 24h) — the concrete time to do it", "durationMins": 30 }] },
+    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "...", "items": [{ "text": "...", "kind": "task", "when": "YYYY-MM-DDTHH:MM", "durationMins": 30 }] },
     { "key": "inbox", "title": "Inbox", "summary": "...", "detail": "..." },
     { "key": "headsup", "title": "Heads-up", "summary": "...", "detail": "..." }
   ],
@@ -73,6 +73,12 @@ Section rules:
   caffeine by 1pm"). Each is imperative, specific, and self-contained; pull them
   straight from that section's real advice. Omit the "items" key when a section
   has nothing genuinely actionable (never invent filler tasks). "kind" is "task".
+  Every item also gets added to the user's CALENDAR with one tap, so "when" is
+  REQUIRED on each item: a concrete local datetime slotted into the day's REAL
+  free gaps (you're given the events and the gaps between them — never overlap
+  an existing event, never schedule in the past relative to the given local
+  time; if the day is over, use tomorrow morning). "durationMins" is your honest
+  estimate (a walk 30-45, deep work 60-90, a quick reply 15).
 - "inbox" is ONLY included when there is urgent email worth flagging; omit the
   object entirely from the array otherwise (don't include an empty one).
 - "headsup" is ONLY included when there's a genuinely notable weather/logistics
