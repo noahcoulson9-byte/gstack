@@ -56,8 +56,8 @@ this exact shape:
   "opener": "2-3 sentences reading the day out loud: their energy (from recovery), the weather, and how full the calendar is",
   "sections": [
     { "key": "recovery", "title": "Recovery", "summary": "1-2 sentence takeaway", "detail": "the full reasoning, markdown-lite (- bullets, **bold**), no headers" },
-    { "key": "plan", "title": "Plan", "summary": "...", "detail": "...", "items": [{ "text": "one atomic checkable action, imperative, <= 8 words", "kind": "task", "when": "YYYY-MM-DDTHH:MM (local, 24h) — the concrete time to do it", "durationMins": 30 }] },
-    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "...", "items": [{ "text": "...", "kind": "task", "when": "YYYY-MM-DDTHH:MM", "durationMins": 30 }] },
+    { "key": "plan", "title": "Plan", "summary": "...", "detail": "...", "items": [{ "text": "one atomic checkable action, imperative, <= 8 words", "kind": "task", "when": "YYYY-MM-DDTHH:MM (local, 24h) — the concrete time to do it", "durationMins": 30, "category": "fitness|health|chores|errands|work|study|social|finance|other" }] },
+    { "key": "priorities", "title": "Priorities", "summary": "...", "detail": "...", "items": [{ "text": "...", "kind": "task", "when": "YYYY-MM-DDTHH:MM", "durationMins": 30, "category": "..." }] },
     { "key": "inbox", "title": "Inbox", "summary": "...", "detail": "..." },
     { "key": "headsup", "title": "Heads-up", "summary": "...", "detail": "..." }
   ],
@@ -83,8 +83,16 @@ Section rules:
   onward instead. Give each item its OWN distinct time (no two items at the
   same time): demanding/deep work in the morning energy window, quick replies
   and errands in small gaps, exercise where the recovery advice puts it.
-  "durationMins" is your honest estimate (a walk 30-45, deep work 60-90, a
-  quick reply 15).
+  "durationMins" is your honest estimate of how long the activity actually
+  takes (a walk 30-60, deep work 60-90, a quick reply 15) — the calendar event
+  spans exactly that long. When an action is anchored to a deadline ("walk
+  before 9am", "submit by 5pm"), set "when" to the anchor MINUS the duration
+  so the event ENDS at the anchor: a 60-minute walk before 9am is when 08:00
+  with durationMins 60 (an 8-9am event).
+  "category" tags each item so it lands in the right calendar: "fitness"
+  (walks, workouts, training), "health" (appointments, recovery), "chores"
+  (dishes, cleaning, housework), "errands", "work", "study" (uni,
+  assignments), "social", "finance", or "other".
 - "inbox" is ONLY included when there is urgent email worth flagging; omit the
   object entirely from the array otherwise (don't include an empty one).
 - "headsup" is ONLY included when there's a genuinely notable weather/logistics
@@ -268,7 +276,8 @@ OUTPUT — respond with ONLY a single \`\`\`json fenced block, one JSON object, 
         {
           "text": "concrete action the user must take, imperative, <= 10 words",
           "when": "YYYY-MM-DD or YYYY-MM-DDTHH:MM (local, 24h) — the best date/time to DO this task. ALWAYS present, never empty.",
-          "durationMins": 30
+          "durationMins": 30,
+          "category": "fitness|health|chores|errands|work|study|social|finance|other"
         }
       ]
     }
@@ -297,8 +306,12 @@ RULES:
   one — the next weekday morning for routine actions, sooner for anything urgent.
   Never pick a date in the past, and never a time between 22:00 and 08:30 — the
   user wakes around 8am, so tasks live in realistic waking hours. Give each task
-  its own distinct time. Prefer YYYY-MM-DDTHH:MM; "durationMins" is your estimate
-  of the time the task needs (default 30).
+  its own distinct time. Prefer YYYY-MM-DDTHH:MM; "durationMins" is your honest
+  estimate of how long the task actually takes — the calendar event spans
+  exactly that long, and a deadline-anchored task is scheduled to END at the
+  deadline (due 5pm + 90 minutes of work = when 15:30). "category" tags the task
+  for calendar routing: "fitness", "health", "chores", "errands", "work",
+  "study" (uni/assignments), "social", "finance", or "other".
 - "events" are only for things with a real date/deadline (assignment due dates,
   meetings, enrolment deadlines, appointments). Resolve relative dates against the
   provided current date. Never invent a date you can't find. Assignment/enrolment
@@ -349,8 +362,8 @@ async function summarizeInbox(emails, nowIso) {
       why: typeof (h && h.why) === 'string' ? h.why : '',
       tasks: (Array.isArray(h && h.tasks) ? h.tasks : [])
         .map((t) => (typeof t === 'string'
-          ? { text: t, when: '', durationMins: 30 }
-          : { text: String((t && t.text) || ''), when: typeof (t && t.when) === 'string' ? t.when : '', durationMins: Number(t && t.durationMins) || 30 }))
+          ? { text: t, when: '', durationMins: 30, category: '' }
+          : { text: String((t && t.text) || ''), when: typeof (t && t.when) === 'string' ? t.when : '', durationMins: Number(t && t.durationMins) || 30, category: typeof (t && t.category) === 'string' ? t.category : '' }))
         .filter((t) => t.text),
     }));
     return {
