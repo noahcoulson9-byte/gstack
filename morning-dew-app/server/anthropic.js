@@ -77,8 +77,14 @@ Section rules:
   REQUIRED on each item: a concrete local datetime slotted into the day's REAL
   free gaps (you're given the events and the gaps between them — never overlap
   an existing event, never schedule in the past relative to the given local
-  time; if the day is over, use tomorrow morning). "durationMins" is your honest
-  estimate (a walk 30-45, deep work 60-90, a quick reply 15).
+  time). Times must be REALISTIC for a human day: the user wakes around 8am,
+  so never schedule anything between 22:00 and 08:30 — if the current local
+  time is overnight or the evening is done, slot items into TOMORROW morning
+  onward instead. Give each item its OWN distinct time (no two items at the
+  same time): demanding/deep work in the morning energy window, quick replies
+  and errands in small gaps, exercise where the recovery advice puts it.
+  "durationMins" is your honest estimate (a walk 30-45, deep work 60-90, a
+  quick reply 15).
 - "inbox" is ONLY included when there is urgent email worth flagging; omit the
   object entirely from the array otherwise (don't include an empty one).
 - "headsup" is ONLY included when there's a genuinely notable weather/logistics
@@ -289,8 +295,10 @@ RULES:
   task sensibly against it (a day or two BEFORE a deadline, at a working hour like
   09:00 or 14:00, never after it); if the email gives no date, YOU choose the best
   one — the next weekday morning for routine actions, sooner for anything urgent.
-  Never pick a date in the past. Prefer YYYY-MM-DDTHH:MM with a sensible working
-  hour; "durationMins" is your estimate of the time the task needs (default 30).
+  Never pick a date in the past, and never a time between 22:00 and 08:30 — the
+  user wakes around 8am, so tasks live in realistic waking hours. Give each task
+  its own distinct time. Prefer YYYY-MM-DDTHH:MM; "durationMins" is your estimate
+  of the time the task needs (default 30).
 - "events" are only for things with a real date/deadline (assignment due dates,
   meetings, enrolment deadlines, appointments). Resolve relative dates against the
   provided current date. Never invent a date you can't find. Assignment/enrolment
