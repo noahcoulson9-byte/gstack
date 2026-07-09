@@ -252,7 +252,13 @@ OUTPUT — respond with ONLY a single \`\`\`json fenced block, one JSON object, 
       "from": "sender name",
       "subject": "the email subject",
       "why": "one short line on why this matters",
-      "tasks": ["concrete action the user must take, imperative, <= 10 words", "..."]
+      "tasks": [
+        {
+          "text": "concrete action the user must take, imperative, <= 10 words",
+          "when": "YYYY-MM-DD or YYYY-MM-DDTHH:MM (local, 24h) — the best date/time to DO this task. ALWAYS present, never empty.",
+          "durationMins": 30
+        }
+      ]
     }
   ],
   "events": [
@@ -272,7 +278,13 @@ RULES:
   actions, money, results, appointments). Skip newsletters, promos, receipts with
   no action. If none matter, return an empty highlights array and say so in overview.
 - "tasks" are things the USER must DO. If an email is purely informational, give it
-  an empty tasks array.
+  an empty tasks array. Every task gets added to the user's CALENDAR as an event, so
+  "when" is REQUIRED on every task: if the email states a date/deadline, schedule the
+  task sensibly against it (a day or two BEFORE a deadline, at a working hour like
+  09:00 or 14:00, never after it); if the email gives no date, YOU choose the best
+  one — the next weekday morning for routine actions, sooner for anything urgent.
+  Never pick a date in the past. Prefer YYYY-MM-DDTHH:MM with a sensible working
+  hour; "durationMins" is your estimate of the time the task needs (default 30).
 - "events" are only for things with a real date/deadline (assignment due dates,
   meetings, enrolment deadlines, appointments). Resolve relative dates against the
   provided current date. Never invent a date you can't find. Assignment/enrolment
@@ -314,12 +326,24 @@ async function summarizeInbox(emails, nowIso) {
     const data = await res.json();
     const raw = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
     const parsed = extractJson(raw);
-    // Normalize so the client can trust the shape.
+    // Normalize so the client can trust the shape. Tasks are objects
+    // ({text, when, durationMins}) — coerce legacy plain-string tasks too so an
+    // older cached model response can't break the calendar-add buttons.
+    const highlights = (Array.isArray(parsed.highlights) ? parsed.highlights : []).map((h) => ({
+      from: typeof (h && h.from) === 'string' ? h.from : '',
+      subject: typeof (h && h.subject) === 'string' ? h.subject : '',
+      why: typeof (h && h.why) === 'string' ? h.why : '',
+      tasks: (Array.isArray(h && h.tasks) ? h.tasks : [])
+        .map((t) => (typeof t === 'string'
+          ? { text: t, when: '', durationMins: 30 }
+          : { text: String((t && t.text) || ''), when: typeof (t && t.when) === 'string' ? t.when : '', durationMins: Number(t && t.durationMins) || 30 }))
+        .filter((t) => t.text),
+    }));
     return {
       configured: true,
       summary: {
         overview: typeof parsed.overview === 'string' ? parsed.overview : '',
-        highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
+        highlights,
         events: Array.isArray(parsed.events) ? parsed.events : [],
       },
     };
