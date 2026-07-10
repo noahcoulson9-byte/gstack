@@ -1299,7 +1299,7 @@
   .nd-hero {
     background: linear-gradient(130deg, rgba(28,52,170,0.40) 0%, rgba(82,22,140,0.28) 55%, rgba(130,28,78,0.16) 100%);
     border: 1px solid rgba(255,255,255,0.20); border-radius: 24px;
-    padding: 1.1rem 1.15rem; min-height: 8rem; position: relative; z-index: 1; overflow: hidden;
+    padding: 1.15rem 1.15rem; min-height: 10.5rem; position: relative; z-index: 1; overflow: hidden;
     backdrop-filter: blur(28px) saturate(170%);
     -webkit-backdrop-filter: blur(28px) saturate(170%);
     box-shadow: 0 12px 32px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.32);
@@ -1399,56 +1399,55 @@
   .nd-cal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; margin-top: 0.3rem; }
   .nd-cal-empty { font-size: 0.78rem; color: var(--muted); margin-top: 0.55rem; }
 
-  /* ---- Home weather card: Apple-Weather-widget look. Sky-tinted glass,
-     thin oversized temperature, hierarchical secondary text. ---- */
-  .ndw {
+  /* ---- Home weather: iOS medium Weather-widget replica. Slate-blue glass,
+     location + big thin temp left, glyph/condition/L-H right, and a scrollable
+     next-24h strip below with rain chance under every hour and sunrise/sunset
+     markers inline at their real minute. Short and full-width so the debrief
+     gets the vertical room. ---- */
+  .wx2 {
     position: relative; overflow: hidden; cursor: pointer;
-    display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
-    padding: 0.85rem 0.9rem;
+    padding: 0.8rem 0.95rem 0.7rem;
     border-radius: 24px;
-    background: linear-gradient(165deg, rgba(52,112,216,0.62) 0%, rgba(38,80,168,0.48) 55%, rgba(30,56,120,0.40) 100%);
+    background: linear-gradient(170deg, rgba(109,122,150,0.72) 0%, rgba(84,95,122,0.62) 55%, rgba(70,79,104,0.58) 100%);
     backdrop-filter: blur(28px) saturate(170%);
     -webkit-backdrop-filter: blur(28px) saturate(170%);
     border: 1px solid rgba(255,255,255,0.22);
     box-shadow: 0 12px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
   }
-  .theme-night .ndw, .theme-dusk .ndw {
-    background: linear-gradient(165deg, rgba(44,58,114,0.62) 0%, rgba(28,36,78,0.5) 55%, rgba(18,22,52,0.45) 100%);
+  .theme-night .wx2, .theme-dusk .wx2 {
+    background: linear-gradient(170deg, rgba(74,84,110,0.70) 0%, rgba(56,64,88,0.62) 55%, rgba(44,50,72,0.58) 100%);
   }
-  .ndw-loading { font-size: 0.78rem; color: rgba(255,255,255,0.75); padding: 0.3rem 0.1rem; }
-  .ndw-loc {
-    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.01em;
-    color: rgba(255,255,255,0.82);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  .wx2-loading { font-size: 0.78rem; color: rgba(255,255,255,0.75); padding: 0.3rem 0.1rem; }
+  .wx2-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
+  .wx2-loc {
+    font-size: 0.82rem; font-weight: 700; color: #fff; letter-spacing: -0.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12rem;
   }
-  .ndw-now { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.3rem; margin-top: 0.05rem; }
-  .ndw-temp { font-size: 2.7rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; color: #fff; }
-  .ndw-glyph svg { width: 42px; height: 32px; margin-top: 0.15rem; }
-  .ndw-cond { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.92); margin-top: 0.15rem; }
-  .ndw-hl { font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 0.1rem; font-variant-numeric: tabular-nums; }
-  .ndw-grid {
-    display: flex; flex-direction: column; gap: 0.32rem;
-    margin-top: 0.6rem; padding-top: 0.55rem;
-    border-top: 1px solid rgba(255,255,255,0.16);
+  .wx2-loc-arrow { font-size: 0.6rem; opacity: 0.9; }
+  .wx2-temp { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.045em; line-height: 1.02; color: #fff; margin-top: 0.05rem; }
+  .wx2-right { text-align: right; flex-shrink: 0; }
+  .wx2-glyph svg { width: 34px; height: 26px; }
+  .wx2-cond { font-size: 0.8rem; font-weight: 600; color: #fff; margin-top: -0.1rem; }
+  .wx2-hl { font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-top: 0.1rem; font-variant-numeric: tabular-nums; }
+  .wx2-hours {
+    display: flex; gap: 0.15rem; margin-top: 0.55rem;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; -ms-overflow-style: none;
+    mask-image: linear-gradient(90deg, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
   }
-  .ndw-m { display: flex; align-items: center; gap: 0.35rem; min-width: 0; }
-  .ndw-m-ico { font-size: 0.7rem; flex-shrink: 0; width: 1rem; text-align: center; }
-  .ndw-m-lbl { font-size: 0.7rem; color: rgba(255,255,255,0.62); }
-  .ndw-m-val { font-size: 0.72rem; font-weight: 700; color: #fff; margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .ndw-sun {
-    display: flex; justify-content: space-between; gap: 0.5rem;
-    font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.72);
-    margin-top: 0.45rem; font-variant-numeric: tabular-nums;
+  .wx2-hours::-webkit-scrollbar { display: none; }
+  .wx2-h {
+    flex: 0 0 auto; width: 3.05rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.06rem;
   }
-  .ndw-sep { height: 1px; background: rgba(255,255,255,0.16); margin: 0.55rem -0.2rem 0.5rem; }
-  .ndw-tmw { display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; }
-  .ndw-tmw-l { display: flex; align-items: center; gap: 0.35rem; min-width: 0; flex: 1 1 auto; }
-  .ndw-tmw-glyph svg { width: 30px; height: 23px; display: block; }
-  .ndw-tmw-title { font-size: 0.74rem; font-weight: 700; color: #fff; }
-  .ndw-tmw-cond { font-size: 0.66rem; color: rgba(255,255,255,0.66); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ndw-tmw-hl { flex-shrink: 0; font-variant-numeric: tabular-nums; }
-  .ndw-tmw-hl b { font-size: 0.82rem; font-weight: 700; color: #fff; }
-  .ndw-tmw-hl span { font-size: 0.76rem; color: rgba(255,255,255,0.55); margin-left: 0.35rem; }
+  .wx2-h-time { font-size: 0.66rem; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; }
+  .wx2-h:first-child .wx2-h-time { color: #fff; }
+  .wx2-h-glyph svg { width: 27px; height: 20px; display: block; }
+  .wx2-h-rain { font-size: 0.6rem; font-weight: 700; color: #8ed0ff; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .wx2-h-rain.nil { color: rgba(255,255,255,0.35); }
+  .wx2-h-temp { font-size: 0.78rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wx2-h.marker .wx2-h-temp { font-size: 0.62rem; font-weight: 700; color: #f7c044; }
 
   .nd-glass-wrap { position: relative; }
   .nd-glass-glow { position: absolute; inset: -6px; border-radius: 28px; background: radial-gradient(60% 120% at 20% 0%, rgba(255,178,46,0.4), transparent 60%), radial-gradient(60% 120% at 90% 100%, rgba(91,157,249,0.4), transparent 60%); filter: blur(26px); opacity: 0.5; pointer-events: none; }
@@ -1689,16 +1688,15 @@
     </section>
   </div>
 
+  <section class="wx2" data-detail="weather" id="wxHomeCard">
+    <div class="wx2-loading">Loading forecast…</div>
+  </section>
+
   <div class="nd-split">
     <div class="nd-split-col" id="scheduleCol">
       <section class="nd-cal" data-detail="schedule" id="scheduleCard">
         <div class="nd-cal-top"><b>Schedule</b><span id="scheduleCardCount"></span></div>
         <div class="nd-cal-body" id="scheduleCardBody"><div class="nd-cal-empty">Loading…</div></div>
-      </section>
-    </div>
-    <div class="nd-split-col" id="wxCol">
-      <section class="ndw" data-detail="weather" id="wxHomeCard">
-        <div class="ndw-loading">Loading forecast…</div>
       </section>
     </div>
   </div>
@@ -3877,59 +3875,98 @@ function wxGlyph(code, isDay) {
   return w(cloud);
 }
 
-// Detailed today + tomorrow weather card on the Home grid (Apple-Weather
-// style): big current temp with condition and H/L, a conditions grid (feels
-// like, rain, UV, wind), sunrise/sunset, then tomorrow's outlook. Tapping
-// opens the full forecast detail.
+// Sunrise/sunset glyphs for the inline hourly markers (sun over horizon with
+// an up/down arrow, like the iOS Weather widget).
+function wxSunGlyph(rise) {
+  const arrow = rise
+    ? '<path d="M24 3v7M20.5 6.5 24 3l3.5 3.5" stroke="#f7c044" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+    : '<path d="M24 10V3M20.5 6.5 24 10l3.5-3.5" stroke="#f7c044" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+  return `<svg viewBox="0 0 48 36">${arrow}
+    <path d="M14 26a10 10 0 0 1 20 0z" fill="#f7c044"/>
+    <line x1="6" y1="28" x2="42" y2="28" stroke="#f7c044" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`;
+}
+// "7pm" / "7:46pm" time labels in the widget's compact voice.
+function wxHourLabel(d) {
+  const h = d.getHours() % 12 || 12;
+  return `${h}${d.getHours() < 12 ? 'am' : 'pm'}`;
+}
+function wxMinuteLabel(d) {
+  const h = d.getHours() % 12 || 12;
+  return `${h}:${String(d.getMinutes()).padStart(2, '0')}${d.getHours() < 12 ? 'am' : 'pm'}`;
+}
+
+// Home weather: an exact take on the iOS medium Weather widget. Left: location
+// + big thin current temp. Right: condition glyph, label, L/H. Below: the next
+// 24 hours as a scrollable strip — every hour carries its rain chance — with
+// sunrise/sunset markers inline at their real times. Tap opens the full
+// forecast detail.
 function renderHomeWeather() {
   const el = document.getElementById('wxHomeCard');
   if (!el) return;
-  if (overview.weatherReached === false) { el.innerHTML = `<div class="ndw-loading">Weather unreachable — tap to retry</div>`; return; }
+  if (overview.weatherReached === false) { el.innerHTML = `<div class="wx2-loading">Weather unreachable — tap to retry</div>`; return; }
   const raw = overview.weatherRaw;
-  if (!raw) { el.innerHTML = `<div class="ndw-loading">Loading forecast…</div>`; return; }
+  if (!raw) { el.innerHTML = `<div class="wx2-loading">Loading forecast…</div>`; return; }
   const cur = raw.current;
+  const hourly = raw.hourly || {};
   const daily = raw.daily || {};
   const [label] = describeWeather(cur.weather_code);
   const hi = daily.temperature_2m_max ? Math.round(daily.temperature_2m_max[0]) : null;
   const lo = daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : null;
-  const rain = daily.precipitation_probability_max ? Math.round(daily.precipitation_probability_max[0] ?? 0) : Math.round(cur.precipitation_probability ?? 0);
-  const uv = daily.uv_index_max ? Math.round(daily.uv_index_max[0] ?? 0) : Math.round(cur.uv_index ?? 0);
-  const wind = Math.round(cur.wind_speed_10m ?? 0);
-  const sunrise = daily.sunrise ? fmtClock(daily.sunrise[0]) : '';
-  const sunset = daily.sunset ? fmtClock(daily.sunset[0]) : '';
 
-  // Tomorrow (index 1 of the daily arrays)
-  let tmw = '';
-  if (daily.weather_code && daily.weather_code.length > 1) {
-    const [tLabel] = describeWeather(daily.weather_code[1]);
-    const tHi = Math.round(daily.temperature_2m_max[1]);
-    const tLo = Math.round(daily.temperature_2m_min[1]);
-    const tRain = Math.round(daily.precipitation_probability_max[1] ?? 0);
-    tmw = `<div class="ndw-sep"></div>
-      <div class="ndw-tmw">
-        <div class="ndw-tmw-l"><span class="ndw-tmw-glyph">${wxGlyph(daily.weather_code[1], true)}</span>
-          <div><div class="ndw-tmw-title">Tomorrow</div><div class="ndw-tmw-cond">${escapeHtml(tLabel)}${tRain >= 20 ? ` · ${tRain}%` : ''}</div></div></div>
-        <div class="ndw-tmw-hl"><b>${fmtTemp(tHi)}</b><span>${fmtTemp(tLo)}</span></div>
-      </div>`;
+  // Hourly entries: from this hour, 24 hours forward.
+  const entries = [];
+  const now = Date.now();
+  if (hourly.time) {
+    for (let i = 0; i < hourly.time.length && entries.length < 24; i++) {
+      const t = new Date(hourly.time[i]);
+      if (t.getTime() < now - 3600000) continue;
+      const isDayHour = daily.sunrise && daily.sunset
+        ? (() => { const dayIdx = Math.max(0, Math.floor((t - new Date(daily.sunrise[0])) / 86400000)); const sr = new Date(daily.sunrise[Math.min(dayIdx, daily.sunrise.length - 1)]); const ss = new Date(daily.sunset[Math.min(dayIdx, daily.sunset.length - 1)]); return t >= sr && t < ss; })()
+        : (t.getHours() >= 6 && t.getHours() < 18);
+      entries.push({
+        at: t.getTime(),
+        time: entries.length === 0 ? 'Now' : wxHourLabel(t),
+        glyph: wxGlyph(hourly.weather_code[i], isDayHour),
+        rain: Math.round(hourly.precipitation_probability[i] ?? 0),
+        temp: fmtTemp(hourly.temperature_2m[i]),
+      });
+    }
+  }
+  // Sunrise/sunset markers inline at their true minute (today + tomorrow).
+  if (entries.length && daily.sunrise && daily.sunset) {
+    const windowEnd = entries[entries.length - 1].at + 3600000;
+    for (let d = 0; d < Math.min(2, daily.sunrise.length); d++) {
+      for (const [iso, rise] of [[daily.sunrise[d], true], [daily.sunset[d], false]]) {
+        const t = new Date(iso).getTime();
+        if (t <= now || t >= windowEnd) continue;
+        entries.push({ at: t, time: wxMinuteLabel(new Date(iso)), glyph: wxSunGlyph(rise), rain: null, temp: rise ? 'Sunrise' : 'Sunset', marker: true });
+      }
+    }
+    entries.sort((a, b) => a.at - b.at);
   }
 
-  const row = (ico, lbl, val) => `<div class="ndw-m"><span class="ndw-m-ico">${ico}</span><span class="ndw-m-lbl">${lbl}</span><span class="ndw-m-val">${val}</span></div>`;
+  const hoursHtml = entries.map((e) => `
+    <div class="wx2-h${e.marker ? ' marker' : ''}">
+      <span class="wx2-h-time">${escapeHtml(e.time)}</span>
+      <span class="wx2-h-glyph">${e.glyph}</span>
+      <span class="wx2-h-rain${e.rain ? '' : ' nil'}">${e.rain === null ? '&nbsp;' : e.rain + '%'}</span>
+      <span class="wx2-h-temp">${escapeHtml(e.temp)}</span>
+    </div>`).join('');
+
   el.innerHTML = `
-    <div class="ndw-loc">${escapeHtml((overview.locationLabel || 'Weather').replace(' (location unavailable)', ''))}</div>
-    <div class="ndw-now">
-      <span class="ndw-temp">${fmtTemp(cur.temperature_2m)}</span>
-      <span class="ndw-glyph">${wxGlyph(cur.weather_code, cur.is_day !== 0)}</span>
+    <div class="wx2-top">
+      <div class="wx2-left">
+        <div class="wx2-loc">${escapeHtml((overview.locationLabel || 'Weather').replace(' (location unavailable)', ''))} <span class="wx2-loc-arrow">➤</span></div>
+        <div class="wx2-temp">${fmtTemp(cur.temperature_2m)}</div>
+      </div>
+      <div class="wx2-right">
+        <span class="wx2-glyph">${wxGlyph(cur.weather_code, cur.is_day !== 0)}</span>
+        <div class="wx2-cond">${escapeHtml(label)}</div>
+        ${hi != null ? `<div class="wx2-hl">L:${fmtTemp(lo)} H:${fmtTemp(hi)}</div>` : ''}
+      </div>
     </div>
-    <div class="ndw-cond">${escapeHtml(label)}</div>
-    ${hi != null ? `<div class="ndw-hl">H:${fmtTemp(hi)}&nbsp;&nbsp;L:${fmtTemp(lo)}</div>` : ''}
-    <div class="ndw-grid">
-      ${row('🌡', 'Feels', fmtTemp(cur.apparent_temperature))}
-      ${row('💧', 'Rain', `${rain}%`)}
-      ${row('☀️', 'UV', String(uv))}
-      ${row('💨', 'Wind', `${wind} km/h`)}
-    </div>
-    ${sunrise ? `<div class="ndw-sun"><span>☀︎ ${escapeHtml(sunrise)}</span><span>☾ ${escapeHtml(sunset)}</span></div>` : ''}
-    ${tmw}`;
+    <div class="wx2-hours">${hoursHtml || `<div class="wx2-loading">Hourly forecast unavailable</div>`}</div>`;
 }
 
 // Scrolls the home schedule panel to the current-time line once per page
@@ -4746,9 +4783,9 @@ function parseHomeCoords(str) {
 function applyWidgetVisibility() {
   const w = getSettings().widgets;
   const sc = document.getElementById('scheduleCol');
-  // The right home column is the weather card now; it reuses the old "inbox"
-  // settings key so an existing hide/show preference keeps applying.
-  const wx = document.getElementById('wxCol');
+  // The weather widget reuses the old "inbox" settings key so an existing
+  // hide/show preference keeps applying to the same home slot.
+  const wx = document.getElementById('wxHomeCard');
   if (sc) sc.hidden = !w.schedule;
   if (wx) wx.hidden = !w.inbox;
 }
