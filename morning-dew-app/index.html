@@ -1299,7 +1299,10 @@
   .nd-hero {
     background: linear-gradient(130deg, rgba(28,52,170,0.40) 0%, rgba(82,22,140,0.28) 55%, rgba(130,28,78,0.16) 100%);
     border: 1px solid rgba(255,255,255,0.20); border-radius: 24px;
-    padding: 1.15rem 1.15rem; min-height: 10.5rem; position: relative; z-index: 1; overflow: hidden;
+    padding: 1.05rem 1.15rem 0.9rem; position: relative; z-index: 1; overflow: hidden;
+    /* FIXED height: the debrief box never grows or shrinks with its content —
+       loading, error, and ready states all fill the identical shell. */
+    height: 23.5rem; display: flex; flex-direction: column;
     backdrop-filter: blur(28px) saturate(170%);
     -webkit-backdrop-filter: blur(28px) saturate(170%);
     box-shadow: 0 12px 32px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.32);
@@ -1308,14 +1311,24 @@
   .nd-hero-headline { font-size: 1.3rem; font-weight: 800; line-height: 1.16; letter-spacing: -0.01em; margin-top: 0.35rem; }
   .nd-hero-preview { font-size: 0.88rem; color: var(--muted); line-height: 1.35; margin-top: 0.35rem; }
   .nd-hero-cta { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.55rem; font-size: 0.88rem; font-weight: 700; color: var(--home-accent); cursor: pointer; }
-  .nd-hero-plan { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--text); }
-  .nd-hero-plan-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: rgba(255,178,46,0.5); box-shadow: 0 0 0 3px rgba(255,178,46,0.12); }
-  .nd-hero-plan-dot.full { background: var(--accent); box-shadow: 0 0 0 3px rgba(255,178,46,0.22); }
-  .nd-hero { cursor: pointer; }
-  .nd-hero-glance { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem 0.7rem; margin-top: 0.65rem; }
-  .nd-glance-item { display: flex; flex-direction: column; gap: 0.1rem; }
-  .nd-glance-val { font-size: 1.1rem; font-weight: 800; line-height: 1.1; }
-  .nd-glance-lbl { font-size: 0.67rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .h2-headline { font-size: 1.15rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-shrink: 0; }
+  .h2-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .h2-sec { margin-top: 0.5rem; }
+  .h2-lbl { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 0.18rem; }
+  .h2-txt { font-size: 0.84rem; line-height: 1.4; color: rgba(255,255,255,0.94); }
+  .h2-txt.dim { color: rgba(255,255,255,0.55); }
+  .h2-sug { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
+  .h2-sug:first-of-type { margin-top: 0; }
+  .h2-sug-txt { flex: 1 1 auto; min-width: 0; font-size: 0.84rem; line-height: 1.3; color: rgba(255,255,255,0.94); }
+  .h2-sug-cal {
+    flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.25rem;
+    background: rgba(61,123,255,0.2); border: 1px solid rgba(120,165,255,0.5);
+    color: #cfe0ff; font-family: inherit; font-size: 0.7rem; font-weight: 800; white-space: nowrap;
+    padding: 0.28rem 0.6rem; border-radius: 999px; cursor: pointer;
+  }
+  .h2-sug-cal:active { background: rgba(61,123,255,0.34); }
+  .h2-sug-cal.added { background: rgba(52,224,196,0.16); border-color: rgba(52,224,196,0.5); color: var(--ok); cursor: default; }
+  .h2-foot { flex-shrink: 0; display: flex; align-items: center; gap: 1.1rem; margin-top: 0.6rem; }
 
   .debrief-day-hdr { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--home-accent); margin: 1rem 0 0.35rem; padding: 0 0.25rem; }
   .db-ev-row { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.42rem 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
@@ -1683,8 +1696,8 @@
   <div class="nd-hero-wrap">
     <div class="nd-hero-glow"></div>
     <section class="nd-hero" id="overviewCard" data-detail="brief">
-      <div class="nd-hero-label">Today at a glance</div>
-      <div class="nd-hero-preview">Building your overview…</div>
+      <div class="nd-hero-label">AI Debrief</div>
+      <div class="nd-hero-preview">Getting your day ready…</div>
     </section>
   </div>
 
@@ -1858,14 +1871,6 @@ function briefTasksForDate(dateStr) {
   const d = dateStr || localDateStr(new Date());
   return loadTasks().filter((t) => t.source === 'brief' && (t.due || '') === d);
 }
-// Compact "N of M plan items done" chip for the home hero — only when the user
-// has actually added brief items to today's checklist.
-function heroPlanProgressHtml() {
-  const items = briefTasksForDate();
-  if (!items.length) return '';
-  const done = items.filter((t) => t.done).length;
-  return `<div class="nd-hero-plan"><span class="nd-hero-plan-dot${done === items.length ? ' full' : ''}"></span>${done} of ${items.length} plan items done</div>`;
-}
 function mutateTask(id, fn) { const t = loadTasks(); const x = t.find((i) => i.id === id); if (x) fn(x, t); saveTasks(t); }
 function toggleTask(id) { mutateTask(id, (x) => { x.done = !x.done; x.doneAt = x.done ? Date.now() : null; }); }
 function snoozeTask(id) {
@@ -1943,57 +1948,6 @@ function findFreeBlock(todaysEvents) {
   return best;
 }
 
-function renderGlance() {
-  const card = document.getElementById('overviewCard');
-  const lines = [];
-
-  if (overview.weather) {
-    const { label, temp, precip, fallback, nudges } = overview.weather;
-    lines.push(`<div class="overview-line"><span class="icon">🌡️</span><span>${fmtTemp(temp)} and ${label.toLowerCase()}, ${precip}% chance of rain${fallback ? ' (showing Brisbane — location unavailable)' : ''}.</span></div>`);
-    (nudges || []).forEach((n) => {
-      lines.push(`<div class="overview-line"><span class="icon">${n.icon}</span><span>${escapeHtml(n.text)}</span></div>`);
-    });
-  }
-
-  if (overview.calendar) {
-    const todays = overview.calendar.filter((ev) => isToday(ev.start)).sort((a, b) => new Date(a.start) - new Date(b.start));
-    const now = new Date();
-    const upcoming = todays.filter((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
-    if (!todays.length) {
-      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>Nothing on the calendar today.</span></div>`);
-    } else if (!upcoming.length) {
-      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>${todays.length} event${todays.length > 1 ? 's' : ''} today, all done.</span></div>`);
-    } else {
-      const next = upcoming[0];
-      lines.push(`<div class="overview-line"><span class="icon">📅</span><span>${todays.length} event${todays.length > 1 ? 's' : ''} today — next: ${next.summary}${next.allDay ? ' (all day)' : ' at ' + fmtClock(next.start)}.</span></div>`);
-    }
-    const free = findFreeBlock(todays);
-    if (free && free.ms >= 15 * 60000) {
-      lines.push(`<div class="overview-line"><span class="icon">🕒</span><span>Free for ${fmtDuration(free.ms)}, until ${fmtClock(free.end)}.</span></div>`);
-    }
-  }
-
-  if (overview.reminders) {
-    const dueToday = overview.reminders.filter((ev) => isToday(ev.start)).length;
-    if (dueToday) {
-      lines.push(`<div class="overview-line"><span class="icon">✅</span><span>${dueToday} reminder${dueToday > 1 ? 's' : ''} due today.</span></div>`);
-    }
-  }
-
-  if (overview.email) {
-    const { urgent } = overview.email;
-    if (urgent > 0) {
-      lines.push(`<div class="overview-line"><span class="icon">✉️</span><span>${urgent} urgent email${urgent > 1 ? 's' : ''} waiting.</span></div>`);
-    }
-  }
-
-  if (!lines.length) {
-    card.innerHTML = `<div class="overview-label">Today at a glance</div><div class="overview-line"><span class="icon">⏳</span><span>Building your overview...</span></div>`;
-    return;
-  }
-  // Home is one screen — keep the glance compact (top 3 lines).
-  card.innerHTML = `<div class="overview-label">Today at a glance</div>${lines.slice(0, 3).join('')}`;
-}
 
 // ---------- AI Morning Brief ----------
 const BRIEF_KEY = 'morningDewBrief';
@@ -2261,62 +2215,123 @@ async function enablePush() {
 const ND_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
 const ND_CHEV_MUTED = '<span class="nd-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
 
-// 4-up stat grid shown on the hero card — weather, next event, recovery, inbox.
-function glancePreviewHtml() {
-  const items = [];
-  if (overview.weather) {
-    items.push({ val: fmtTemp(overview.weather.temp), lbl: overview.weather.label });
+// ---- AI Debrief hero: a FIXED-height card that never grows or shrinks. ----
+// Four tight sections — Inbox, Weather today, Upcoming, Add to your day — each
+// one line or two, with one-tap calendar buttons on the suggestions. Every
+// data source degrades to a short placeholder line inside the same shell, so
+// the box's size is identical whether the brief is loading, failed, or ready.
+
+// One concise AI line about urgent mail (from the brief's own inbox read),
+// falling back to a computed "N urgent — sender, sender" line.
+function heroInboxLine() {
+  const b = overview.brief;
+  if (overview.briefStructured && b && Array.isArray(b.sections)) {
+    const inbox = b.sections.find((x) => x.key === 'inbox');
+    if (inbox && inbox.summary) return inbox.summary;
   }
-  if (overview.calendar) {
-    const evs = todaysEvents();
-    const now = new Date();
-    const next = evs.find((ev) => ev.allDay || new Date(ev.end || ev.start) > now);
-    if (next) items.push({ val: next.allDay ? 'All day' : fmtClock(next.start), lbl: next.summary });
-    else items.push({ val: '—', lbl: 'Clear today' });
+  const d = overview.emailData;
+  if (!d) return overview.emailReached === false ? 'Mail unreachable right now.' : 'Checking your mail…';
+  const urgent = d.urgent || [];
+  if (!urgent.length) return 'Nothing urgent in your inbox.';
+  const names = urgent.slice(0, 2).map((m) => senderName(m.from));
+  return `${urgent.length} urgent — ${names.join(', ')}${urgent.length > 2 ? '…' : ''}`;
+}
+
+// One-line weather read: temp now, condition, H/L, and the rain story (peak
+// hour when a real chance shows up, plain percentage otherwise).
+function heroWeatherLine() {
+  const raw = overview.weatherRaw;
+  if (!raw) return overview.weatherReached === false ? 'Weather unreachable.' : 'Checking the sky…';
+  const cur = raw.current;
+  const daily = raw.daily || {};
+  const [label] = describeWeather(cur.weather_code);
+  const bits = [`${fmtTemp(cur.temperature_2m)} ${label}`];
+  if (daily.temperature_2m_max) bits.push(`H:${fmtTemp(daily.temperature_2m_max[0])} L:${fmtTemp(daily.temperature_2m_min[0])}`);
+  let peak = null;
+  if (raw.hourly && raw.hourly.time) {
+    let best = { p: -1, t: null };
+    let count = 0;
+    const now = Date.now();
+    for (let i = 0; i < raw.hourly.time.length && count < 18; i++) {
+      const t = new Date(raw.hourly.time[i]).getTime();
+      if (t < now - 3600000) continue;
+      count++;
+      const pp = raw.hourly.precipitation_probability[i] ?? 0;
+      if (pp > best.p) best = { p: pp, t: raw.hourly.time[i] };
+    }
+    if (best.p >= 30) peak = `${Math.round(best.p)}% rain ~${fmtClock(best.t)}`;
   }
-  const h = overview.health;
-  if (h && h.recovery != null) items.push({ val: `${h.recovery}%`, lbl: 'Recovery' });
-  if (overview.emailData) {
-    const u = overview.emailData.urgent.length;
-    items.push({ val: u ? String(u) : '0', lbl: u ? `Urgent email${u > 1 ? 's' : ''}` : 'Inbox clear' });
+  const rainMax = daily.precipitation_probability_max ? Math.round(daily.precipitation_probability_max[0] ?? 0) : Math.round(cur.precipitation_probability ?? 0);
+  bits.push(peak || `Rain ${rainMax}%`);
+  return bits.join(' · ');
+}
+
+// The next couple of real calendar entries still ahead of now.
+function heroUpcomingLine() {
+  if (overview.calendarReached === false) return 'Calendar unreachable.';
+  if (!overview.calendar) return 'Checking your calendar…';
+  const now = new Date();
+  const evs = todaysEvents().filter((ev) => ev.allDay || new Date(ev.end || ev.start) > now).slice(0, 2);
+  if (!evs.length) return 'Calendar clear for the rest of today.';
+  return evs.map((ev) => `${ev.allDay ? 'All day' : fmtClock(ev.start)} ${ev.summary || ''}`.trim()).join(' · ');
+}
+
+// Up to three AI-scheduled suggestions (from the brief's plan/priorities),
+// each with a one-tap add-to-calendar button at its sensible time.
+function heroSuggestionsHtml() {
+  const b = overview.brief;
+  if (overview.briefStructured && b && Array.isArray(b.sections)) {
+    _briefSlot = 0;
+    const items = [];
+    const seen = new Set();
+    for (const s of b.sections) {
+      if (!Array.isArray(s.items)) continue;
+      for (const it of s.items) {
+        if (it && it.text && !seen.has(it.text)) { seen.add(it.text); items.push(it); }
+      }
+    }
+    if (items.length) {
+      return items.slice(0, 3).map((it) => {
+        const when = briefItemWhen(it);
+        const durationMins = Number(it.durationMins) || 30;
+        const notes = 'From your Morning Dew daily brief';
+        const btn = calAddBtnHtml({
+          title: it.text, start: when, durationMins, notes,
+          category: it.category || '',
+          ics: icsHref({ title: it.text, date: when, durationMins, notes }),
+        }, `${fmtClock(when)} +`, 'h2-sug-cal');
+        return `<div class="h2-sug"><span class="h2-sug-txt">${escapeHtml(it.text)}</span>${btn}</div>`;
+      }).join('');
+    }
   }
-  if (!items.length) return `<div class="nd-hero-preview">Building your overview…</div>`;
-  return `<div class="nd-hero-glance">${items.map(({ val, lbl }) =>
-    `<div class="nd-glance-item"><div class="nd-glance-val">${escapeHtml(String(val))}</div><div class="nd-glance-lbl">${escapeHtml(String(lbl))}</div></div>`
-  ).join('')}</div>`;
+  if (overview.briefFetching) return `<div class="h2-txt dim">Planning your day…</div>`;
+  if (overview.briefConfigured === false) return `<div class="h2-txt dim">Connect the AI on the server to unlock suggestions.</div>`;
+  return `<div class="h2-txt dim">Open the debrief to generate today's plan.</div>`;
 }
 
 function renderOverview() {
   updateMoreBadge();
   const card = document.getElementById('overviewCard');
   if (!card) return;
+  const b = overview.brief;
+  let headline;
+  if (b) headline = briefHeadline(b);
+  else if (overview.briefFetching) headline = 'Writing your brief…';
+  else if (overview.briefError) headline = 'Brief unavailable — tap to retry';
+  else headline = 'Getting your day ready…';
   const hour = new Date().getHours();
-
-  if (hour >= 17 && !isReviewedToday()) {
-    card.innerHTML = `<div class="nd-hero-label">Wrap up</div>
-      <div class="nd-hero-headline">Review your day</div>
-      ${glancePreviewHtml()}
-      <div class="nd-hero-cta" data-detail="review">Start review ${ND_CHEV}</div>`;
-    return;
-  }
-  if (overview.brief) {
-    const opener = typeof overview.brief === 'object' && overview.brief.opener
-      ? `<div class="nd-hero-preview">${escapeHtml(overview.brief.opener)}</div>` : '';
-    card.innerHTML = `<div class="nd-hero-label">Your brief</div>
-      <div class="nd-hero-headline">${escapeHtml(briefHeadline(overview.brief))}</div>
-      ${opener}
-      ${heroPlanProgressHtml()}
-      ${glancePreviewHtml()}
-      <div class="nd-hero-cta">Daily debrief ${ND_CHEV}</div>`;
-    return;
-  }
-  if (overview.briefFetching) {
-    card.innerHTML = `<div class="nd-hero-label">Your brief</div>
-      ${glancePreviewHtml()}
-      <div class="nd-hero-preview" style="margin-top:0.3rem;font-size:0.8rem">Writing your brief…</div>`;
-    return;
-  }
-  card.innerHTML = `<div class="nd-hero-label">Today at a glance</div>${glancePreviewHtml()}`;
+  const review = (hour >= 17 && !isReviewedToday())
+    ? `<span class="nd-hero-cta" data-detail="review">Review day ${ND_CHEV}</span>` : '';
+  const sec = (lbl, inner) => `<div class="h2-sec"><div class="h2-lbl">${lbl}</div>${inner}</div>`;
+  card.innerHTML = `<div class="nd-hero-label">AI Debrief</div>
+    <div class="nd-hero-headline h2-headline">${escapeHtml(headline)}</div>
+    <div class="h2-body">
+      ${sec('Inbox', `<div class="h2-txt">${escapeHtml(heroInboxLine())}</div>`)}
+      ${sec('Weather today', `<div class="h2-txt">${escapeHtml(heroWeatherLine())}</div>`)}
+      ${sec('Upcoming', `<div class="h2-txt">${escapeHtml(heroUpcomingLine())}</div>`)}
+      ${sec('Add to your day', heroSuggestionsHtml())}
+    </div>
+    <div class="h2-foot"><span class="nd-hero-cta">Daily debrief ${ND_CHEV}</span>${review}</div>`;
 }
 
 const WEATHER_CODES = {
@@ -6028,6 +6043,9 @@ document.addEventListener('click', (e) => {
 
 // ---------- Detail-screen wiring ----------
 document.addEventListener('click', (e) => {
+  // Calendar-add buttons live inside data-detail cards (the hero); their own
+  // listener handles the tap, so don't ALSO open the detail page over it.
+  if (e.target.closest('[data-cal-add]')) return;
   const trigger = e.target.closest('[data-detail]');
   if (trigger) {
     e.preventDefault();
