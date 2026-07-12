@@ -161,6 +161,60 @@ with whatever data is present; never invent events or numbers. Aim for ~350-500
 words total across all fields: detailed but skimmable, with the recovery section's
 detail field the richest.`;
 
+// Calls the Anthropic Messages API in STREAMING mode and accumulates the text.
+// Streaming is load-bearing, not cosmetic: a non-streaming request sits on a
+// silent socket for the whole generation (20-90s), and intermediate proxies /
+// the host runtime can kill that idle connection mid-generation — which is how
+// both debriefs went dark as hard 502s. With SSE the socket carries bytes
+// continuously, and a mid-stream drop surfaces as a normal catchable error.
+async function anthropicStream({ apiKey, maxTokens, system, userContent, timeoutMs }) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: maxTokens,
+        stream: true,
+        system,
+        messages: [{ role: 'user', content: userContent }],
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`anthropic ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let text = '';
+    for await (const chunk of res.body) {
+      buffer += decoder.decode(chunk, { stream: true });
+      let nl;
+      while ((nl = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        let ev;
+        try { ev = JSON.parse(payload); } catch { continue; }
+        if (ev.type === 'content_block_delta' && ev.delta && typeof ev.delta.text === 'string') text += ev.delta.text;
+        else if (ev.type === 'error') throw new Error(`anthropic stream error: ${(ev.error && ev.error.message) || 'unknown'}`);
+      }
+    }
+    return text.trim();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Removes a ```json ... ``` fence from the model's response. Tolerates a
 // MISSING closing fence — when a response is truncated at max_tokens the opening
 // ```json survives but the closing ``` never arrives, and a naive match would
@@ -192,39 +246,17 @@ async function generateBrief(context) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { configured: false };
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), BRIEF_TIMEOUT_MS);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        // Headroom so a detailed brief (all sections + the rich recovery detail)
-        // never truncates mid-JSON. Truncation drops the closing fence and the
-        // brief falls back to raw text — the "YOUR BRIEF ```json" leak.
-        max_tokens: 4096,
-        system: SYSTEM_PROMPT,
-        messages: [
-          { role: 'user', content: `Here is today's context:\n\n${JSON.stringify(context)}\n\nWrite my morning brief.` },
-        ],
-      }),
+    // max_tokens 4096: headroom so a detailed brief (all sections + the rich
+    // recovery detail) never truncates mid-JSON — truncation drops the closing
+    // fence and the brief degrades to raw text.
+    const raw = await anthropicStream({
+      apiKey,
+      maxTokens: 4096,
+      system: SYSTEM_PROMPT,
+      userContent: `Here is today's context:\n\n${JSON.stringify(context)}\n\nWrite my morning brief.`,
+      timeoutMs: BRIEF_TIMEOUT_MS,
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`anthropic ${res.status}: ${body.slice(0, 200)}`);
-    }
-    const data = await res.json();
-    const raw = (data.content || [])
-      .filter((b) => b.type === 'text')
-      .map((b) => b.text)
-      .join('')
-      .trim();
 
     try {
       const parsed = extractJson(raw);
@@ -248,8 +280,6 @@ async function generateBrief(context) {
   } catch (err) {
     if (err && err.name === 'AbortError') return { configured: true, error: 'Brief timed out — try again in a moment.' };
     throw err;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -326,8 +356,6 @@ async function summarizeInbox(emails, nowIso) {
     return { configured: true, summary: { overview: 'No unread email to summarize right now.', highlights: [], events: [] } };
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 45000);
   try {
     const payload = {
       now: nowIso || new Date().toISOString(),
@@ -335,23 +363,13 @@ async function summarizeInbox(emails, nowIso) {
         from: m.from, subject: m.subject, date: m.date, snippet: (m.snippet || '').slice(0, 400),
       })),
     };
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 2500, // headroom so a busy inbox's JSON never truncates mid-object
-        system: SUMMARY_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: `Current date/time: ${payload.now}\n\nHere are my unread emails:\n\n${JSON.stringify(payload.emails)}\n\nSummarize my inbox.` }],
-      }),
+    const raw = await anthropicStream({
+      apiKey,
+      maxTokens: 2500, // headroom so a busy inbox's JSON never truncates mid-object
+      system: SUMMARY_SYSTEM_PROMPT,
+      userContent: `Current date/time: ${payload.now}\n\nHere are my unread emails:\n\n${JSON.stringify(payload.emails)}\n\nSummarize my inbox.`,
+      timeoutMs: 45000,
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`anthropic ${res.status}: ${body.slice(0, 200)}`);
-    }
-    const data = await res.json();
-    const raw = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
     const parsed = extractJson(raw);
     // Normalize so the client can trust the shape. Tasks are objects
     // ({text, when, durationMins}) — coerce legacy plain-string tasks too so an
@@ -377,8 +395,6 @@ async function summarizeInbox(emails, nowIso) {
   } catch (err) {
     if (err && err.name === 'AbortError') return { configured: true, error: 'Summary timed out — try again in a moment.' };
     return { configured: true, error: String(err.message || err) };
-  } finally {
-    clearTimeout(timer);
   }
 }
 
