@@ -2306,6 +2306,9 @@ function heroSuggestionsHtml() {
   }
   if (overview.briefFetching) return `<div class="h2-txt dim">Planning your day…</div>`;
   if (overview.briefConfigured === false) return `<div class="h2-txt dim">Connect the AI on the server to unlock suggestions.</div>`;
+  // Show the REAL error so a broken brief is diagnosable from the home screen
+  // instead of silently looking empty.
+  if (overview.briefError) return `<div class="h2-txt dim">${escapeHtml(String(overview.briefError).slice(0, 160))}</div>`;
   return `<div class="h2-txt dim">Open the debrief to generate today's plan.</div>`;
 }
 
