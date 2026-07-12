@@ -2,7 +2,10 @@
 # Docker container — used by render.yaml for the free Render deploy described
 # in README.md "Deploying the backend". Bun serves the frontend files in this
 # same directory and proxies calendar/reminders/email; see server/server.js.
-FROM oven/bun:1
+# Pinned (not the floating :1 tag): every Render rebuild used to pull whatever
+# Bun had shipped that week, so a runtime regression could silently break the
+# backend with zero code changes. Bump this deliberately, after testing.
+FROM oven/bun:1.2
 
 WORKDIR /app
 COPY . .
