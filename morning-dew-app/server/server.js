@@ -429,13 +429,20 @@ async function gatherEmail({ withBody = false } = {}) {
     anyConfigured = true;
     try {
       const { urgent: iUrgent, recent: iRecent } = await withTimeout(
-        imap.fetchTriage({
-          user: imapUser,
-          password: imapPassword,
-          host: process.env.GMAIL_IMAP_HOST || undefined,
-          port: process.env.GMAIL_IMAP_PORT ? Number(process.env.GMAIL_IMAP_PORT) : undefined,
-          withBody,
-        }),
+        imap.fetchTriage(
+          {
+            user: imapUser,
+            password: imapPassword,
+            host: process.env.GMAIL_IMAP_HOST || undefined,
+            port: process.env.GMAIL_IMAP_PORT ? Number(process.env.GMAIL_IMAP_PORT) : undefined,
+          },
+          // withBody is an OPTION, not a credential — it used to ride in the
+          // creds object where fetchTriage never read it, so the AI summary
+          // silently ran on subject lines alone. The internal deadline stays
+          // BELOW the outer race so fetchTriage always rejects cleanly first
+          // and tears its own socket down.
+          { withBody, deadlineMs: withBody ? 18000 : 12000 }
+        ),
         withBody ? 22000 : 16000,
         'Gmail IMAP'
       );
