@@ -1,0 +1,43 @@
+# On-demand backend diagnostics for Morning Dew.
+#
+# Probes the AI endpoints from a GitHub runner (which can reach Render) and
+# prints SANITIZED results only: HTTP status plus the configured/structured/
+# error fields. Never prints brief text, email content, or calendar names —
+# this is a public repo, so response bodies stay out of the logs.
+name: Morning Dew diagnostics
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe AI + calendar endpoints
+        run: |
+          BASE="https://morning-dew-backend-3w0m.onrender.com"
+          probe () {
+            local name="$1" url="$2"
+            local body code
+            body=$(curl -sS --max-time 100 -w '\n%{http_code}' "$url" 2>&1) || { echo "$name: curl failed: $body"; return; }
+            code=$(echo "$body" | tail -1)
+            body=$(echo "$body" | sed '$d')
+            local len=${#body}
+            # Sanitized field extraction only — no content.
+            local configured structured error
+            configured=$(echo "$body" | jq -r 'if has("configured") then .configured else "n/a" end' 2>/dev/null || echo 'not-json')
+            structured=$(echo "$body" | jq -r 'if has("structured") then .structured else "n/a" end' 2>/dev/null || echo 'n/a')
+            error=$(echo "$body" | jq -r '.error // "none"' 2>/dev/null | head -c 300)
+            echo "== $name =="
+            echo "   http=$code bytes=$len configured=$configured structured=$structured"
+            echo "   error=$error"
+          }
+          probe "health"        "$BASE/api/health"
+          probe "brief (GET diagnostic)" "$BASE/api/brief"
+          probe "email"         "$BASE/api/email"
+          probe "email-summary" "$BASE/api/email-summary"
+          # calendar-add GET lists calendars; print only configured + count.
+          body=$(curl -sS --max-time 60 "$BASE/api/calendar-add" || echo '{}')
+          echo "== calendar-add =="
+          echo "   configured=$(echo "$body" | jq -r '.configured // "n/a"' 2>/dev/null) calendars=$(echo "$body" | jq -r '(.calendars | length) // 0' 2>/dev/null) error=$(echo "$body" | jq -r '.error // "none"' 2>/dev/null | head -c 200)"
